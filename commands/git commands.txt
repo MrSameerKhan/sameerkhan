@@ -1,0 +1,25 @@
+
+Pull then Push:
+
+git status
+git stash # (If uncommitted changes exist)
+git fetch origin
+git pull --rebase=false origin main # (or git pull --rebase origin main)
+git stash pop # (If you used stash earlier)
+git add .
+git commit -m "Your commit message"
+git push origin main
+
+
+
+only push:
+
+git add .
+git commit -m "Your commit message"
+git push origin main
+
+remove junk
+git rm --cached -r .idea
+echo ".idea/" >> .gitignore
+git commit -m "Removed .idea from Git tracking"
+git push origin main

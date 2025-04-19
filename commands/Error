@@ -1,0 +1,16 @@
+ValueError: Could not interpret optimizer identifier: <keras.src.optimizers.adam.Adam object at 0x7fa014b06490>
+File <command-8332361853737011>, line 11
+      7 # ------------------------------------------------------------
+      8 # 6. Compile Model (Using keras.optimizers.Adam)
+      9 # ------------------------------------------------------------
+     10 optimizer = Adam(learning_rate=2e-5, epsilon=1e-08)
+---> 11 model.compile(optimizer=optimizer, loss=custom_loss, metrics=['accuracy'])
+     12 model.summary()
+File /databricks/python/lib/python3.11/site-packages/tf_keras/src/optimizers/__init__.py:335, in get(identifier, **kwargs)
+    330     return get(
+    331         config,
+    332         use_legacy_optimizer=use_legacy_optimizer,
+    333     )
+    334 else:
+--> 335     raise ValueError(
+    336         f"Could not interpret optimizer identifier: {identifier}"

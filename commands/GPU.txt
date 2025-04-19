@@ -1,0 +1,22 @@
+Install TensorFlow (Metal Backend for M1)
+
+conda create --name ml_env python=3.9  # TensorFlow works best with Python 3.9 on M1
+conda activate ml_env
+
+conda install -c apple tensorflow-deps  # Install dependencies
+pip install tensorflow-macos  # TensorFlow for macOS
+pip install tensorflow-metal  # Metal GPU acceleration
+
+import tensorflow as tf
+print(tf.config.list_physical_devices('GPU'))
+
+---------------------------------------------------------------------------------------------
+
+
+Install PyTorch (Metal Backend for M1)
+
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+import torch
+print(torch.backends.mps.is_available())  # Should print True
+print(torch.backends.mps.is_built())  # Should print True

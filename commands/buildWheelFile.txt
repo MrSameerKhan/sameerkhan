@@ -1,0 +1,27 @@
+Step 1: Install Required Tools
+pip install setuptools wheel
+
+
+Step 2: Prepare Your Project
+
+my_project/
+│-- my_package/
+│   │-- __init__.py
+│   │-- module1.py
+│   │-- module2.py
+│-- setup.py
+│-- requirements.txt
+│-- README.md
+
+
+Step 3: Build the Wheel File
+python setup.py bdist_wheel
+
+
+Step 4: Install the Wheel File Locally
+pip install dist/my_package-0.1.0-py3-none-any.whl
+
+
+Verifying Installation
+import my_package
+print(my_package.__version__)  # If __version__ is defined in __init__.py

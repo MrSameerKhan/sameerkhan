@@ -1,0 +1,21 @@
+conda create --name my_env python=3.10
+
+conda env list
+
+conda env remove --name your_env_name
+
+
+1. Enable Auto Activation for Conda
+conda init zsh  # For zsh (default on macOS)
+conda init bash  # If using bash
+Then restart your terminal.
+
+2. Set Your Default Conda Environment
+echo "conda activate my_env" >> ~/.zshrc
+source ~/.zshrc
+
+
+3. (Optional) Disable Base Environment Auto-Activation
+conda config --set auto_activate_base false
+
+conda config --set auto_activate_base true
