@@ -17,6 +17,9 @@ Install PyTorch (Metal Backend for M1)
 
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
+pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
+
+
 import torch
-print(torch.backends.mps.is_available())  # Should print True
-print(torch.backends.mps.is_built())  # Should print True
+print("MPS available:", torch.backends.mps.is_available()) # Should print True
+print("MPS built:", torch.backends.mps.is_built()) # Should print True
