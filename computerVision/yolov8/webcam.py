@@ -4,9 +4,9 @@ import cv2
 from ultralytics import YOLO
 
 # Load model (nano is fastest)
-# model = YOLO("yolov8n.pt")  # or "yolov8s.pt" / "yolov8n-seg.pt" for segmentation
-# model = YOLO("/Users/sameerkhan/Desktop/sameerkhan/data/cv/yolov8/yolov8n-pose.pt")
-model = YOLO("/Users/sameerkhan/Desktop/sameerkhan/data/cv/experiments/yolov8_custom_acne/weights/best.pt")
+# model = YOLO("yolov8n.pt")  # or "yolov8s-seg.pt" / "yolov8n-seg.pt" for segmentation
+model = YOLO("/Users/sameerkhan/Desktop/sameerkhan/data/cv/yolov8/yolov8n-seg.pt")
+# model = YOLO("/Users/sameerkhan/Desktop/sameerkhan/data/cv/experiments/yolov8_custom_acne/weights/best.pt")
 
 # Try default camera; fallback to index 1 if needed
 cap = cv2.VideoCapture(0)
