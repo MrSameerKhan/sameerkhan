@@ -4,3 +4,4 @@ nlp-env/
 weights/
 yolo/
 langchain/
+.env
