@@ -26,14 +26,14 @@ prompt = ChatPromptTemplate.from_messages([
 # ---------------------------------
 # Streamlit UI
 # ---------------------------------
-st.title("🧠 LangChain Demo with Ollama (Llama2 Model)")
+st.title("🧠 LangChain Demo with Ollama (deepseek-r1 Model)")
 input_text = st.text_input("🔍 Enter your question:")
 
 
 # ---------------------------------
 # LLM Setup
 # ---------------------------------
-llm = OllamaLLM(model="llama2")
+llm = OllamaLLM(model="deepseek-r1")
 output_parser = StrOutputParser()
 
 # Create a simple chain: prompt → LLM → parser
@@ -47,5 +47,3 @@ if input_text:
     st.write("💬 **Response:**")
     st.write(response)
 
-
-#Final

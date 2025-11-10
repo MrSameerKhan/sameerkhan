@@ -35,7 +35,7 @@ input_text = st.text_input("🔍 Enter your question:")
 # ---------------------------------
 # LLM Setup
 # ---------------------------------
-llm = ChatOpenAI(model="gpt-3.5-turbo")
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
 output_parser = StrOutputParser()
 
 # Create a simple chain: prompt → LLM → parser

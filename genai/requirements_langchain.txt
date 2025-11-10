@@ -1,7 +1,12 @@
 langchain
 langchain-openai
 streamlit
-dotenv
 langchain_community
 langchain-ollama
 watchdog
+langchain_core
+python-dotenv
+langserve
+fastapi
+uvicorn
+sse_starlette

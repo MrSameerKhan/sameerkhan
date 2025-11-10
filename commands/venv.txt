@@ -4,3 +4,4 @@ source venv/bin/activate
 
 Windows:
 .\venv\Scripts\activate
+deactivate
