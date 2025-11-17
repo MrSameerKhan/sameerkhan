@@ -3,6 +3,9 @@ langchain-core
 langchain-community
 langchain-openai
 langchain-ollama
+langchainhub
+langsmith
+langchain-text-splitters
 streamlit
 watchdog
 python-dotenv
@@ -16,3 +19,5 @@ chromadb
 openai
 sentence_transformers
 faiss-cpu
+arxiv
+wikipedia

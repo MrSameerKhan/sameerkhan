@@ -1,67 +1,52 @@
 from fastapi import FastAPI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from langchain_ollama import OllamaLLM
 from langserve import add_routes
-from dotenv import load_dotenv
 import uvicorn
 import os
+from langchain_community.llms import Ollama
+from dotenv import load_dotenv
 
-# ---------------------------------
-# Load environment variables
-# ---------------------------------
 load_dotenv()
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
-# ---------------------------------
-# Initialize FastAPI app
-# ---------------------------------
-app = FastAPI(
-    title="LangChain Server",
+os.environ['OPENAI_API_KEY']=os.getenv("OPENAI_API_KEY")
+
+app=FastAPI(
+    title="Langchain Server",
     version="1.0",
-    description="A simple API Server exposing LLM chains",
+    decsription="A simple API Server"
+
 )
 
-# ---------------------------------
-# Define models
-# ---------------------------------
-# OpenAI model (optional; only if you want it)
-openai_model = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
-
-# Ollama model (DeepSeek-R1 running locally via ollama)
-ollama_model = OllamaLLM(model="deepseek-r1")   # or "deepseek-r1:8b" if that’s your tag
-
-# ---------------------------------
-# Define prompts
-# ---------------------------------
-prompt_essay = ChatPromptTemplate.from_template(
-    "Write me an essay about {topic} with 100 words."
-)
-
-prompt_poem = ChatPromptTemplate.from_template(
-    "Write me a poem about {topic} with 100 words."
-)
-
-# ---------------------------------
-# Add routes using LangServe
-# ---------------------------------
-
-# Essay using Ollama (DeepSeek-R1)
 add_routes(
     app,
-    prompt_essay | openai_model,
-    path="/essay",
+    ChatOpenAI(),
+    path="/openai"
 )
+model=ChatOpenAI()
+##ollama llama2
+llm=Ollama(model="llama2")
 
-# Poem using Ollama (DeepSeek-R1)
+prompt1=ChatPromptTemplate.from_template("Write me an essay about {topic} with 100 words")
+prompt2=ChatPromptTemplate.from_template("Write me an poem about {topic} for a 5 years child with 100 words")
+
 add_routes(
     app,
-    prompt_poem | openai_model,
-    path="/poem",
+    prompt1|model,
+    path="/essay"
+
+
 )
 
-# ---------------------------------
-# Run server
-# ---------------------------------
-if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8010)
+add_routes(
+    app,
+    prompt2|llm,
+    path="/poem"
+
+
+)
+
+
+if __name__=="__main__":
+    uvicorn.run(app,host="localhost",port=8000)
+
