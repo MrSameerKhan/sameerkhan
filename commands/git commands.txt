@@ -1,12 +1,47 @@
 
+Create new git repo
+
+git config --global user.name "Sameer Khan"
+git config --global user.email "email.com"
+
+git config --global --list
+git config --global init.defaultBranch main
+git --version
+which git
+
+cd ~/Desktop
+mkdir my-project
+cd my-project
+echo "# my project" > README.md
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/MrSameerKhan/my-project.git
+git remote -V
+git remote -v
+git push -u origin main
+
+Pull on New Machine
+git --version
+git config --global user.name "Sameer Khan"
+git config --global user.email "email.com"
+cd ~/Desktop
+git clone https://my-project.git
+cd my-project
+git pull origin main
+
+
 Pull then Push:
 
-git status
-git stash                                              # (If uncommitted changes exist)
-git fetch origin
-git pull --rebase=false origin main                    # (or git pull --rebase origin main)
-git stash pop                                          # (If you used stash earlier)
-git add .
+git status                                             # Shows current branch, staged files, and uncommitted changes
+git stash                                              # Temporarily saves uncommitted changes to keep working tree clean
+git fetch origin                                       # Downloads latest changes from remote without modifying local code
+git pull --rebase=false origin main                    # Pulls and merges remote main into local main (no rebase)
+or
+git pull --rebase origin main                          # Pulls remote changes and rebases local commits on top
+git stash pop                                          # Restores stashed local changes back into the working tree
+git add .                                   
 git commit -m "Your commit message"
 git push origin main
 
