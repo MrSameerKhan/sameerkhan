@@ -478,6 +478,53 @@ h1 {
 
   <div class="flow-arrow">
     <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c4)"></div></div>
+      <span class="flow-arrow-label">Embeddings · Trained models</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c4);animation-delay:1.2s"></div></div>
+    </div>
+  </div>
+
+  <!-- L4.25 Deep Learning -->
+  <div class="layer" style="--delay:0.6s">
+    <div class="layer-header">
+      <span class="layer-num">04.25</span>
+      <span class="layer-name" style="color:var(--c4)">Deep Learning</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-3">
+      <div class="card" data-id="dlframeworks" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">🔬</div>
+          <div><div class="card-title">Training Frameworks</div><div class="card-tech" style="color:var(--c4)">PyTorch · TensorFlow · JAX</div></div>
+        </div>
+        <div class="card-desc">PyTorch dominates research and LLM fine-tuning. TensorFlow for production deployment. JAX for high-performance research. Use autograd for backprop; leverage mixed precision (FP16/BF16) for memory and speed.</div>
+      </div>
+      <div class="card" data-id="dlarch" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">🏗️</div>
+          <div><div class="card-title">Model Architectures</div><div class="card-tech" style="color:var(--c4)">Transformers · LoRA · QLoRA</div></div>
+        </div>
+        <div class="card-desc">Transformer attention scales to long sequences. LoRA/QLoRA enable parameter-efficient fine-tuning with 0.1–1% trainable params. Use Hugging Face PEFT for adapter-based tuning without full model copies.</div>
+      </div>
+      <div class="card" data-id="dloptim" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">📉</div>
+          <div><div class="card-title">Optimization & Training</div><div class="card-tech" style="color:var(--c4)">AdamW · Gradient checkpointing · DDP</div></div>
+        </div>
+        <div class="card-desc">AdamW with cosine LR decay for stable convergence. Gradient checkpointing trades compute for memory. Distributed Data Parallel (DDP) for multi-GPU. Track loss curves and eval metrics in Weights & Biases or MLflow.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
       <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c5)"></div></div>
       <span class="flow-arrow-label">Features · Model outputs</span>
       <span class="chevron">▼</span>
@@ -675,6 +722,14 @@ h1 {
         <div class="dec-q"><span>💡</span> How should coding assistance get context?</div>
         <div class="dec-a">Combine LSP (symbols, types, definitions) with RAG over project files and docs. LSP gives precise language semantics; embeddings retrieve relevant modules and patterns. Keep context windows bounded — prioritize open files and recently edited code. Use streaming for completions so users see suggestions as they type.</div>
       </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> When to fine-tune vs prompt engineering?</div>
+        <div class="dec-a">Start with prompt engineering and RAG — zero training cost, fast iteration. Fine-tune when you have 100+ high-quality examples and domain-specific patterns that prompts can't capture. Use LoRA/QLoRA for cost-effective tuning. Evaluate on held-out data before deploying.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> How do I train deep learning models efficiently?</div>
+        <div class="dec-a">Use mixed precision (FP16/BF16), gradient checkpointing, and efficient optimizers (AdamW). For LLMs, prefer LoRA over full fine-tuning. Scale with DDP for multi-GPU. Profile with PyTorch Profiler to find bottlenecks. Consider cloud GPU spot instances (RunPod, Lambda) for cost savings.</div>
+      </div>
     </div>
   </div>
 
@@ -709,6 +764,9 @@ const D = {
   mlapi:{title:"🧠 Model Inference API",badge:"Machine Learning",color:"var(--c4)",body:"Keep all model calls in secure backend routes. This lets you version prompts, apply retries and fallbacks, enforce token budgets, and protect API keys. For MVP, start with one provider and abstract only when you need multi-model routing.",pills:["OpenAI API","Backend-only calls","Prompt templates","Retries + fallbacks","Token budgets","API key safety"]},
   mlvector:{title:"🧲 Vector Search",badge:"Machine Learning",color:"var(--c4)",body:"Use embeddings + similarity search to retrieve relevant context before generation. Start simple with pgvector on Postgres so you do not add another system early. Move to a dedicated vector DB only if query volume or latency requires it.",pills:["Embeddings","RAG pattern","pgvector first","Pinecone (later)","Top-k retrieval","Semantic search"]},
   mleval:{title:"📐 Quality & Eval",badge:"Machine Learning",color:"var(--c4)",body:"Treat prompts like code with evaluation sets and release checks. Track latency, hallucination rate, and cost by prompt version. Langfuse provides tracing and observability; Promptfoo helps compare variants before deploying changes.",pills:["Promptfoo","Langfuse","Prompt versioning","Latency tracking","Cost tracking","Regression checks"]},
+  dlframeworks:{title:"🔬 Training Frameworks",badge:"Deep Learning",color:"var(--c4)",body:"PyTorch is the default for LLM fine-tuning and research — dynamic graphs, strong ecosystem (Hugging Face, Lightning). TensorFlow/Keras for production serving and edge. JAX offers JIT compilation and functional purity for maximum performance. Use torch.compile() or XLA for faster training. Mixed precision (AMP) with FP16/BF16 cuts memory ~50% and speeds training 1.5–2x on modern GPUs.",pills:["PyTorch","TensorFlow","JAX","Autograd","Mixed precision","torch.compile"]},
+  dlarch:{title:"🏗️ Model Architectures",badge:"Deep Learning",color:"var(--c4)",body:"Transformers use self-attention to model long-range dependencies — the backbone of GPT, BERT, LLaMA. For fine-tuning: LoRA injects low-rank adapters (train only 0.1–1% of params). QLoRA quantizes base model to 4-bit and trains adapters in FP16 — fine-tune 7B models on a single 24GB GPU. Hugging Face PEFT and TRL simplify implementation. Choose architecture based on task: encoder-only (BERT) for classification, decoder-only (GPT) for generation.",pills:["Transformers","LoRA","QLoRA","PEFT","Hugging Face","Parameter-efficient"]},
+  dloptim:{title:"📉 Optimization & Training",badge:"Deep Learning",color:"var(--c4)",body:"AdamW with weight decay prevents overfitting. Cosine or linear LR decay from peak to ~10% over training. Gradient checkpointing recomputes activations during backward pass — halves memory at ~20% compute cost. Distributed Data Parallel (DDP) scales across GPUs; FSDP for models that don't fit on one device. Log to W&B or MLflow for experiment tracking. Use early stopping on validation loss to avoid overfitting.",pills:["AdamW","Cosine decay","Gradient checkpointing","DDP","FSDP","W&B / MLflow"]},
   db:{title:"🗄️ Primary Database",badge:"Data",color:"var(--c5)",body:"PostgreSQL for internal tools — relational, robust, and future-proof. Supabase wraps Postgres with a REST API, realtime subscriptions, and a generous free tier. Neon offers serverless Postgres with database branching for dev/staging workflows.",pills:["PostgreSQL","Supabase","Neon (serverless)","Connection pooling","Realtime (Supabase)","DB branching (Neon)"]},
   cache:{title:"⚡ Cache Layer",badge:"Data",color:"var(--c5)",body:"Next.js 14's fetch caching with revalidation tags handles 90% of dashboard caching needs. Tag cache entries, then call revalidateTag() on mutations. Add Upstash Redis (serverless, no idle costs) for rate limiting, session storage, or cross-request shared state.",pills:["Next.js fetch cache","revalidateTag()","Upstash Redis (later)","ISR pages","On-demand revalidation","Rate limiting"]},
   files:{title:"📁 File Storage",badge:"Data",color:"var(--c5)",body:"Cloudflare R2 is S3-compatible with zero egress fees — massive cost difference vs S3 for read-heavy workloads. Use for CSV uploads, generated PDFs, exports, and avatars. Integrates via the AWS SDK v3 pointed at R2's endpoint.",pills:["Cloudflare R2","AWS S3 (alt)","Zero egress fees","Pre-signed URLs","AWS SDK v3 compatible","Multipart uploads"]},
