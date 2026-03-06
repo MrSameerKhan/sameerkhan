@@ -61,29 +61,30 @@ git push origin main
 
 
 
-
+---------------------------------------------- Create New branch - make changes - push -----------------------
 1. Create a new branch & push to GitHub
 git checkout -b feature/architecture-diagram
 git add .
 git commit -m "Add architecture diagram"
 git push origin feature/architecture-diagram
 
+---------------------------------------------- Create PR ------------------
 2. Create a Pull Request (PR)
-
 Go to your repo on github.com
 You'll see a yellow banner: "Compare & pull request" — click it
 Add a title + description
 Click "Create pull request"
 
-
+---------------------------------------------- Merge PR ------------------
 3. Merge the PR
-
 On the PR page, click "Merge pull request" → "Confirm merge"
 Optionally click "Delete branch" to clean up
 
 
+------------------------------------------------ Change to main - pull - changes - push --------------------------
+
 4. Push code from main branch later
-bashgit checkout main
+git checkout main
 git pull origin main        # sync latest first
 # make your changes...
 git add .
@@ -91,4 +92,14 @@ git commit -m "Your message"
 git push origin main
 
 
-The end
+
+
+Step 1 — Stash your changes and switch to main
+bashgit stash
+git checkout main
+git pull origin main
+Step 2 — Apply your stashed changes on main
+bashgit stash pop
+git add .
+git commit -m "commands"
+git push origin main
