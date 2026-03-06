@@ -58,3 +58,34 @@ git rm --cached -r .idea
 echo ".idea/" >> .gitignore
 git commit -m "Removed .idea from Git tracking"
 git push origin main
+
+
+
+
+1. Create a new branch & push to GitHub
+git checkout -b feature/architecture-diagram
+git add .
+git commit -m "Add architecture diagram"
+git push origin feature/architecture-diagram
+
+2. Create a Pull Request (PR)
+
+Go to your repo on github.com
+You'll see a yellow banner: "Compare & pull request" — click it
+Add a title + description
+Click "Create pull request"
+
+
+3. Merge the PR
+
+On the PR page, click "Merge pull request" → "Confirm merge"
+Optionally click "Delete branch" to clean up
+
+
+4. Push code from main branch later
+bashgit checkout main
+git pull origin main        # sync latest first
+# make your changes...
+git add .
+git commit -m "Your message"
+git push origin main
