@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">̦
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture · Internal Dashboard MVP</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080a0f;
+  --grid: rgba(255,255,255,0.025);
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.08);
+  --border-bright: rgba(255,255,255,0.18);
+  --text: #f0f4ff;
+  --muted: rgba(240,244,255,0.4);
+  --c1: #00ff88;
+  --c2: #ffb020;
+  --c3: #38bdf8;
+  --c4: #bf7cf6;
+  --c5: #8b9aad;
+  --c6: #f97316;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 100% 100% at 50% 0%, black 40%, transparent 100%);
+}
+
+.bg-glow {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(0,255,136,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 60%, rgba(56,189,248,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 90%, rgba(191,124,246,0.04) 0%, transparent 60%);
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
+
+header {
+  margin-bottom: 56px;
+  opacity: 0;
+  animation: rise 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s forwards;
+}
+
+.header-eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--c1);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-eyebrow::before { content:''; display:block; width:24px; height:1px; background:var(--c1); }
+
+h1 {
+  font-size: clamp(28px,5vw,42px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #f0f4ff 0%, rgba(240,244,255,0.5) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+.header-sub { margin-top:10px; color:var(--muted); font-size:14px; font-weight:300; }
+
+.layer {
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: translateY(20px);
+}
+.layer.visible { animation: rise 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+.layer-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; padding-left:2px; }
+.layer-num { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); opacity:0.6; }
+.layer-name { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; }
+.layer-line { flex:1; height:1px; background:var(--border); }
+
+.cards-row { display:grid; gap:8px; }
+.cards-row.cols-3 { grid-template-columns:repeat(3,1fr); }
+.cards-row.cols-2 { grid-template-columns:repeat(2,1fr); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, background 0.25s, transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+}
+
+.card::after {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.04) 50%,transparent 60%);
+  transform:translateX(-100%);
+  transition:transform 0.55s;
+  pointer-events:none;
+}
+.card:hover::after { transform:translateX(100%); }
+.card:hover { background:var(--surface-hover); transform:translateY(-3px) scale(1.01); }
+.card.active { transform:translateY(-3px) scale(1.01); }
+
+.card-bar {
+  position:absolute; top:0; left:0; right:0; height:2px;
+  border-radius:12px 12px 0 0; opacity:0;
+  transition:opacity 0.3s;
+}
+.card:hover .card-bar, .card.active .card-bar { opacity:1; }
+
+.card-ping {
+  position:absolute; top:14px; right:14px;
+  width:6px; height:6px; border-radius:50%; opacity:0.4;
+  transition:opacity 0.3s;
+}
+.card-ping::before {
+  content:''; position:absolute; inset:-3px; border-radius:50%;
+  border:1px solid currentColor;
+  animation:ping 2s ease-out infinite; opacity:0;
+}
+.card.active .card-ping { opacity:1; }
+.card.active .card-ping::before { opacity:1; }
+
+@keyframes ping {
+  0% { transform:scale(1); opacity:0.7; }
+  100% { transform:scale(2.8); opacity:0; }
+}
+
+.card-top { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+
+.card-icon {
+  width:32px; height:32px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; flex-shrink:0;
+  background:rgba(255,255,255,0.05);
+  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.card:hover .card-icon, .card.active .card-icon { transform:scale(1.15) rotate(-5deg); }
+
+.card-title { font-size:13px; font-weight:600; color:var(--text); }
+.card-tech { font-family:'Space Mono',monospace; font-size:10px; margin-bottom:6px; opacity:0.7; transition:opacity 0.2s; }
+.card:hover .card-tech, .card.active .card-tech { opacity:1; }
+
+.card-desc {
+  font-size:12px; color:var(--muted); line-height:1.55;
+  max-height:0; overflow:hidden;
+  transition:max-height 0.45s cubic-bezier(0.16,1,0.3,1), opacity 0.3s;
+  opacity:0;
+}
+.card.active .card-desc { max-height:140px; opacity:1; }
+
+/* FLOW ARROWS */
+.flow-arrow {
+  display:flex; align-items:center; justify-content:center;
+  height:36px;
+}
+.flow-arrow-inner { display:flex; align-items:center; gap:8px; opacity:0.45; transition:opacity 0.3s; }
+.flow-arrow:hover .flow-arrow-inner { opacity:0.9; }
+
+.flow-line { width:60px; height:1px; position:relative; overflow:hidden; }
+.flow-line-bg { width:100%; height:100%; background:var(--border-bright); }
+
+.flow-packet {
+  position:absolute; top:-2px; left:-8px;
+  width:8px; height:5px; border-radius:3px;
+  animation:packet 2s linear infinite;
+}
+@keyframes packet {
+  0% { left:-8px; opacity:0; }
+  10% { opacity:1; }
+  90% { opacity:1; }
+  100% { left:100%; opacity:0; }
+}
+
+.flow-arrow-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+.chevron { color:var(--muted); font-size:10px; }
+
+/* DRAWER */
+#drawer {
+  background:linear-gradient(135deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0.02) 100%);
+  border:1px solid var(--border-bright);
+  border-radius:16px;
+  max-height:0; overflow:hidden;
+  transition:max-height 0.5s cubic-bezier(0.16,1,0.3,1), padding 0.3s, border-color 0.3s;
+  margin-top:16px;
+}
+#drawer.open { max-height:350px; padding:24px 28px; }
+
+.drawer-inner { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+
+.drawer-title {
+  font-size:16px; font-weight:600; margin-bottom:8px;
+  display:flex; align-items:center; gap:10px;
+}
+.drawer-badge {
+  font-family:'Space Mono',monospace; font-size:9px;
+  padding:3px 8px; border-radius:20px; letter-spacing:0.08em; text-transform:uppercase;
+}
+.drawer-body { font-size:13px; color:var(--muted); line-height:1.65; }
+
+.drawer-pills-title {
+  font-family:'Space Mono',monospace; font-size:9px;
+  letter-spacing:0.15em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:10px;
+}
+.pills { display:flex; flex-wrap:wrap; gap:6px; }
+.pill {
+  font-family:'Space Mono',monospace; font-size:10px;
+  padding:4px 10px; border-radius:6px;
+  border:1px solid var(--border-bright);
+  background:rgba(255,255,255,0.03);
+  color:var(--text);
+  animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.8)} to{opacity:1;transform:scale(1)} }
+
+/* DECISIONS */
+.decisions {
+  margin-top:56px; opacity:0;
+  animation:rise 0.6s cubic-bezier(0.16,1,0.3,1) 1.2s forwards;
+}
+.section-eyebrow {
+  font-family:'Space Mono',monospace; font-size:10px;
+  letter-spacing:0.2em; text-transform:uppercase; color:var(--muted);
+  margin-bottom:20px; display:flex; align-items:center; gap:12px;
+}
+.section-eyebrow::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.dec-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+
+.dec-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:16px 18px;
+  transition:all 0.2s; cursor:default;
+}
+.dec-card:hover { background:var(--surface-hover); border-color:var(--border-bright); }
+
+.dec-q { font-size:12px; font-weight:600; color:var(--text); margin-bottom:6px; display:flex; gap:8px; align-items:flex-start; }
+.dec-a { font-size:12px; color:var(--muted); line-height:1.6; padding-left:20px; }
+
+.mvp-callout {
+  margin-top:40px;
+  background:linear-gradient(135deg,rgba(0,255,136,0.06) 0%,rgba(0,255,136,0.02) 100%);
+  border:1px solid rgba(0,255,136,0.2); border-radius:14px;
+  padding:22px 26px; display:flex; align-items:flex-start; gap:16px;
+  opacity:0; animation:rise 0.6s cubic-bezier(0.16,1,0.3,1) 1.4s forwards;
+}
+.mvp-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
+.mvp-title { font-size:13px; font-weight:600; color:var(--c1); margin-bottom:6px; font-family:'Space Mono',monospace; letter-spacing:0.05em; }
+.mvp-body { font-size:13px; color:var(--muted); line-height:1.6; }
+.mvp-stack { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.mvp-pill {
+  font-family:'Space Mono',monospace; font-size:10px;
+  padding:4px 10px; border-radius:6px;
+  background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.25); color:var(--c1);
+}
+
+@keyframes rise { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+@media(max-width:600px){
+  .cards-row.cols-3 { grid-template-columns:1fr; }
+  .cards-row.cols-2 { grid-template-columns:1fr; }
+  .drawer-inner { grid-template-columns:1fr; }
+}
+
+.footer {
+  position: fixed; bottom: 0; right: 0;
+  padding: 16px 24px; font-family: 'Space Mono', monospace;
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.5; transition: opacity 0.3s;
+}
+.footer:hover { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="wrap">
+  <header>
+    <div class="header-eyebrow">Software Architecture</div>
+    <h1>Internal Dashboard<br>MVP Stack</h1>
+    <p class="header-sub">Solo startup · Move fast · Click any component to explore</p>
+  </header>
+
+  <!-- L1 -->
+  <div class="layer" style="--delay:0.1s">
+    <div class="layer-header">
+      <span class="layer-num">01</span>
+      <span class="layer-name" style="color:var(--c1)">Frontend</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-3">
+      <div class="card" data-id="nextjs" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c1),transparent)"></div>
+        <div class="card-ping" style="background:var(--c1);color:var(--c1)"></div>
+        <div class="card-top">
+          <div class="card-icon">⚡</div>
+          <div><div class="card-title">Next.js App</div><div class="card-tech" style="color:var(--c1)">Next.js 14 · TypeScript</div></div>
+        </div>
+        <div class="card-desc">App Router, server components, file-based routing. Full-stack in one repo — no separate backend server needed for v1.</div>
+      </div>
+      <div class="card" data-id="ui" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c1),transparent)"></div>
+        <div class="card-ping" style="background:var(--c1);color:var(--c1)"></div>
+        <div class="card-top">
+          <div class="card-icon">🎨</div>
+          <div><div class="card-title">UI Components</div><div class="card-tech" style="color:var(--c1)">shadcn/ui · Tailwind</div></div>
+        </div>
+        <div class="card-desc">Copy-paste accessible components. Charts via Recharts or Tremor. Zero design decisions forced on you.</div>
+      </div>
+      <div class="card" data-id="state" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c1),transparent)"></div>
+        <div class="card-ping" style="background:var(--c1);color:var(--c1)"></div>
+        <div class="card-top">
+          <div class="card-icon">🔄</div>
+          <div><div class="card-title">Data Fetching</div><div class="card-tech" style="color:var(--c1)">TanStack Query · SWR</div></div>
+        </div>
+        <div class="card-desc">Caching, loading states, background refetch — all handled. Keep server state out of Redux entirely.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c2)"></div></div>
+      <span class="flow-arrow-label">HTTPS · REST or tRPC</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c2);animation-delay:1s"></div></div>
+    </div>
+  </div>
+
+  <!-- L2 -->
+  <div class="layer" style="--delay:0.25s">
+    <div class="layer-header">
+      <span class="layer-num">02</span>
+      <span class="layer-name" style="color:var(--c2)">Auth</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-2">
+      <div class="card" data-id="auth" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c2),transparent)"></div>
+        <div class="card-ping" style="background:var(--c2);color:var(--c2)"></div>
+        <div class="card-top">
+          <div class="card-icon">🔐</div>
+          <div><div class="card-title">Authentication</div><div class="card-tech" style="color:var(--c2)">Clerk · or · NextAuth</div></div>
+        </div>
+        <div class="card-desc">Full auth in an afternoon. Email, Google SSO, magic links, MFA. Clerk has the best solo-dev DX. NextAuth for zero vendor lock-in.</div>
+      </div>
+      <div class="card" data-id="rbac" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c2),transparent)"></div>
+        <div class="card-ping" style="background:var(--c2);color:var(--c2)"></div>
+        <div class="card-top">
+          <div class="card-icon">🛡️</div>
+          <div><div class="card-title">Permissions</div><div class="card-tech" style="color:var(--c2)">Middleware · JWT roles</div></div>
+        </div>
+        <div class="card-desc">Route-level guards in Next.js middleware. Start with admin vs viewer. Encode roles in JWT. Extend when teams grow.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c3)"></div></div>
+      <span class="flow-arrow-label">Verified requests</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c3);animation-delay:0.7s"></div></div>
+    </div>
+  </div>
+
+  <!-- L3 -->
+  <div class="layer" style="--delay:0.4s">
+    <div class="layer-header">
+      <span class="layer-num">03</span>
+      <span class="layer-name" style="color:var(--c3)">Backend · API</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-3">
+      <div class="card" data-id="api" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c3),transparent)"></div>
+        <div class="card-ping" style="background:var(--c3);color:var(--c3)"></div>
+        <div class="card-top">
+          <div class="card-icon">🚀</div>
+          <div><div class="card-title">API Routes</div><div class="card-tech" style="color:var(--c3)">Next.js Route Handlers</div></div>
+        </div>
+        <div class="card-desc">Collocated in one repo. Serverless on Vercel. Add tRPC for end-to-end type safety without writing fetch calls.</div>
+      </div>
+      <div class="card" data-id="orm" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c3),transparent)"></div>
+        <div class="card-ping" style="background:var(--c3);color:var(--c3)"></div>
+        <div class="card-top">
+          <div class="card-icon">🗂️</div>
+          <div><div class="card-title">ORM / Data Layer</div><div class="card-tech" style="color:var(--c3)">Prisma · Zod</div></div>
+        </div>
+        <div class="card-desc">Type-safe DB queries + auto migrations. Zod validates API inputs at the boundary. Eliminates entire categories of runtime bugs.</div>
+      </div>
+      <div class="card" data-id="jobs" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c3),transparent)"></div>
+        <div class="card-ping" style="background:var(--c3);color:var(--c3)"></div>
+        <div class="card-top">
+          <div class="card-icon">⏰</div>
+          <div><div class="card-title">Background Jobs</div><div class="card-tech" style="color:var(--c3)">Inngest · Vercel Cron</div></div>
+        </div>
+        <div class="card-desc">Durable retryable functions for syncs, reports, webhooks. Skip for v1 unless you have a hard requirement today.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c4)"></div></div>
+      <span class="flow-arrow-label">Embeddings · Inference calls</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c4);animation-delay:1.2s"></div></div>
+    </div>
+  </div>
+
+  <!-- L4 -->
+  <div class="layer" style="--delay:0.55s">
+    <div class="layer-header">
+      <span class="layer-num">04</span>
+      <span class="layer-name" style="color:var(--c4)">Machine Learning</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-3">
+      <div class="card" data-id="mlapi" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">🧠</div>
+          <div><div class="card-title">Model Inference API</div><div class="card-tech" style="color:var(--c4)">OpenAI API · Workers</div></div>
+        </div>
+        <div class="card-desc">Keep inference in backend routes, not the browser. Centralize prompt templates, retries, and guardrails for predictable model behavior.</div>
+      </div>
+      <div class="card" data-id="mlvector" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">🧲</div>
+          <div><div class="card-title">Vector Search</div><div class="card-tech" style="color:var(--c4)">pgvector · Pinecone</div></div>
+        </div>
+        <div class="card-desc">Store embeddings and retrieve relevant context before generation. Start with pgvector in Postgres, move to Pinecone when scale demands it.</div>
+      </div>
+      <div class="card" data-id="mleval" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">📐</div>
+          <div><div class="card-title">Quality & Eval</div><div class="card-tech" style="color:var(--c4)">Promptfoo · Langfuse</div></div>
+        </div>
+        <div class="card-desc">Track output quality, latency, and cost. Run test sets against prompt/model changes to prevent regressions before shipping.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c5)"></div></div>
+      <span class="flow-arrow-label">Features · Model outputs</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c5);animation-delay:1.2s"></div></div>
+    </div>
+  </div>
+
+  <!-- L4.5 -->
+  <div class="layer" style="--delay:0.625s">
+    <div class="layer-header">
+      <span class="layer-num">04.5</span>
+      <span class="layer-name" style="color:var(--c4)">LLM Orchestration</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-2">
+      <div class="card" data-id="llmframework" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">🔗</div>
+          <div><div class="card-title">LLM Frameworks</div><div class="card-tech" style="color:var(--c4)">LangChain · LlamaIndex</div></div>
+        </div>
+        <div class="card-desc">Abstract over API differences between OpenAI, Claude, Gemini. Chain multiple steps, manage conversation memory, and inspect token usage. Start simple, add frameworks when you need multi-step reasoning.</div>
+      </div>
+      <div class="card" data-id="prompting" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">💬</div>
+          <div><div class="card-title">Prompt Management</div><div class="card-tech" style="color:var(--c4)">Prompt Versioning · Templates</div></div>
+        </div>
+        <div class="card-desc">Store prompts in a database or version control. Separate system prompts from user input. Track which prompt version generated each output for debugging and analysis.</div>
+      </div>
+      <div class="card" data-id="agents" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">🤖</div>
+          <div><div class="card-title">AI Agents</div><div class="card-tech" style="color:var(--c4)">Tool calling · Function definitions</div></div>
+        </div>
+        <div class="card-desc">Let models call functions, execute tools, and reason over results. Use structured outputs for reliable parsing. Keep agent loops simple and add guardrails to prevent infinite loops.</div>
+      </div>
+      <div class="card" data-id="codingassist" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c4),transparent)"></div>
+        <div class="card-ping" style="background:var(--c4);color:var(--c4)"></div>
+        <div class="card-top">
+          <div class="card-icon">⌨️</div>
+          <div><div class="card-title">Coding Assistance</div><div class="card-tech" style="color:var(--c4)">Inline completion · Refactor · Explain</div></div>
+        </div>
+        <div class="card-desc">Real-time code completion, multi-line suggestions, and natural-language commands. Uses project context via embeddings and LSP for accurate, scope-aware suggestions. Supports explain, refactor, and test generation.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c5)"></div></div>
+      <span class="flow-arrow-label">Orchestrated results</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c5);animation-delay:1.2s"></div></div>
+    </div>
+  </div>
+
+  <!-- L5 -->
+  <div class="layer" style="--delay:0.7s">
+    <div class="layer-header">
+      <span class="layer-num">05</span>
+      <span class="layer-name" style="color:var(--c5)">Data</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-3">
+      <div class="card" data-id="db" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c5),transparent)"></div>
+        <div class="card-ping" style="background:var(--c5);color:var(--c5)"></div>
+        <div class="card-top">
+          <div class="card-icon">🗄️</div>
+          <div><div class="card-title">Primary Database</div><div class="card-tech" style="color:var(--c5)">Supabase · Neon</div></div>
+        </div>
+        <div class="card-desc">Managed Postgres with generous free tiers. Supabase adds realtime; Neon adds DB branching for staging environments.</div>
+      </div>
+      <div class="card" data-id="cache" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c5),transparent)"></div>
+        <div class="card-ping" style="background:var(--c5);color:var(--c5)"></div>
+        <div class="card-top">
+          <div class="card-icon">⚡</div>
+          <div><div class="card-title">Cache Layer</div><div class="card-tech" style="color:var(--c5)">Next.js cache · Upstash</div></div>
+        </div>
+        <div class="card-desc">Built-in Next.js fetch caching handles 90% of needs. Add Upstash Redis only when you hit actual latency issues.</div>
+      </div>
+      <div class="card" data-id="files" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c5),transparent)"></div>
+        <div class="card-ping" style="background:var(--c5);color:var(--c5)"></div>
+        <div class="card-top">
+          <div class="card-icon">📁</div>
+          <div><div class="card-title">File Storage</div><div class="card-tech" style="color:var(--c5)">Cloudflare R2 · S3</div></div>
+        </div>
+        <div class="card-desc">R2 has zero egress fees — massive cost win vs S3 for bootstrappers. S3-compatible, works with AWS SDK v3.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">
+    <div class="flow-arrow-inner">
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c6)"></div></div>
+      <span class="flow-arrow-label">Managed infra</span>
+      <span class="chevron">▼</span>
+      <div class="flow-line"><div class="flow-line-bg"></div><div class="flow-packet" style="background:var(--c6);animation-delay:0.5s"></div></div>
+    </div>
+  </div>
+
+  <!-- L6 -->
+  <div class="layer" style="--delay:0.85s">
+    <div class="layer-header">
+      <span class="layer-num">06</span>
+      <span class="layer-name" style="color:var(--c6)">Infra · DevOps</span>
+      <div class="layer-line"></div>
+    </div>
+    <div class="cards-row cols-3">
+      <div class="card" data-id="deploy" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c6),transparent)"></div>
+        <div class="card-ping" style="background:var(--c6);color:var(--c6)"></div>
+        <div class="card-top">
+          <div class="card-icon">🌐</div>
+          <div><div class="card-title">Hosting</div><div class="card-tech" style="color:var(--c6)">Vercel</div></div>
+        </div>
+        <div class="card-desc">Push to GitHub → auto-deploy. Preview URLs for every PR. Edge CDN, SSL, serverless functions — all zero config.</div>
+      </div>
+      <div class="card" data-id="cicd" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c6),transparent)"></div>
+        <div class="card-ping" style="background:var(--c6);color:var(--c6)"></div>
+        <div class="card-top">
+          <div class="card-icon">🔁</div>
+          <div><div class="card-title">CI / CD</div><div class="card-tech" style="color:var(--c6)">GitHub Actions</div></div>
+        </div>
+        <div class="card-desc">Lint + TypeScript check on every PR. Vercel handles deploys. No Docker, no Kubernetes for v1 — that's premature ops.</div>
+      </div>
+      <div class="card" data-id="monitoring" onclick="toggle(this)">
+        <div class="card-bar" style="background:linear-gradient(90deg,var(--c6),transparent)"></div>
+        <div class="card-ping" style="background:var(--c6);color:var(--c6)"></div>
+        <div class="card-top">
+          <div class="card-icon">📊</div>
+          <div><div class="card-title">Monitoring</div><div class="card-tech" style="color:var(--c6)">Sentry · Vercel Analytics</div></div>
+        </div>
+        <div class="card-desc">Sentry catches + groups errors with stack traces. Vercel Analytics for core web vitals. Add Axiom when logs get complex.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER -->
+  <div id="drawer">
+    <div class="drawer-inner" id="drawer-inner"></div>
+  </div>
+
+  <!-- DECISIONS -->
+  <div class="decisions">
+    <div class="section-eyebrow">Key Architectural Decisions</div>
+    <div class="dec-grid">
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> Why one repo for frontend + backend?</div>
+        <div class="dec-a">Zero coordination overhead as a solo dev. Next.js full-stack collocates everything. Split into separate services when you hire or hit real scaling limits.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> Why managed Postgres, not SQLite?</div>
+        <div class="dec-a">Supabase/Neon are free to start and production-ready. Migrating from SQLite to Postgres when you need it is painful and time-consuming.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> Why not microservices?</div>
+        <div class="dec-a">You're one person. A monolith ships faster, is easier to debug, and can be decomposed later once domain boundaries are fully understood.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> When to add a separate backend?</div>
+        <div class="dec-a">When API routes get too heavy, or you need to expose the API to mobile apps or third parties. Extract to standalone Fastify or Hono then.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> How to handle external data sources?</div>
+        <div class="dec-a">For internal tools, data often lives in Sheets or Airtable. Use their SDKs in API routes and cache aggressively with revalidation tags.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> What's the real MVP cut line?</div>
+        <div class="dec-a">Next.js + Clerk + Prisma + Supabase + Vercel. Working internal tool in a weekend. Everything else is optional until proven necessary.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> Which LLM model should I use?</div>
+        <div class="dec-a">Start with OpenAI GPT-4 (most capable, best cost) or Claude (better for long contexts). Evaluate Gemini or local models once you hit specific constraints. Lock in a model via config, not hardcoded, to swap later.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> Should I use LangChain or raw API?</div>
+        <div class="dec-a">Use raw OpenAI SDK for simple prompts. LangChain adds abstraction and memory management — add it when you need multi-step chains or conversation history, not before.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> How do I avoid runaway LLM costs?</div>
+        <div class="dec-a">Set strict token budgets per request. Use cheaper & faster models for validation. Cache expensive operations. Log every call with cost. Set up billing alerts in the API provider dashboard.</div>
+      </div>
+      <div class="dec-card">
+        <div class="dec-q"><span>💡</span> How should coding assistance get context?</div>
+        <div class="dec-a">Combine LSP (symbols, types, definitions) with RAG over project files and docs. LSP gives precise language semantics; embeddings retrieve relevant modules and patterns. Keep context windows bounded — prioritize open files and recently edited code. Use streaming for completions so users see suggestions as they type.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mvp-callout">
+    <div class="mvp-icon">🚀</div>
+    <div>
+      <div class="mvp-title">The Weekend MVP Stack</div>
+      <div class="mvp-body">Everything you need to go from zero to a working internal dashboard in 48 hours.</div>
+      <div class="mvp-stack">
+        <span class="mvp-pill">Next.js 14</span>
+        <span class="mvp-pill">Clerk Auth</span>
+        <span class="mvp-pill">Prisma ORM</span>
+        <span class="mvp-pill">Supabase Postgres</span>
+        <span class="mvp-pill">shadcn/ui</span>
+        <span class="mvp-pill">Vercel Deploy</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const D = {
+  nextjs:{title:"⚡ Next.js App",badge:"Frontend",color:"var(--c1)",body:"Next.js 14 App Router gives you server components, streaming, full-stack capability, and zero-config Vercel deployment. TypeScript from day one catches bugs before runtime. Nested layouts in the App Router are perfect for dashboards with sidebars and tabs.",pills:["Next.js 14","TypeScript","App Router","Server Components","Streaming SSR","File-based routing"]},
+  ui:{title:"🎨 UI Components",badge:"Frontend",color:"var(--c1)",body:"shadcn/ui gives you accessible Radix primitives that you copy into your own codebase — you own the code completely. Tailwind handles styling. For charts: Recharts is flexible, Tremor is higher-level and dashboard-optimised with pre-built widgets.",pills:["shadcn/ui","Tailwind CSS","Recharts","Tremor","Radix UI","Accessible by default"]},
+  state:{title:"🔄 Data Fetching",badge:"Frontend",color:"var(--c1)",body:"TanStack Query manages all server state: caching, background refresh, pagination, optimistic updates. SWR is a lighter alternative. Keep UI state in useState. Don't touch Redux or Zustand until you have a concrete reason with measurable pain.",pills:["TanStack Query","SWR (alt)","Optimistic updates","Infinite scroll","Auto caching","No Redux needed"]},
+  auth:{title:"🔐 Authentication",badge:"Auth",color:"var(--c2)",body:"Clerk is the fastest path: embeddable UI, email/password, Google & GitHub SSO, magic links, MFA, session management — all in a few lines. NextAuth v5 is the open-source alternative. Don't build auth yourself — it's a security liability.",pills:["Clerk (recommended)","NextAuth v5","Google SSO","Magic links","MFA","Session tokens"]},
+  rbac:{title:"🛡️ Permissions",badge:"Auth",color:"var(--c2)",body:"Start with two roles: admin and viewer. Encode the role as a custom JWT claim (Clerk supports this natively). Check it in Next.js middleware before any route renders. Don't build complex RBAC until you have multiple teams or permission hierarchies.",pills:["JWT roles","Next.js Middleware","Route protection","Admin / Viewer","Custom claims","Extend later with Casbin"]},
+  api:{title:"🚀 API Routes",badge:"Backend",color:"var(--c3)",body:"Route Handlers live in app/api/ alongside your frontend — no separate process. They run as serverless functions on Vercel. For full type-safety across the stack, tRPC is exceptional: no fetch calls, no schema drift, just TypeScript throughout.",pills:["Route Handlers","tRPC (optional)","REST or RPC","Edge runtime","Node runtime","Serverless"]},
+  orm:{title:"🗂️ ORM / Data Layer",badge:"Backend",color:"var(--c3)",body:"Prisma gives you a declarative schema, auto-generated type-safe client, and built-in migrations. Combine with Zod to validate all API inputs at the boundary. This stack eliminates entire categories of runtime type bugs before they ever reach production.",pills:["Prisma ORM","Zod validation","Auto migrations","Type-safe queries","Prisma Studio","Schema-first dev"]},
+  jobs:{title:"⏰ Background Jobs",badge:"Backend",color:"var(--c3)",body:"Inngest gives you durable, retryable background functions that survive cold starts. Use for: nightly data syncs, report generation, webhook processing, email sending. Vercel Cron is simpler for scheduled tasks. Skip both for v1 unless you have hard requirements.",pills:["Inngest","Vercel Cron","Durable execution","Auto retries","Scheduled tasks","Skip for v1"]},
+  mlapi:{title:"🧠 Model Inference API",badge:"Machine Learning",color:"var(--c4)",body:"Keep all model calls in secure backend routes. This lets you version prompts, apply retries and fallbacks, enforce token budgets, and protect API keys. For MVP, start with one provider and abstract only when you need multi-model routing.",pills:["OpenAI API","Backend-only calls","Prompt templates","Retries + fallbacks","Token budgets","API key safety"]},
+  mlvector:{title:"🧲 Vector Search",badge:"Machine Learning",color:"var(--c4)",body:"Use embeddings + similarity search to retrieve relevant context before generation. Start simple with pgvector on Postgres so you do not add another system early. Move to a dedicated vector DB only if query volume or latency requires it.",pills:["Embeddings","RAG pattern","pgvector first","Pinecone (later)","Top-k retrieval","Semantic search"]},
+  mleval:{title:"📐 Quality & Eval",badge:"Machine Learning",color:"var(--c4)",body:"Treat prompts like code with evaluation sets and release checks. Track latency, hallucination rate, and cost by prompt version. Langfuse provides tracing and observability; Promptfoo helps compare variants before deploying changes.",pills:["Promptfoo","Langfuse","Prompt versioning","Latency tracking","Cost tracking","Regression checks"]},
+  db:{title:"🗄️ Primary Database",badge:"Data",color:"var(--c5)",body:"PostgreSQL for internal tools — relational, robust, and future-proof. Supabase wraps Postgres with a REST API, realtime subscriptions, and a generous free tier. Neon offers serverless Postgres with database branching for dev/staging workflows.",pills:["PostgreSQL","Supabase","Neon (serverless)","Connection pooling","Realtime (Supabase)","DB branching (Neon)"]},
+  cache:{title:"⚡ Cache Layer",badge:"Data",color:"var(--c5)",body:"Next.js 14's fetch caching with revalidation tags handles 90% of dashboard caching needs. Tag cache entries, then call revalidateTag() on mutations. Add Upstash Redis (serverless, no idle costs) for rate limiting, session storage, or cross-request shared state.",pills:["Next.js fetch cache","revalidateTag()","Upstash Redis (later)","ISR pages","On-demand revalidation","Rate limiting"]},
+  files:{title:"📁 File Storage",badge:"Data",color:"var(--c5)",body:"Cloudflare R2 is S3-compatible with zero egress fees — massive cost difference vs S3 for read-heavy workloads. Use for CSV uploads, generated PDFs, exports, and avatars. Integrates via the AWS SDK v3 pointed at R2's endpoint.",pills:["Cloudflare R2","AWS S3 (alt)","Zero egress fees","Pre-signed URLs","AWS SDK v3 compatible","Multipart uploads"]},
+  deploy:{title:"🌐 Hosting",badge:"Infra",color:"var(--c6)",body:"Vercel is purpose-built for Next.js. Every GitHub push triggers a deployment. Every PR gets a unique preview URL for review. Global edge CDN, automatic SSL, serverless function scaling. Free Hobby tier comfortably handles internal tools with small teams.",pills:["Vercel","Auto preview URLs","Edge CDN","SSL included","Serverless scale","Free Hobby tier"]},
+  cicd:{title:"🔁 CI / CD",badge:"Infra",color:"var(--c6)",body:"Keep GitHub Actions minimal: ESLint, TypeScript type-check, and optional Playwright smoke tests on every PR. Vercel handles the actual deployment pipeline. Resist adding Docker or Kubernetes until you have a concrete operational problem to solve.",pills:["GitHub Actions","ESLint","TypeScript check","Playwright (optional)","Vercel deploy","No Docker for v1"]},
+  monitoring:{title:"📊 Monitoring",badge:"Infra",color:"var(--c6)",body:"Sentry captures frontend and backend errors, groups them intelligently, and gives you full stack traces with source maps. Vercel Analytics tracks Core Web Vitals. Add Axiom or Logtail for structured log querying once operations get more complex.",pills:["Sentry","Vercel Analytics","Core Web Vitals","Error grouping","Source maps","Axiom (logs, later)"]},
+  llmframework:{title:"🔗 LLM Frameworks",badge:"LLM Orchestration",color:"var(--c4)",body:"LangChain abstracts over OpenAI, Claude, Anthropic, Gemini — swap models without rewriting prompts. Handles chains (sequential steps), memory (conversation context), and tool integration. LlamaIndex specialized for RAG patterns. Start with raw OpenAI SDK if simple; add frameworks when orchestrating multi-step flows.",pills:["LangChain","LlamaIndex","Model abstraction","Memory management","Chain composition","Tool integration"]},
+  prompting:{title:"💬 Prompt Management",badge:"LLM Orchestration",color:"var(--c4)",body:"Store prompts in a database table or JSON file, not hardcoded in code. Version each prompt with a revision number. Log which prompt version + model + parameters generated each output for reproducibility and debugging. A/B test prompt variants with Promptfoo before shipping.",pills:["Prompt versioning","Database storage","Template syntax","A/B testing","Output logging","Reproducibility"]},
+  agents:{title:"🤖 AI Agents",badge:"LLM Orchestration",color:"var(--c4)",body:"Use function calling (available in OpenAI, Claude, Gemini) to let models decide when to call tools. Models return structured tool calls; you execute these tools and return results to the model. Prevent infinite loops with max iteration counts and explicit stop conditions.",pills:["Function calling","Tool definitions","Structured outputs","ReAct pattern","Iteration limits","Cost controls"]},
+  codingassist:{title:"⌨️ Coding Assistance",badge:"LLM Orchestration",color:"var(--c4)",body:"Coding assistance provides inline autocomplete, multi-line code generation, and natural-language-driven edits. It consumes project context via embeddings (relevant files, docs) and LSP (symbols, types) to produce accurate, scope-aware suggestions. Key capabilities: explain code in plain language, refactor with intent preservation, generate tests from implementations, and fix errors from stack traces. Stream responses for low-latency UX. Cache common completions and use smaller/faster models for simple suggestions to control cost.",pills:["Inline completion","Code generation","Explain & refactor","LSP integration","RAG for context","Streaming responses"]},
+};
+
+let active = null;
+
+function toggle(card) {
+  const id = card.dataset.id;
+  const d = D[id];
+  const drawer = document.getElementById('drawer');
+  const inner = document.getElementById('drawer-inner');
+
+  if (active === card) {
+    card.classList.remove('active');
+    drawer.classList.remove('open');
+    active = null;
+    return;
+  }
+
+  if (active) active.classList.remove('active');
+  card.classList.add('active');
+  active = card;
+
+  const pills = d.pills.map((p,i) =>
+    `<span class="pill" style="animation-delay:${i*0.04}s;${i<2?`border-color:color-mix(in srgb,${d.color} 40%,transparent);color:${d.color};background:color-mix(in srgb,${d.color} 8%,transparent)`:''}">${p}</span>`
+  ).join('');
+
+  inner.innerHTML = `
+    <div>
+      <div class="drawer-title">${d.title}
+        <span class="drawer-badge" style="background:color-mix(in srgb,${d.color} 12%,transparent);color:${d.color};border:1px solid color-mix(in srgb,${d.color} 25%,transparent)">${d.badge}</span>
+      </div>
+      <div class="drawer-body">${d.body}</div>
+    </div>
+    <div>
+      <div class="drawer-pills-title">Tech stack</div>
+      <div class="pills">${pills}</div>
+    </div>`;
+
+  drawer.style.borderColor = `color-mix(in srgb,${d.color} 30%, rgba(255,255,255,0.18))`;
+  drawer.classList.add('open');
+  setTimeout(() => drawer.scrollIntoView({behavior:'smooth',block:'nearest'}), 60);
+}
+
+// Staggered layer reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.animationDelay = e.target.style.getPropertyValue('--delay') || '0s';
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+    }
+  });
+}, {threshold:0.1});
+
+document.querySelectorAll('.layer').forEach(l => obs.observe(l));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && active) {
+    active.classList.remove('active');
+    document.getElementById('drawer').classList.remove('open');
+    active = null;
+  }
+});
+</script>
+
+<div class="footer">By Sameer Khan</div>
+</body>
+</html>
