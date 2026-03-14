@@ -1,4 +1,4 @@
-# sameerkhanAI
+# sameerkhanAI 
 
 Personal ML/DL mastery repo — built for deep understanding, interview prep, and long-term reference.
 Covers the full stack from classical ML to LLM systems and production MLOps.
@@ -48,7 +48,7 @@ Covers the full stack from classical ML to LLM systems and production MLOps.
 
 ---
 
-## Code (`zcode/`)
+## Code (`code/`)
 
 Each topic folder contains a `code/` directory with working implementations:
 
