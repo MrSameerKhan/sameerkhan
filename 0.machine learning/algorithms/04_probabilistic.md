@@ -1,0 +1,404 @@
+# 04 — Probabilistic Models (Naive Bayes, GMM, Bayesian Inference)
+
+## Quick Reference
+
+| Model | Core Assumption | Best For |
+|-------|----------------|---------|
+| Naive Bayes (Gaussian) | Features independent given class; continuous features normal | Fast baseline, continuous features |
+| Naive Bayes (Multinomial) | Features are counts/frequencies | Text classification (TF, count vectors) |
+| Naive Bayes (Bernoulli) | Features are binary | Binary word presence for text |
+| GMM (EM) | Data is mixture of Gaussians | Soft clustering, density estimation |
+| Bayesian Ridge | Gaussian prior on weights | Uncertainty quantification in regression |
+| Bayesian Optimization | Gaussian Process prior on objective | Hyperparameter tuning, expensive black-box |
+
+---
+
+## 1. Naive Bayes
+
+### Bayes' Theorem for Classification
+```
+P(y|x₁,...,xₙ) ∝ P(y) · P(x₁,...,xₙ|y)
+
+Naive assumption: features are conditionally independent given y
+  P(x₁,...,xₙ|y) = Π P(xᵢ|y)
+
+Therefore:
+  P(y|x) ∝ P(y) · Π P(xᵢ|y)
+
+Prediction: ŷ = argmax_y P(y) · Π P(xᵢ|y)
+```
+
+In practice: use log probabilities (avoid numerical underflow from multiplying small numbers)
+```
+ŷ = argmax_y [log P(y) + Σ log P(xᵢ|y)]
+```
+
+### Gaussian Naive Bayes
+Assumes each feature follows a Gaussian distribution within each class:
+```
+P(xᵢ|y=k) = N(xᵢ; μᵢₖ, σᵢₖ²)
+
+During training: estimate μᵢₖ = mean of feature i for class k
+                                σᵢₖ² = variance of feature i for class k
+```
+
+```python
+from sklearn.naive_bayes import GaussianNB
+
+gnb = GaussianNB(var_smoothing=1e-9)   # add small variance to avoid zero variance
+gnb.fit(X_train, y_train)
+
+# Access learned parameters
+print(gnb.theta_)    # [n_classes, n_features] — class-conditional means
+print(gnb.var_)      # [n_classes, n_features] — class-conditional variances
+print(gnb.class_prior_)  # P(y=k) for each class
+
+probs = gnb.predict_proba(X_test)   # [n_samples, n_classes]
+```
+
+### Multinomial Naive Bayes (Text Classification)
+```
+Assumes features are non-negative integer counts (word frequencies)
+P(xᵢ|y=k) = θᵢₖ  where θᵢₖ = count(word i in class k) / total words in class k
+
+Laplace smoothing (α): add α to all counts to avoid zero probability for unseen words
+  θᵢₖ = (count(word i in class k) + α) / (total words in class k + α · vocab_size)
+```
+
+```python
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.pipeline import Pipeline
+
+# Text classification pipeline
+text_clf = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=10000, ngram_range=(1, 2))),
+    ('clf', MultinomialNB(alpha=1.0))   # alpha = Laplace smoothing
+])
+
+text_clf.fit(X_train_text, y_train)
+```
+
+### Bernoulli Naive Bayes (Binary Features)
+```
+Assumes features are binary (word present/absent, not count)
+P(xᵢ=1|y=k) = pᵢₖ
+P(xᵢ=0|y=k) = 1 − pᵢₖ
+```
+
+```python
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.feature_extraction.text import CountVectorizer
+
+# Binary word presence (not count)
+binarize_vec = CountVectorizer(binary=True)
+X_binary = binarize_vec.fit_transform(texts)
+
+bnb = BernoulliNB(alpha=1.0)
+bnb.fit(X_train_binary, y_train)
+```
+
+### Complement Naive Bayes (Imbalanced Text)
+Better than MultinomialNB for imbalanced classes — trains on complement of each class:
+```python
+from sklearn.naive_bayes import ComplementNB
+cnb = ComplementNB(alpha=1.0)
+cnb.fit(X_train_tfidf, y_train)
+```
+
+### Naive Bayes — When It Fails and Why
+```
+The "naive" assumption (feature independence) is almost always wrong in practice.
+Despite this, NB often works well because:
+  - Correct posterior ordering even if calibration is off
+  - Very sample-efficient — estimates fewer parameters
+  - Robust to irrelevant features (they contribute equally to all classes)
+
+Fails when:
+  - Features are highly correlated (e.g., "New" and "York" in text — NB double-counts)
+  - Feature-class relationship is nonlinear
+  - Need well-calibrated probabilities (NB probabilities are often overconfident)
+```
+
+### When to Use Naive Bayes
+```
+✓ Text classification (spam, sentiment, topic) — fast, effective baseline
+✓ Very small datasets — needs fewer samples than discriminative models
+✓ Real-time inference — scoring is just sum of log-probabilities
+✓ Multi-label classification — each class independently
+✓ Missing values — simply skip missing features in product
+
+✗ High-accuracy requirement with sufficient data → use XGBoost or DL
+✗ Correlated features → calibration is poor
+✗ Non-text tabular data → usually worse than LightGBM
+```
+
+---
+
+## 2. Gaussian Mixture Models (GMM) + EM Algorithm
+
+### GMM Setup
+```
+Data assumed to come from K Gaussian distributions (components):
+  p(x) = Σₖ πₖ · N(x; μₖ, Σₖ)
+
+πₖ = mixing coefficient (weight of component k), Σπₖ=1
+μₖ = mean of component k
+Σₖ = covariance matrix of component k
+```
+
+### EM Algorithm (Expectation-Maximization)
+GMM has latent variables (which component each point came from) → can't directly maximize likelihood → use EM.
+
+```
+E-step (Expectation): Compute soft assignments (responsibilities)
+  rᵢₖ = P(z=k|xᵢ) = πₖ N(xᵢ; μₖ, Σₖ) / Σⱼ πⱼ N(xᵢ; μⱼ, Σⱼ)
+
+M-step (Maximization): Update parameters using weighted data
+  Nₖ = Σᵢ rᵢₖ                         (effective number of points in component k)
+  πₖ = Nₖ / n                           (update mixing coefficient)
+  μₖ = (1/Nₖ) Σᵢ rᵢₖ xᵢ               (weighted mean)
+  Σₖ = (1/Nₖ) Σᵢ rᵢₖ (xᵢ-μₖ)(xᵢ-μₖ)ᵀ (weighted covariance)
+
+Repeat E-step and M-step until log-likelihood converges (always increases)
+```
+
+**EM properties:**
+- Guaranteed to converge (likelihood never decreases)
+- Converges to local maximum (not necessarily global) — run multiple initializations
+- K-Means is a special case of EM with hard assignments (responsibilities ∈ {0,1}) and spherical equal covariances
+
+```python
+from sklearn.mixture import GaussianMixture
+import numpy as np
+
+# Model selection: find best K using BIC (lower = better)
+bics = []
+for k in range(1, 11):
+    gmm = GaussianMixture(n_components=k, covariance_type='full',
+                          n_init=5, random_state=42)
+    gmm.fit(X_scaled)
+    bics.append(gmm.bic(X_scaled))
+
+best_k = np.argmin(bics) + 1
+print(f"Best K (BIC): {best_k}")
+
+# Fit final model
+gmm = GaussianMixture(n_components=best_k, covariance_type='full',
+                      n_init=10, random_state=42)
+gmm.fit(X_scaled)
+
+# Soft assignments
+probs = gmm.predict_proba(X_scaled)   # [n_samples, K] — P(component k | xᵢ)
+labels = gmm.predict(X_scaled)         # hard assignment = argmax
+
+# Log-likelihood of new data (use for anomaly detection)
+log_likelihood = gmm.score_samples(X_test)
+# Low log-likelihood → anomalous point (doesn't fit any Gaussian well)
+```
+
+### Covariance Type Selection
+```python
+# 'full': each component has its own full covariance matrix (most flexible)
+# 'tied': all components share same covariance matrix (fewer parameters)
+# 'diag': each component has diagonal covariance (assumes feature independence)
+# 'spherical': each component has a single variance (like K-Means with soft assignments)
+
+# Rule: start with 'full'; if overfitting, try 'tied' or 'diag'
+```
+
+---
+
+## 3. Bayesian Linear Regression
+
+### Frequentist vs Bayesian Regression
+```
+Frequentist (OLS): find single best weights w* that minimize MSE
+  No uncertainty on w — point estimate
+
+Bayesian: treat weights as random variables with prior distribution
+  Prior: P(w) = N(0, α⁻¹I)  (Gaussian prior — equivalent to Ridge)
+  Likelihood: P(y|X,w) = N(Xw, β⁻¹I)
+  Posterior: P(w|X,y) ∝ P(y|X,w) · P(w)  ← still Gaussian for Gaussian prior+likelihood
+
+Prediction: P(y*|x*, X, y) = ∫ P(y*|x*,w) P(w|X,y) dw
+  → Gaussian predictive distribution with mean AND uncertainty estimate
+```
+
+**Why Bayesian regression?**
+- Returns uncertainty on predictions (confidence intervals, not just point estimates)
+- Naturally handles small datasets (prior regularizes)
+- MAP estimate with Gaussian prior = Ridge regression
+
+```python
+from sklearn.linear_model import BayesianRidge
+
+# Automatically infers regularization from data (no manual alpha tuning)
+br = BayesianRidge(compute_score=True)
+br.fit(X_train, y_train)
+
+# Get uncertainty estimates
+y_pred, y_std = br.predict(X_test, return_std=True)
+
+# 95% confidence interval
+ci_lower = y_pred - 1.96 * y_std
+ci_upper = y_pred + 1.96 * y_std
+```
+
+---
+
+## 4. Bayesian Optimization (for Hyperparameter Tuning)
+
+### Why Better Than Random/Grid Search?
+- Random search: blind to past results — might try the same bad region twice
+- Bayesian BO: fits a surrogate model (Gaussian Process) on past (params → metric) observations, uses acquisition function to choose next point intelligently
+
+```
+Surrogate model: GP models the objective function's distribution
+  After each trial: update posterior belief about objective
+
+Acquisition function: balance exploration vs exploitation
+  Expected Improvement (EI): choose next point with max expected improvement over best so far
+  Upper Confidence Bound (UCB): choose point where UCB of GP is highest
+```
+
+```python
+# Optuna (most practical for ML)
+import optuna
+
+def objective(trial):
+    params = {
+        'n_estimators': trial.suggest_int('n_estimators', 100, 2000),
+        'max_depth': trial.suggest_int('max_depth', 3, 15),
+        'learning_rate': trial.suggest_float('learning_rate', 0.001, 0.3, log=True),
+        'subsample': trial.suggest_float('subsample', 0.5, 1.0),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0),
+        'min_child_weight': trial.suggest_int('min_child_weight', 1, 20),
+    }
+
+    model = XGBClassifier(**params, random_state=42)
+    cv_score = cross_val_score(model, X_train, y_train, cv=5,
+                               scoring='roc_auc').mean()
+    return cv_score
+
+# Optuna uses Tree-structured Parzen Estimator (TPE), a form of Bayesian optimization
+study = optuna.create_study(direction='maximize',
+                             sampler=optuna.samplers.TPESampler())
+study.optimize(objective, n_trials=100, timeout=3600)
+
+print(f"Best AUC: {study.best_value:.4f}")
+print(f"Best params: {study.best_params}")
+
+# Visualization
+optuna.visualization.plot_optimization_history(study).show()
+optuna.visualization.plot_param_importances(study).show()
+```
+
+---
+
+## 5. Calibration and Probability Estimation
+
+### When Naive Bayes Needs Calibration
+NB probabilities are often overconfident (pushed toward 0 and 1). Calibrate:
+
+```python
+from sklearn.calibration import CalibratedClassifierCV
+
+# Naive Bayes with Platt scaling
+calibrated_nb = CalibratedClassifierCV(MultinomialNB(), method='sigmoid', cv=5)
+calibrated_nb.fit(X_train, y_train)
+
+# Check calibration
+from sklearn.calibration import calibration_curve
+prob_true, prob_pred = calibration_curve(y_test,
+                                          calibrated_nb.predict_proba(X_test)[:,1],
+                                          n_bins=10)
+```
+
+---
+
+## 6. When to Use What
+
+| Scenario | Model | Why |
+|----------|-------|-----|
+| Text spam/sentiment, fast baseline | Multinomial NB | Very fast, works well for text counts |
+| Very small dataset (< 1K samples) | Gaussian NB or Bayesian Ridge | Data-efficient; prior regularizes |
+| Soft cluster assignments | GMM | Know cluster membership probabilities |
+| Best K for GMM | BIC criterion | Penalizes model complexity |
+| Hyperparameter optimization (expensive model) | Bayesian Optimization (Optuna) | More efficient than random search |
+| Uncertainty quantification in regression | Bayesian Ridge | Returns prediction + std |
+| Real-time text classification | Bernoulli / Multinomial NB | Near-zero inference cost |
+| Anomaly detection with density | GMM log-likelihood | Flag points with low p(x) |
+
+---
+
+## 7. Gotchas
+
+**Naive Bayes zero-probability problem.**
+If a word appears in class A but not class B in training data → P(word|class B) = 0 → product of probabilities = 0 → model never predicts class B for any document containing that word. Fix: Laplace smoothing (alpha=1.0 in sklearn adds 1 to all word counts).
+
+**GMM sensitive to initialization.**
+EM converges to local maxima. Always use `n_init=10+` to run multiple initializations and keep the best log-likelihood.
+
+**GMM covariance singularity.**
+If a component gets very few points → covariance matrix is singular → EM breaks. Fix: `reg_covar` parameter (sklearn default `1e-6`) adds a small regularization to diagonal.
+
+**Bayesian Optimization needs sufficient trials to work.**
+With < 10-20 trials, the GP surrogate doesn't have enough signal. Use at least 50-100 trials. For fast models (linear), just use RandomizedSearchCV.
+
+**Optuna objective must be deterministic (same params → same result) for best performance.**
+If your cross-validation shuffles differently each time, set `random_state` in both the model and CV.
+
+**NB probability interpretation is unreliable.**
+While NB often gets predictions right, the probabilities are systematically miscalibrated. For decision thresholding or cost-sensitive decisions, always calibrate NB with Platt scaling.
+
+---
+
+## 8. Debugging Guide
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| Naive Bayes log-probabilities = -inf | Zero probability (unseen word/value) | Increase alpha (smoothing); check training coverage |
+| GMM convergence warning | Too many components or too few data | Reduce n_components; increase n_init |
+| GMM single cluster captures all data | Bad initialization; K too small | Increase K; use k-means initialization |
+| Bayesian Optimization not improving | Too few trials or wrong search space | Increase n_trials; check param bounds (not too wide) |
+| NB predictions all one class | Class prior dominates | Check class_prior; balance classes; use uniform prior |
+| BayesianRidge much worse than Ridge | Prior assumption wrong | Stick with regular Ridge; tune alpha manually |
+
+---
+
+## 9. Interview Q&A (Senior Level)
+
+**Q: Naive Bayes assumes feature independence — but it works well for text. Why?**
+A: The independence assumption is clearly violated in text ("New" and "York" co-occur). But NB doesn't need perfect probability estimates — it needs the correct argmax (correct class ranked highest). Even with wrong absolute probabilities, NB often gets the ranking right because: (1) the dominant signal in most classification tasks is the feature-class correlation, not the feature-feature correlations, (2) the violations tend to be symmetric across classes (if "New" and "York" are correlated, they're correlated for all classes), so the ranking is preserved. Empirically, NB is a strong baseline for text despite the violated assumption.
+
+**Q: What is the EM algorithm and when does it apply?**
+A: EM is used when the likelihood function has latent (unobserved) variables that make direct maximization intractable. E-step: compute the expected value of the log-likelihood under the current parameter estimates (soft assignments of latent variables). M-step: maximize this expected log-likelihood with respect to parameters (update parameters given soft assignments). Repeat until convergence. Applies to: GMM (latent: which Gaussian generated each point), hidden Markov models (latent: hidden state sequence), k-means (hard-EM variant). Guaranteed to converge (likelihood never decreases) but to a local maximum — multiple initializations required.
+
+**Q: When would you use Bayesian Optimization over Random Search for hyperparameter tuning?**
+A: Bayesian Optimization when: (1) each trial is expensive (training a large neural net takes hours), (2) you have a budget of < 100 trials, (3) the objective function is smooth (good params have nearby good params). Random search when: (1) trials are cheap (linear model, small dataset), (2) you can afford > 100 trials, (3) parallelism is more valuable than intelligence (random search parallelizes perfectly; BO is sequential). Practical rule: use Optuna (Bayesian) for any model that takes > 5 minutes to train. For quick models, 100 random trials often beats 50 Bayesian trials.
+
+---
+
+## 10. Connections
+
+| This file | Links to | Why |
+|-----------|----------|-----|
+| Bayes' Theorem foundation | `../fundamentals/01_statistics_foundations.md` | Full derivation and intuition |
+| GMM for clustering | `03_unsupervised.md` | GMM as soft clustering covered there |
+| NB for text | `../../3.nlp/` (future) | Text classification baseline |
+| Bayesian Optimization (Optuna) | `../fundamentals/04_model_evaluation.md` | Hyperparameter tuning strategies |
+| GMM log-likelihood for anomaly | `03_unsupervised.md` | Density-based anomaly detection |
+| Calibration | `../fundamentals/04_model_evaluation.md` | Calibration curve, Platt scaling |
+
+---
+
+## Key Takeaway
+
+**Naive Bayes**: your fastest text classification baseline. MultinomialNB for TF/count features, BernoulliNB for binary presence, GaussianNB for continuous. Always add smoothing (alpha>0).
+
+**GMM**: K-Means with soft assignments and elliptical clusters. Use BIC to choose K. Log-likelihood on new data = density-based anomaly score.
+
+**EM Algorithm**: the general framework behind GMM and many probabilistic models — alternate between assigning soft cluster memberships (E-step) and updating parameters (M-step).
+
+**Bayesian Optimization**: use Optuna when hyperparameter trials are expensive. 50 intelligent trials often beats 500 random trials.
