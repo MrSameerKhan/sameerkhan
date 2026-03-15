@@ -7,6 +7,22 @@
 
 ---
 
+## Repo Folder ↔ Checklist Phase Mapping
+
+| Folder | Checklist Phase |
+|--------|----------------|
+| `1.machine learning/` | Phase 1 |
+| `2.deep learning/` | Phase 2 |
+| `3.computerVision/` | Phase 3 |
+| `4.nlp/` | Phase 4 |
+| `5.transformers/` | Phase 5 |
+| `6.llms/` | Phase 6, 7, 8, 9 |
+| `7.multimodal/` | Phase 11 |
+| `8.mlops/` | Phase 10 |
+| `9.system_design/` | Phase 12 |
+
+---
+
 ## PHASE 1 — Machine Learning Fundamentals
 > You have hands-on experience here — focus on gaps and ability to explain concepts clearly in interviews
 
@@ -151,6 +167,7 @@
 - [ ] Flash Attention — memory bottleneck of standard attention, IO-aware solution `**`
 - [ ] KV Cache — how autoregressive inference is sped up `***`
 - [ ] Grouped Query Attention (GQA) — LLaMA-2 uses this, reduces KV cache size `**`
+- [ ] Speculative decoding — draft model + target model, why it's faster `**`
 - [ ] Mixture of Experts (MoE) — sparse activation, router, Mixtral architecture `**`
 - [ ] Quantization basics — FP32 → FP16 → INT8 → INT4 tradeoffs `***`
 
@@ -175,6 +192,15 @@
 - [ ] DPO — Direct Preference Optimization, simpler than PPO, increasingly standard `***`
 - [ ] ORPO — combined SFT + alignment in one step `*`
 - [ ] Constitutional AI — self-critique and revision approach `*`
+
+### LLM Evaluation
+- [ ] BLEU / ROUGE — n-gram overlap metrics, limitations for generative tasks `***`
+- [ ] BERTScore — semantic similarity using contextual embeddings `**`
+- [ ] LLM-as-Judge — pointwise vs pairwise scoring, position/verbosity bias `***`
+- [ ] MMLU / MT-Bench / HumanEval — standard benchmarks, what each measures `**`
+- [ ] pass@k — for code generation, probability of at least one correct in k samples `**`
+- [ ] Hallucination detection — NLI-based factual consistency checking `***`
+- [ ] RAGAS — faithfulness, answer relevancy, context precision, context recall `***`
 
 ---
 
@@ -254,6 +280,12 @@
 - [ ] Conditional routing between agents `**`
 - [ ] Persistence — checkpointing agent state `*`
 
+### MCP — Model Context Protocol
+- [ ] What MCP is — standardized protocol for LLM ↔ tool communication `**`
+- [ ] MCP server — expose tools/resources via FastMCP `**`
+- [ ] MCP client — connect Claude/any LLM to MCP server `**`
+- [ ] When to use MCP vs function calling — MCP for reusable tool servers `*`
+
 ---
 
 ## PHASE 10 — MLOps for LLMs
@@ -302,6 +334,43 @@
 
 ---
 
+## PHASE 12 — ML System Design
+> Critical for senior interviews — every Sr. ML Engineer round includes at least one system design question
+
+### The 8-Step Framework (use for every design question)
+- [ ] Step 1: Clarify requirements — scale, latency, accuracy, constraints `***`
+- [ ] Step 2: Define metrics — offline (AUC, F1) and online (CTR, revenue, latency) `***`
+- [ ] Step 3: High-level architecture — data pipeline → model → serving → monitoring `***`
+- [ ] Step 4: Data pipeline — collection, labeling, feature engineering, storage `***`
+- [ ] Step 5: Model selection — start simple, justify complexity `***`
+- [ ] Step 6: Training pipeline — distributed training, experiment tracking `**`
+- [ ] Step 7: Serving — latency budget, batching, caching, A/B testing `***`
+- [ ] Step 8: Monitoring — data drift, model drift, retraining triggers `***`
+
+### Must-Know Design Problems
+- [ ] **Recommendation System** — two-tower neural network, ALS, FAISS HNSW, reranking, cold start `***`
+- [ ] **Search / RAG System** — document indexer, hybrid retrieval (RRF), cross-encoder reranking, 10K QPS scale `***`
+- [ ] **Document Processing Pipeline** — classification + extraction + validation + human review queue `***`
+- [ ] **Fraud Detection System** — real-time vs batch, feature store, class imbalance, explainability `**`
+- [ ] **Ad Click-Through Rate (CTR) Prediction** — wide & deep, feature crosses, online learning `**`
+- [ ] **Semantic Search / Embedding Pipeline** — embedding model choice, indexing, staleness, scale `**`
+
+### Key Tradeoffs to Know Cold
+- [ ] Precision vs recall — when to optimize which (fraud = high recall, search = high precision) `***`
+- [ ] Latency vs accuracy — when to use simpler/faster model in serving path `***`
+- [ ] Online vs batch inference — event-driven vs scheduled, when each applies `***`
+- [ ] Buy vs build — when to use OpenAI API vs fine-tune vs train from scratch `***`
+- [ ] Cold start problem — new user, new item — strategies for each `**`
+- [ ] Feedback loops — how model predictions affect future training data `**`
+
+### Practical Skills
+- [ ] Draw architecture diagrams clearly — boxes, arrows, data flow `***`
+- [ ] Size your system — storage, QPS, model size, GPU count estimates `**`
+- [ ] Talk through tradeoffs out loud — interviewers care about reasoning, not just the answer `***`
+- [ ] Practice 2 designs per week out loud, timed at 45 minutes `***`
+
+---
+
 ## Capstone Projects (one per phase, goes on GitHub + resume)
 
 - [ ] **Phase 7** — RAG system: financial doc Q&A + RAGAS evaluation `***`
@@ -309,6 +378,7 @@
 - [ ] **Phase 9** — LangChain document agent: OCR + vector search + DB lookup `***`
 - [ ] **Phase 10** — vLLM serving endpoint + Evidently monitoring dashboard `**`
 - [ ] **Phase 11** — LayoutLM fine-tuned on financial document classification `**`
+- [ ] **Phase 12** — System design mock: design a document Q&A system end-to-end (timed 45 min) `***`
 
 ---
 
@@ -327,8 +397,9 @@
 | 9 | LLM Agents | 2 weeks | `***` |
 | 10 | MLOps for LLMs | 2 weeks | `**` |
 | 11 | Multimodal | 2 weeks | `**` |
+| 12 | ML System Design | 2–3 weeks | `***` |
 | — | Capstone Projects | ongoing | `***` |
-| **Total** | | **~18–20 weeks** | |
+| **Total** | | **~20–23 weeks** | |
 
 ---
 
@@ -338,15 +409,17 @@
 Backpropagation · Bias-variance tradeoff · Precision/Recall/F1/AUC · Vanishing gradients ·
 BatchNorm/LayerNorm · LSTM gates · BERT fine-tuning · Tokenization (BPE/WordPiece) ·
 Self-attention math · KV Cache · Quantization basics · RAG pipeline end-to-end ·
-QLoRA fine-tuning · ReAct agents · vLLM serving · LayoutLM
+QLoRA fine-tuning · ReAct agents · vLLM serving · LayoutLM ·
+LLM-as-Judge · RAGAS · ML System Design 8-step framework · Hallucination detection
 
 ### `**` Separate good candidates from great ones
 GBM/XGBoost internals · Custom PyTorch training loops · Transfer learning strategy ·
 Cross-encoder vs bi-encoder · Flash Attention · DPO · Hybrid search + reranking ·
-LoRA rank/alpha tuning · LangGraph · Evidently monitoring
+LoRA rank/alpha tuning · LangGraph · Evidently monitoring ·
+Speculative decoding · BERTScore · MCP server · System design tradeoffs (latency vs accuracy)
 
 ### `*` Nice to have — add after the above
-DETR · FastText · ORPO · ALiBi · Contextual compression · Kubernetes · Feature stores · Florence-2
+DETR · FastText · ORPO · ALiBi · Contextual compression · Kubernetes · Feature stores · Florence-2 · MCP client
 
 ---
 
@@ -358,7 +431,8 @@ DETR · FastText · ORPO · ALiBi · Contextual compression · Kubernetes · Fea
 | 5–6 | Transformer Internals + Alignment | ~3 weeks | Learn the how and why, not just usage |
 | 7–9 | RAG → Fine-tuning → Agents | ~6–8 weeks | Build all 3 as GitHub projects |
 | 10–11 | MLOps for LLMs + Multimodal | ~4 weeks | Extend existing MLOps strength |
-| **Total** | | **~18–20 weeks** | |
+| 12 | ML System Design | ~2–3 weeks | Practice out loud, timed — not just theory |
+| **Total** | | **~20–23 weeks** | |
 
 ### Notes
 - **Phases 1–4** — you have real production experience here. 1 week each max. Focus on being able to *explain* clearly, not re-learn.
