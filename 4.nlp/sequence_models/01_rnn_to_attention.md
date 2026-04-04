@@ -41,6 +41,334 @@ NLP tasks are fundamentally sequential:
 
 ---
 
+## 1.5 Dry Run — "I love cats" Through Every Architecture
+
+One sentence. Same embedding vectors from the embeddings file. Hidden size = 2 so numbers stay traceable.
+
+```
+Sentence:  "I    love  cats"
+            x₁    x₂    x₃
+
+x₁ = embed("I")    = [ 0.21,  0.45, -0.12]
+x₂ = embed("love") = [ 0.05,  0.92,  0.10]
+x₃ = embed("cats") = [ 0.89, -0.32,  0.76]
+
+hidden_size = 2     h₀ = [0.0, 0.0]   (all models start here)
+```
+
+---
+
+### RNN — hidden state overwrites itself each step
+
+```
+Formula:  hₜ = tanh(Wₓ·xₜ + Wₕ·hₜ₋₁)
+
+Weights (fixed for this example):
+  Wₓ (2×3) = [[0.5, 0.2,  0.3],    Wₕ (2×2) = [[0.4, 0.1],
+               [0.1, 0.8,  0.4]]                 [0.2, 0.3]]
+```
+
+```
+Step t=1 — "I"   (x₁ = [0.21, 0.45, -0.12])
+  Wₓ·x₁ = [0.5×0.21 + 0.2×0.45 + 0.3×(-0.12),  0.1×0.21 + 0.8×0.45 + 0.4×(-0.12)]
+         = [0.105 + 0.090 - 0.036,               0.021 + 0.360 - 0.048]
+         = [0.159,  0.333]
+  Wₕ·h₀ = [0, 0]   (zeros)
+  h₁ = tanh([0.159, 0.333]) = [0.16, 0.32]   ← "I" is encoded here
+
+Step t=2 — "love"   (x₂ = [0.05, 0.92, 0.10])
+  Wₓ·x₂ = [0.5×0.05 + 0.2×0.92 + 0.3×0.10,  0.1×0.05 + 0.8×0.92 + 0.4×0.10]
+         = [0.239,  0.781]
+  Wₕ·h₁ = [0.4×0.16 + 0.1×0.32,  0.2×0.16 + 0.3×0.32]
+         = [0.096,  0.128]
+  h₂ = tanh([0.239+0.096,  0.781+0.128]) = tanh([0.335, 0.909]) = [0.32, 0.72]
+                                                                      ↑
+                                                          "I" squeezed into 0.096
+
+Step t=3 — "cats"   (x₃ = [0.89, -0.32, 0.76])
+  Wₓ·x₃ = [0.609,  0.137]
+  Wₕ·h₂ = [0.4×0.32 + 0.1×0.72,  0.2×0.32 + 0.3×0.72]
+         = [0.200,  0.280]
+  h₃ = tanh([0.609+0.200,  0.137+0.280]) = tanh([0.809, 0.417]) = [0.67, 0.39]
+```
+
+```
+Signal from "I" (h₁) reaching h₃:
+  Each step multiplies by Wₕ × tanh'(·)
+  Effective factor per step ≈ 0.4 (spectral radius of Wₕ × activation derivative)
+  After 2 steps:  0.4 × 0.4 = 0.16  →  only ~16% of "I" signal survives in h₃
+
+h₁ = [0.16, 0.32]   ← "I" encoded clearly
+h₂ = [0.32, 0.72]   ← "I" is now a tiny part of a much louder "love" signal
+h₃ = [0.67, 0.39]   ← completely dominated by "cats" — "I" is almost gone
+```
+
+**Problem:** For long sentences ("The cat that sat on the mat ... was hungry"), h₁ ("cat") is
+essentially gone by the time we need it to predict "was". That's the vanishing gradient problem.
+
+---
+
+### LSTM — cell state is a protected memory lane
+
+LSTM has 4 gates per step. Input is always the concatenation `[hₜ₋₁, xₜ]`.
+
+```
+Step t=1 — "I":   [h₀, x₁] = [0.0, 0.0, 0.21, 0.45, -0.12]
+
+  (weight matrices applied → gate output values:)
+  f₁ = σ(Wf·[h₀,x₁]) = [0.60, 0.65]   ← forget: nothing to forget (C₀=0)
+  i₁ = σ(Wi·[h₀,x₁]) = [0.75, 0.50]   ← input: write "I" info at 75-50% strength
+  g̃₁ = tanh(Wg·[h₀,x₁]) = [0.30, 0.40] ← candidate: what "I" contributes
+  o₁ = σ(Wo·[h₀,x₁]) = [0.70, 0.60]   ← output: how much to expose
+
+  Cell state:  C₁ = f₁ ⊙ C₀  +  i₁ ⊙ g̃₁
+                  = [0.60,0.65] ⊙ [0,0]  +  [0.75,0.50] ⊙ [0.30,0.40]
+                  = [0,    0  ]           +  [0.225, 0.200]
+                  = [0.225, 0.200]   ← "I" info stored in cell state
+
+  Hidden state: h₁ = o₁ ⊙ tanh(C₁)
+                   = [0.70, 0.60] ⊙ [0.22, 0.20]
+                   = [0.16, 0.12]
+```
+
+```
+Step t=2 — "love":   [h₁, x₂] = [0.16, 0.12, 0.05, 0.92, 0.10]
+
+  f₂ = [0.90, 0.85]   ← forget gate: KEEP 90-85% of C₁ ("I" info)
+  i₂ = [0.70, 0.80]   ← input gate:  write "love" at 70-80% strength
+  g̃₂ = [0.10, 0.85]   ← candidate: "love" is mostly a verb signal (dim 1)
+  o₂ = [0.65, 0.75]
+
+  Cell state:  C₂ = f₂ ⊙ C₁          +  i₂ ⊙ g̃₂
+                  = [0.90,0.85] ⊙ [0.225,0.200]  +  [0.70,0.80] ⊙ [0.10,0.85]
+                  = [0.203, 0.170]                +  [0.070, 0.680]
+                  = [0.273, 0.850]
+                      ↑                               ↑
+                   "I" mostly preserved            "love" written in
+                   (90% of C₁ kept!)
+
+  Hidden state: h₂ = o₂ ⊙ tanh(C₂)
+                   = [0.65, 0.75] ⊙ [0.267, 0.691]
+                   = [0.17, 0.52]
+```
+
+```
+Step t=3 — "cats":   [h₂, x₃] = [0.17, 0.52, 0.89, -0.32, 0.76]
+
+  f₃ = [0.85, 0.80]     i₃ = [0.90, 0.65]     g̃₃ = [0.80, -0.30]
+
+  C₃ = [0.85,0.80] ⊙ [0.273,0.850]  +  [0.90,0.65] ⊙ [0.80,-0.30]
+     = [0.232, 0.680]                +  [0.720, -0.195]
+     = [0.952, 0.485]
+
+  h₃ = [0.80,0.70] ⊙ tanh([0.952, 0.485]) = [0.80,0.70] ⊙ [0.74, 0.45]
+     = [0.59, 0.32]
+```
+
+```
+"I" signal in cell state after each step:
+
+  After t=1:  C₁ = [0.225, 0.200]   ← written in full
+  After t=2:  C₂[0] = 0.90 × 0.225 = 0.203  →  90% of "I" still there
+  After t=3:  C₃[0] = 0.85 × 0.203 = 0.173  →  77% of "I" still there
+
+  "I" survival in cell state:  f₂ × f₃ = 0.90 × 0.85 = 0.765  →  76.5%
+
+  Compare RNN: same 2 steps → ~16% signal
+  Compare LSTM: same 2 steps → 76.5% signal  ✅
+
+The cell state is an additive path: C₃ = f₃ ⊙ (f₂ ⊙ C₁ + ...) + ...
+Gradient flows back through this addition, not through repeated Wₕ multiplication.
+```
+
+---
+
+### GRU — same idea, 2 gates instead of 4
+
+GRU merges forget + input into a single **update gate** `z`. No separate cell state.
+
+```
+Step t=2 — "love":   [h₁, x₂] = [0.16, 0.12, 0.05, 0.92, 0.10]
+
+  z₂ = σ(Wz·[h₁,x₂]) = [0.70, 0.60]   ← update gate (blend of old/new)
+  r₂ = σ(Wr·[h₁,x₂]) = [0.80, 0.90]   ← reset gate (how much past for candidate)
+
+  r₂ ⊙ h₁ = [0.80×0.16, 0.90×0.12] = [0.128, 0.108]   ← gated past
+
+  h̃₂ = tanh(W·[r₂⊙h₁, x₂]) = [0.10, 0.85]   ← same candidate as LSTM's g̃₂
+
+  h₂ = (1−z₂) ⊙ h₁  +  z₂ ⊙ h̃₂
+     = [0.30, 0.40] ⊙ [0.16, 0.12]  +  [0.70, 0.60] ⊙ [0.10, 0.85]
+     = [0.048, 0.048]                +  [0.070, 0.510]
+     = [0.118, 0.558] ≈ [0.12, 0.56]
+```
+
+```
+What (1−z₂) ⊙ h₁ means:
+  z₂ = 0.70 → (1−z₂) = 0.30 → keep 30% of old h₁ in each dimension
+  z₂ = 0.60 → (1−z₂) = 0.40 → keep 40% of old h₁
+
+  LSTM had a separate cell state keeping 90% via forget gate.
+  GRU keeps it in h directly via update gate — fewer parameters, similar effect.
+
+  LSTM h₂ = [0.17, 0.52]   (via cell state + output gate)
+  GRU  h₂ = [0.12, 0.56]   (same order of magnitude, no cell state needed)
+```
+
+---
+
+### BiLSTM — run the LSTM forwards AND backwards, then concatenate
+
+```
+Forward LSTM (left → right):
+  h→₁ = LSTM_fwd(x₁)        = [0.16, 0.12]   sees: "I"
+  h→₂ = LSTM_fwd(x₂, h→₁)  = [0.17, 0.52]   sees: "I love"
+  h→₃ = LSTM_fwd(x₃, h→₂)  = [0.59, 0.32]   sees: "I love cats"
+
+Backward LSTM (right → left, starts fresh):
+  h←₃ = LSTM_bwd(x₃)        = [0.51, 0.27]   sees: "cats"
+  h←₂ = LSTM_bwd(x₂, h←₃)  = [0.31, 0.62]   sees: "cats love"  (reversed)
+  h←₁ = LSTM_bwd(x₁, h←₂)  = [0.24, 0.41]   sees: "cats love I"  (reversed)
+
+Concatenate at EACH position:
+  pos 1 "I":    [h→₁  ;  h←₁] = [0.16, 0.12  |  0.24, 0.41]   shape: (4,)
+  pos 2 "love": [h→₂  ;  h←₂] = [0.17, 0.52  |  0.31, 0.62]   shape: (4,)
+                                  ↑ sees "I"      ↑ sees "cats"
+  pos 3 "cats": [h→₃  ;  h←₃] = [0.59, 0.32  |  0.51, 0.27]   shape: (4,)
+```
+
+```
+Why this matters for NER — labeling "love" as a VERB:
+
+  Unidirectional LSTM at pos 2:  only knows "I love" → uncertain if verb or noun
+  BiLSTM at pos 2: knows "I love cats" in full
+    Forward side: [0.17, 0.52] encodes "I came before"
+    Backward side: [0.31, 0.62] encodes "cats came after"
+    → "something between a subject and an object" → clearly a VERB
+```
+
+---
+
+### Attention — decoder dynamically queries ALL encoder states
+
+```
+Encoder (LSTM over "I love cats") produces one hidden state per word:
+  h₁ = [0.16, 0.12]   ("I")
+  h₂ = [0.17, 0.52]   ("love")
+  h₃ = [0.59, 0.32]   ("cats")
+
+Task: translate to French → "J'aime les chats"
+Decoder is about to generate "aime" (French for "love").
+Decoder state at this step: s = [0.10, 0.85]
+                                  ↑ low in dim 0 (not noun-like)
+                                  ↑ high in dim 1 (verb-seeking)
+```
+
+```
+Step 1: compute alignment score  eᵢ = s · hᵢ  (dot product = similarity)
+
+  e₁ = [0.10, 0.85] · [0.16, 0.12] = 0.016 + 0.102 = 0.118   "I"
+  e₂ = [0.10, 0.85] · [0.17, 0.52] = 0.017 + 0.442 = 0.459   "love"  ← highest
+  e₃ = [0.10, 0.85] · [0.59, 0.32] = 0.059 + 0.272 = 0.331   "cats"
+
+  Why "love" wins: h₂ = [0.17, 0.52] has high dim 1 (0.52),
+                   s = [0.10, 0.85] also has high dim 1 (0.85)
+                   → large dot product → "love" aligns with the decoder's query
+
+Step 2: softmax to get attention weights α
+
+  exp([0.118, 0.459, 0.331]) = [1.125, 1.583, 1.392]   sum = 4.100
+  α = [1.125/4.100, 1.583/4.100, 1.392/4.100]
+    = [0.27,        0.39,         0.34       ]
+          ↑             ↑              ↑
+         27%           39%            34%
+        "I"          "love"         "cats"
+
+Step 3: context vector  c = Σ αᵢ · hᵢ
+
+  c = 0.27×[0.16,0.12] + 0.39×[0.17,0.52] + 0.34×[0.59,0.32]
+    = [0.043, 0.032]  + [0.066, 0.203]  + [0.201, 0.109]
+    = [0.310, 0.344]
+
+  This is passed to the decoder → "aime" is generated using a context vector
+  that is 39% "love", 34% "cats", 27% "I".
+  The decoder doesn't have to memorize everything in one fixed vector.
+```
+
+```
+For each French output word, the attention pattern shifts:
+
+  Generating "J'"   (I):    α ≈ [0.80, 0.10, 0.10]   → attends to "I"
+  Generating "aime" (love): α ≈ [0.27, 0.39, 0.34]   → attends to "love"
+  Generating "chats"(cats): α ≈ [0.05, 0.15, 0.80]   → attends to "cats"
+
+  This is the attention heatmap — each row sums to 1.
+```
+
+---
+
+### Side-by-Side: What does each model know at position 2 ("love")?
+
+```
+Architecture   What the representation at "love" contains
+────────────────────────────────────────────────────────────────────────────────
+RNN            h₂ = [0.32, 0.72]
+               "I" survives at ~16% (squeezed through 1 multiplication step)
+               Mostly dominated by "love" signal
+
+LSTM           h₂ = [0.17, 0.52],  C₂ = [0.273, 0.850]
+               "I" in cell state at 90% strength (forget gate kept it)
+               "love" added on top via input gate
+
+GRU            h₂ = [0.12, 0.56]
+               "I" kept at ~30-40% (update gate interpolates old/new)
+               Same idea as LSTM with no separate cell state
+
+BiLSTM         h₂ = [0.17, 0.52 | 0.31, 0.62]  (4-dim)
+               Left half (forward): encodes "I" + "love"
+               Right half (backward): encodes "cats" + "love"
+               → Full sentence context at every position
+
+Attention      No fixed h₂ — decoder queries all positions dynamically
+               α = [0.27, 0.39, 0.34]
+               → Soft weighted access to ALL encoder states each step
+               → Information is never compressed into a single vector
+```
+
+```python
+import torch
+import torch.nn as nn
+
+# All 5 architectures, same input, 3 lines each
+x = torch.tensor([[                      # batch=1, seq_len=3
+    [ 0.21,  0.45, -0.12],  # "I"
+    [ 0.05,  0.92,  0.10],  # "love"
+    [ 0.89, -0.32,  0.76],  # "cats"
+]])  # shape: [1, 3, 3]
+
+rnn    = nn.RNN(input_size=3, hidden_size=2, batch_first=True)
+lstm   = nn.LSTM(input_size=3, hidden_size=2, batch_first=True)
+gru    = nn.GRU(input_size=3, hidden_size=2, batch_first=True)
+bilstm = nn.LSTM(input_size=3, hidden_size=2, batch_first=True, bidirectional=True)
+
+rnn_out,    rnn_h              = rnn(x)    # rnn_out: [1,3,2], rnn_h: [1,1,2]
+lstm_out,   (lstm_h, lstm_c)   = lstm(x)   # lstm_out: [1,3,2], lstm_h/c: [1,1,2]
+gru_out,    gru_h              = gru(x)    # gru_out: [1,3,2], gru_h: [1,1,2]
+bilstm_out, (bi_h, bi_c)       = bilstm(x) # bilstm_out: [1,3,4] ← 4 = 2*hidden
+
+print(rnn_out.shape)     # [1, 3, 2]   — one 2-dim vector per position
+print(lstm_out.shape)    # [1, 3, 2]
+print(bilstm_out.shape)  # [1, 3, 4]   — 4 dim because forward+backward concatenated
+
+# Position 2 ("love") representation from each:
+print("RNN    love:", rnn_out[0, 1])      # [0.32, 0.72] approx
+print("LSTM   love:", lstm_out[0, 1])     # [0.17, 0.52] approx
+print("GRU    love:", gru_out[0, 1])      # [0.12, 0.56] approx
+print("BiLSTM love:", bilstm_out[0, 1])   # [fwd₁, fwd₂, bwd₁, bwd₂] — 4 values
+```
+
+---
+
 ## 2. Vanilla RNN
 
 ### Architecture

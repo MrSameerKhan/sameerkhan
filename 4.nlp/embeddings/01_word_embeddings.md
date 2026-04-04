@@ -36,6 +36,117 @@ Dense embeddings capture:
 
 ---
 
+## 1.5 The Embedding Matrix — Concrete Example
+
+Two sentences, tiny 3-dimensional embeddings so you can see every number.
+
+```
+Sentences:
+  S1: "I love cats"
+  S2: "cats love fish"
+
+Vocabulary (sorted, 0-indexed):
+  0 → "I"
+  1 → "cats"
+  2 → "fish"
+  3 → "love"
+
+Embedding matrix W  [shape: 4 words × 3 dims]
+         dim_0   dim_1   dim_2
+  "I"   [ 0.21,  0.45, -0.12 ]   ← row 0
+  "cats"[ 0.89, -0.32,  0.76 ]   ← row 1
+  "fish"[ 0.83, -0.28,  0.71 ]   ← row 2
+  "love"[ 0.05,  0.92,  0.10 ]   ← row 3
+```
+
+**Lookup = just index the row.** No multiplication needed.
+
+```
+"cats" has index 1  →  W[1]  =  [0.89, -0.32, 0.76]
+"love" has index 3  →  W[3]  =  [0.05,  0.92, 0.10]
+"fish" has index 2  →  W[2]  =  [0.83, -0.28, 0.71]
+```
+
+**Sentence S2 "cats love fish" → sequence of 3 vectors:**
+
+```
+  Token:   cats            love            fish
+  Index:    1               3               2
+            ↓               ↓               ↓
+         [0.89,-0.32,0.76] [0.05,0.92,0.10] [0.83,-0.28,0.71]
+
+  Shape passed to model: [seq_len=3, embed_dim=3]
+```
+
+**Why "cats" ≈ "fish" (cosine ≈ 0.99 here)?**
+Both appear in the same context (after "love", near each other). During training,
+their rows get pulled toward the same direction. "love" lives in a different
+region (high dim_1, low dim_0) — it plays a syntactic role (verb), not a noun.
+
+```python
+import numpy as np
+
+# The embedding matrix — rows = words, cols = dimensions
+W = np.array([
+    [ 0.21,  0.45, -0.12],  # "I"
+    [ 0.89, -0.32,  0.76],  # "cats"
+    [ 0.83, -0.28,  0.71],  # "fish"
+    [ 0.05,  0.92,  0.10],  # "love"
+])
+
+vocab = {"I": 0, "cats": 1, "fish": 2, "love": 3}
+
+# Lookup: just index the matrix
+def embed(word):
+    return W[vocab[word]]
+
+# Sentence → matrix of embeddings
+def sentence_to_matrix(sentence):
+    tokens = sentence.lower().split()
+    return np.stack([embed(t) for t in tokens])
+
+s2 = sentence_to_matrix("cats love fish")
+print(s2.shape)   # (3, 3)  ← [seq_len, embed_dim]
+print(s2)
+# [[ 0.89 -0.32  0.76]
+#  [ 0.05  0.92  0.10]
+#  [ 0.83 -0.28  0.71]]
+
+# cats vs fish similarity
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+print(cosine(embed("cats"), embed("fish")))   # 0.999  ← very similar
+print(cosine(embed("cats"), embed("love")))   # -0.14  ← unrelated
+```
+
+**In PyTorch — exactly the same logic, GPU-accelerated:**
+
+```python
+import torch
+import torch.nn as nn
+
+# vocab_size=4, embed_dim=3
+embedding = nn.Embedding(num_embeddings=4, embedding_dim=3)
+
+# Preload our hand-crafted weights
+embedding.weight = nn.Parameter(torch.tensor(W, dtype=torch.float32))
+
+# S2: "cats love fish" → token indices [1, 3, 2]
+s2_indices = torch.tensor([1, 3, 2])
+output = embedding(s2_indices)
+print(output.shape)   # torch.Size([3, 3])
+# tensor([[ 0.8900, -0.3200,  0.7600],
+#         [ 0.0500,  0.9200,  0.1000],
+#         [ 0.8300, -0.2800,  0.7100]])
+```
+
+**Key insight:** The embedding matrix is just a lookup table. Index in → row out.
+Training (Word2Vec / GloVe / fine-tuning) is simply adjusting these rows so
+semantically similar words end up with similar row vectors.
+
+---
+
 ## 2. Word2Vec
 
 ### Core Idea
@@ -328,6 +439,229 @@ Quality: competitive with GloVe for English, significantly better for morphologi
 
 ❌ When vocabulary is fixed and known → GloVe/Word2Vec sufficient
 ❌ When character n-grams carry no signal (random OCR errors with no phonetic basis)
+```
+
+---
+
+## 4.5 Word2Vec vs GloVe vs FastText — Concrete Comparison
+
+Same 2 sentences throughout so you can see exactly what each model does differently.
+
+```
+Corpus:
+  S1: "I love cats"
+  S2: "cats love fish"
+
+Vocabulary: {"I":0, "love":1, "cats":2, "fish":3}
+```
+
+---
+
+### Step 1 — Word2Vec: sees training PAIRS from a sliding window
+
+Skip-gram, window=1: for each center word, emit (center → context) pairs.
+
+```
+S1: "I love cats"
+  center=I     → context: [love]        → pair (I, love)
+  center=love  → context: [I, cats]     → pairs (love, I), (love, cats)
+  center=cats  → context: [love]        → pair (cats, love)
+
+S2: "cats love fish"
+  center=cats  → context: [love]        → pair (cats, love)   ← same pair again!
+  center=love  → context: [cats, fish]  → pairs (love, cats), (love, fish)
+  center=fish  → context: [love]        → pair (fish, love)
+
+All training pairs:
+  (I, love)      ×1
+  (love, I)      ×1
+  (love, cats)   ×2   ← seen twice → strong pull
+  (cats, love)   ×2   ← seen twice → strong pull
+  (love, fish)   ×1
+  (fish, love)   ×1
+```
+
+Word2Vec only ever sees **local pairs**. It never knows that `cats` and `fish`
+directly co-occur — it only sees each of them next to `love`. They become similar
+*indirectly* (both pulled toward `love`).
+
+---
+
+### Step 2 — GloVe: sees a CO-OCCURRENCE MATRIX over the full corpus
+
+GloVe counts every (word_i, word_j) pair within the window across the *entire*
+corpus first, then trains on those counts.
+
+```
+Co-occurrence matrix X  (window=1, counted over both sentences):
+
+         I     love  cats  fish
+  I    [ 0,    1,    0,    0  ]
+  love [ 1,    0,    2,    1  ]   ← love appears next to cats TWICE
+  cats [ 0,    2,    0,    0  ]
+  fish [ 0,    1,    0,    0  ]
+```
+
+How each cell gets its value — window=1 means only **immediate neighbors** count:
+
+```
+S1: "I    love  cats"
+     pos0  pos1  pos2
+
+  "I"    neighbors: [love]        distance to cats = 2 → NOT counted
+  "love" neighbors: [I, cats]
+  "cats" neighbors: [love]
+
+S2: "cats  love  fish"
+     pos0   pos1  pos2
+
+  "cats" neighbors: [love]
+  "love" neighbors: [cats, fish]
+  "fish" neighbors: [love]
+
+Pair          S1   S2   Total   → cell
+──────────────────────────────────────
+(I,    love)   1    0     1     X[I][love]    = 1
+(love, cats)   1    1     2     X[love][cats] = 2
+(love, fish)   0    1     1     X[love][fish] = 1
+(I,    cats)   0    0     0     X[I][cats]    = 0  ← distance=2 in S1, never adjacent
+(cats, fish)   0    0     0     X[cats][fish] = 0  ← distance=2 in S2, never adjacent
+```
+
+```
+X[love][cats] = 2   (S1 contributes 1, S2 contributes 1)
+X[love][fish] = 1   (only S2)
+X[cats][fish] = 0   (never directly adjacent)
+```
+
+GloVe's objective:  `w_i · w_j  ≈  log( X[i][j] )`
+
+```
+w_love · w_cats ≈ log(2) = 0.69   ← stronger signal
+w_love · w_fish ≈ log(1) = 0.00   ← weaker signal
+w_cats · w_fish ≈ log(0) = -∞     ← no direct signal at all
+```
+
+**Key difference from Word2Vec:** GloVe uses the count matrix as a global
+summary. Word2Vec stochastically samples pairs online. Both produce similar
+final vectors for this example, but GloVe's training is one-pass over the matrix.
+
+---
+
+### Step 3 — FastText: breaks words into character n-grams
+
+Word2Vec and GloVe treat words as atomic units. FastText decomposes each word.
+
+```
+"cats"  (n=3, with boundary markers < >):
+  character n-grams: <ca, cat, ats, ts>  +  the whole-word token <cats>
+
+  Embedding("cats") = E(<ca>) + E(<cat>) + E(<ats>) + E(<ts>) + E(<cats>)
+                      ↑ sum of all n-gram vectors
+
+"fish"  character n-grams: <fi, fis, ish, sh>  +  <fish>
+"love"  character n-grams: <lo, lov, ove, ve>  +  <love>
+```
+
+**OOV word at inference — "catss" (typo):**
+
+```
+Word2Vec / GloVe:
+  "catss" → not in vocab → [UNK] → zero vector  ❌ no information
+
+FastText:
+  "catss" n-grams: <ca, cat, ats, tss, ss>  +  <catss>
+                    ↑        ↑    ↑
+              shared with "cats"!
+
+  Embedding("catss") = E(<ca>) + E(<cat>) + E(<ats>) + E(<tss>) + E(<ss>) + E(<catss>)
+                       ≈ very close to Embedding("cats")  ✅ meaningful vector
+```
+
+**OOV word "fishing" (unseen form):**
+
+```
+FastText n-grams: <fi, fis, ish, shi, hin, ing, ng>
+                   ↑    ↑    ↑
+              shares <fi, fis, ish> with "fish"
+
+Embedding("fishing") ≈ similar to Embedding("fish")  ✅
+```
+
+---
+
+### Side-by-Side Summary
+
+```python
+import numpy as np
+
+vocab     = {"I": 0, "love": 1, "cats": 2, "fish": 3}
+sentences = ["I love cats", "cats love fish"]
+
+# ── Word2Vec: what it learned from (training pairs only) ──────────────────────
+# Pairs seen:  (love,cats)×2, (cats,love)×2, (love,fish)×1, (fish,love)×1
+# Result: "cats" and "fish" end up similar because both co-occur with "love"
+w2v = {
+    "I":    np.array([ 0.10,  0.80, -0.20]),
+    "love": np.array([ 0.05,  0.92,  0.10]),
+    "cats": np.array([ 0.89, -0.32,  0.76]),
+    "fish": np.array([ 0.83, -0.28,  0.71]),   # ← similar to cats
+}
+
+# ── GloVe: learned from co-occurrence counts ─────────────────────────────────
+# X[love][cats]=2, X[love][fish]=1  →  love-cats bond is stronger
+glove = {
+    "I":    np.array([ 0.12,  0.78, -0.18]),
+    "love": np.array([ 0.04,  0.93,  0.09]),
+    "cats": np.array([ 0.90, -0.31,  0.77]),
+    "fish": np.array([ 0.70, -0.18,  0.60]),   # ← slightly further from cats
+}                                               #   because X[love][fish] < X[love][cats]
+
+# ── FastText: sum of n-gram vectors ──────────────────────────────────────────
+ft_ngrams = {                   # each n-gram has its own trained vector
+    "<ca":  np.array([ 0.40, -0.10,  0.35]),
+    "cat":  np.array([ 0.35, -0.12,  0.32]),
+    "ats":  np.array([ 0.30, -0.15,  0.30]),
+    "ts>":  np.array([ 0.20, -0.08,  0.18]),
+    "<cats>": np.array([ 0.04,  0.03,  0.01]),  # whole-word residual
+}
+cats_embedding = sum(ft_ngrams.values())        # [1.29, -0.42, 1.16]
+
+# OOV word "catss" — shares most n-grams with "cats"
+ft_catss = {
+    "<ca":  np.array([ 0.40, -0.10,  0.35]),   # shared ✅
+    "cat":  np.array([ 0.35, -0.12,  0.32]),   # shared ✅
+    "ats":  np.array([ 0.30, -0.15,  0.30]),   # shared ✅
+    "tss":  np.array([ 0.02,  0.01,  0.02]),   # new (small random)
+    "ss>":  np.array([ 0.01,  0.00,  0.01]),   # new (small random)
+}
+catss_embedding = sum(ft_catss.values())        # [1.08, -0.36, 1.00]  ≈ cats ✅
+
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+print(cosine(cats_embedding, catss_embedding))  # ~0.999 — typo handled!
+```
+
+---
+
+### What each model "knows" vs "doesn't know"
+
+```
+Scenario             Word2Vec        GloVe           FastText
+─────────────────────────────────────────────────────────────────
+cats ≈ fish?          ✅ yes          ✅ yes          ✅ yes
+  (both near "love")
+
+love-cats bond >       ❌ depends     ✅ yes           ✅ yes
+love-fish bond?           on sampling    (count=2 vs 1)
+
+"catss" (OOV typo)    ❌ zero vector  ❌ zero vector  ✅ ~cats
+
+"fishing" (OOV form)  ❌ zero vector  ❌ zero vector  ✅ ~fish
+
+Training requires      streaming      full corpus     streaming
+full corpus upfront?   pairs          count matrix    pairs + n-grams
 ```
 
 ---
