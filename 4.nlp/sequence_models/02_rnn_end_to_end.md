@@ -5,6 +5,108 @@ No matrices. Every number computed by hand so the chain is fully visible.
 
 ---
 
+## 0. Problem Statement
+
+**Task:** Binary sentence classification
+**Question:** Does this sentence mention an animal?
+
+```
+Input sentence:   "cat sat on mat"
+Expected output:   1   (yes, "cat" is an animal)
+```
+
+```
+Why this task exposes RNN's weakness:
+
+  The answer depends on the FIRST word — "cat".
+  The RNN reads words left to right and must remember "cat"
+  all the way to the end before making the final prediction.
+
+  If the model forgets "cat" by the time it finishes reading,
+  it will output something close to 0 (no animal) instead of 1.
+
+  That is exactly what we will watch happen.
+```
+
+---
+
+## 0.1 What Is the Input?
+
+```
+Raw text:  "cat sat on mat"
+
+The model cannot read strings. It needs numbers.
+We go through 3 steps before the RNN sees anything:
+
+  Step 1 — Tokenization        split into words
+  Step 2 — Vocabulary lookup   map each word to an integer index
+  Step 3 — Embedding           map each integer to a number (or vector)
+```
+
+### Step 1 — Tokenization
+
+```
+"cat sat on mat"
+       ↓  split on whitespace
+["cat", "sat", "on", "mat"]
+```
+
+### Step 2 — Vocabulary Lookup
+
+```
+Build a vocabulary from your training corpus:
+  vocab = { "cat": 1, "sat": 2, "on": 3, "mat": 4, "<UNK>": 0 }
+
+Map each token to its index:
+  ["cat", "sat", "on", "mat"]  →  [1, 2, 3, 4]
+
+The model never sees the word "cat" again — only the integer 1.
+```
+
+### Step 3 — Embedding
+
+```
+Map each integer index to a number (scalar here, vector in real models).
+
+Embedding table (learned during training):
+  index 1 ("cat") → 1.0    ← high value: content word, subject, animal
+  index 2 ("sat") → 0.2    ← lower: common verb, less informative
+  index 3 ("on")  → 0.1    ← low: function word (preposition)
+  index 4 ("mat") → 0.2    ← low: object noun, less discriminative
+
+Final input sequence to the RNN:
+  x₁=1.0  x₂=0.2  x₃=0.1  x₄=0.2
+  "cat"   "sat"    "on"    "mat"
+
+Note: in real models these are 100-300 dimensional vectors (GloVe, Word2Vec),
+      not scalars. We use scalars here so every number is traceable by hand.
+```
+
+---
+
+## 0.2 What Is the Expected Output?
+
+```
+After reading all 4 words, the RNN produces a final hidden state h₄.
+We use h₄ directly as the prediction (no output layer, for simplicity).
+
+ŷ = h₄        (a number between -1 and 1 because of tanh)
+
+Target:
+  y = 1.0   → sentence IS about an animal
+  y = 0.0   → sentence is NOT about an animal
+
+Loss tells us how wrong the prediction is:
+  L = ½(y - ŷ)²
+
+  If ŷ=0.360 and y=1.0:  L = ½(0.64)² = 0.205   ← model is wrong
+  If ŷ=0.950 and y=1.0:  L = ½(0.05)² = 0.001   ← model is right
+
+Training = adjust weights so L gets smaller over many sentences.
+```
+
+---
+
 ## Setup
 
 ```
