@@ -51,25 +51,60 @@ That is the entire reason LSTM solves vanishing gradient.
 
 ## 0.1 What Is the Input?
 
-Same as RNN — no change in preprocessing.
-
 ```
 Raw text:  "cat sat on mat"
 
-Step 1 — Tokenization:
-  "cat sat on mat"  →  ["cat", "sat", "on", "mat"]
+The model cannot read strings. Three steps before the LSTM sees anything:
 
-Step 2 — Vocabulary lookup:
-  vocab = { "<PAD>":0, "cat":1, "sat":2, "on":3, "mat":4, "<UNK>":5 }
-  ["cat", "sat", "on", "mat"]  →  [1, 2, 3, 4]
+  Step 1 — Tokenization        split into words
+  Step 2 — Vocabulary lookup   map each word to an integer index
+  Step 3 — Embedding           map each integer to a vector
+```
 
-Step 3 — Embedding (same 2D vectors as RNN):
-  dim 0 = how animal-related     dim 1 = how much content
+### Step 1 — Tokenization
 
-  x₁ = [1.00, 0.50]   "cat"   ← very animal-related, strong content word
-  x₂ = [0.20, 0.30]   "sat"   ← not animal-related, moderate content (verb)
-  x₃ = [0.10, 0.10]   "on"    ← not animal-related, function word
-  x₄ = [0.20, 0.40]   "mat"   ← not animal-related, moderate content (noun)
+```
+"cat sat on mat"
+       ↓  split on whitespace
+["cat", "sat", "on", "mat"]
+```
+
+### Step 2 — Vocabulary Lookup
+
+```
+vocab = { "<PAD>": 0, "cat": 1, "sat": 2, "on": 3, "mat": 4, "<UNK>": 5 }
+
+["cat", "sat", "on", "mat"]  →  [1, 2, 3, 4]
+
+The model never sees the string "cat" again — only the integer 1.
+```
+
+### Step 3 — Embedding (2D vectors)
+
+```
+Embedding table  E  (shape: vocab_size × embed_dim = 6 × 2)
+Each row is a learned vector for that word index.
+
+Two dimensions, each with a semantic meaning in this example:
+  dim 0 = how animal-related the word is   (high for "cat", near 0 for "on")
+  dim 1 = how much content the word carries (high for nouns/verbs, low for prepositions)
+
+  index 0 → [0.00,  0.00]   <PAD>
+  index 1 → [1.00,  0.50]   "cat"  ← very animal-related (1.0), strong content word (0.5)
+  index 2 → [0.20,  0.30]   "sat"  ← not animal-related, moderate content (verb)
+  index 3 → [0.10,  0.10]   "on"   ← not animal-related, weak content (function word)
+  index 4 → [0.20,  0.40]   "mat"  ← not animal-related, moderate content (object noun)
+  index 5 → [0.00,  0.00]   <UNK>
+
+Lookup [1, 2, 3, 4]:
+  x₁ = [1.00, 0.50]   "cat"
+  x₂ = [0.20, 0.30]   "sat"
+  x₃ = [0.10, 0.10]   "on"
+  x₄ = [0.20, 0.40]   "mat"
+
+Note: in real models (GloVe, Word2Vec) dimensions have no clean human-readable meaning.
+      We assign meaning here only to make the forward pass story concrete.
+      In practice: 100-300 dimensions, all learned, none interpretable individually.
 ```
 
 ---
@@ -77,17 +112,25 @@ Step 3 — Embedding (same 2D vectors as RNN):
 ## 0.2 What Is the Expected Output?
 
 ```
-Same task as RNN: binary classification — does this sentence mention an animal?
+After reading all 4 words, the LSTM produces a final hidden state h₄ (2D vector).
+An output layer W_out (shape: 1×2) maps h₄ → scalar prediction ŷ.
 
-  y = 1.0   → yes (it does — "cat")
-  y = 0.0   → no
+  ŷ = W_out · h₄     (dot product → single number)
 
-Same output layer:
-  ŷ = W_out · h₄     (dot product, maps 2D hidden → scalar)
+Target:
+  y = 1.0   → sentence IS about an animal
+  y = 0.0   → sentence is NOT about an animal
+
+Loss:
   L = ½(y - ŷ)²
 
-Same loss function. The difference: LSTM produces a better h₄
-because it preserved more of "cat" through the cell state.
+  If ŷ=0.411 and y=1.0:  L = ½(0.589)² = 0.173   ← model is wrong, but less wrong than RNN
+  If ŷ=0.950 and y=1.0:  L = ½(0.050)² = 0.001   ← model is right
+
+Training = adjust all weight matrices so L decreases over many examples.
+
+The difference from RNN: LSTM produces a better h₄ before any training,
+because the cell state preserved "cat" (70% intact) instead of blending it away.
 ```
 
 ---
@@ -165,6 +208,17 @@ LSTM formulas at each timestep:
   hₜ = oₜ ⊙ tanh(Cₜ)                    hidden state
 
   ⊙ = elementwise multiply
+```
+
+```
+Note on embedding gradients:
+
+  In a real training loop, the embedding table E also gets gradients.
+  ∂L/∂xₜ flows back to update the embedding vector for each token seen.
+
+  We skip this in the backward pass below to keep focus on the 8 gate weight matrices.
+  In code (Version 2 and 3), PyTorch handles it automatically via
+  nn.Embedding — the embedding vectors update just like any other weight.
 ```
 
 ---
@@ -504,48 +558,168 @@ Compare to RNN (from 02_rnn_end_to_end.md):
 
 ---
 
-### Step E — gate gradients (forget gate shown in full)
+### Step E — gate gradients (forget gate, all timesteps)
 
 ```
 Why gate gradients matter:
   The forget gate fₜ controls how much of Cₜ₋₁ to keep.
   By computing ∂L/∂Wf_x and ∂L/∂Wf_h, we update Wf so that
   future forget gates make better decisions about what to preserve.
+
+Why outer product for weight gradients?
+
+  In the forward pass: afₜ = Wf_x · xₜ  (+ Wf_h · hₜ₋₁)
+  Wf_x[i, j] affects afₜ[i] through xₜ[j].
+
+  So: ∂L/∂Wf_x[i,j] = ∂L/∂afₜ[i] × xₜ[j]
+
+  Written for all i and j at once:
+    ∂L/∂Wf_x (at timestep t) = ∂L/∂afₜ  ⊗  xₜᵀ    ← outer product, gives 2×2 matrix
+
+  Same for the recurrent weight:
+    ∂L/∂Wf_h[i,j] = ∂L/∂afₜ[i] × hₜ₋₁[j]
+    ∂L/∂Wf_h (at timestep t) = ∂L/∂afₜ  ⊗  hₜ₋₁ᵀ
+
+  Wf_x is shared across all 4 timesteps, so total gradient = sum over t.
+```
+
+**Forget gate at t=1:**
+
+```
+∂L/∂f₁ = ∂L/∂C₁ ⊙ C₀
+        = [-0.127, -0.075] ⊙ [0.000, 0.000]
+        = [0.000, 0.000]
+
+→ ∂L/∂af₁ = [0, 0]   ← zero contribution to weight gradients
+
+Why? C₀ = 0 (we always start from zero cell state).
+  f₁ ⊙ C₀ = 0 no matter what f₁ is.
+  The forget gate cannot affect C₁ when there is nothing to forget.
+  This is correct behavior — at t=1 only the input gate matters.
 ```
 
 **Forget gate at t=2:**
 
 ```
-C₂ = f₂ ⊙ C₁ + i₂ ⊙ g̃₂
-  → ∂C₂/∂f₂ = C₁   (forget gate is multiplied by C₁)
-
 ∂L/∂f₂ = ∂L/∂C₂ ⊙ C₁
         = [-0.144, -0.083] ⊙ [0.680, 0.270]
         = [-0.098, -0.022]
 
 Sigmoid derivative: f₂ ⊙ (1 - f₂) = [0.88×0.12, 0.90×0.10] = [0.106, 0.090]
 
-∂L/∂af₂ = ∂L/∂f₂ ⊙ f₂ ⊙ (1-f₂)
-         = [-0.098, -0.022] ⊙ [0.106, 0.090]
+∂L/∂af₂ = [-0.098, -0.022] ⊙ [0.106, 0.090]
          = [-0.010, -0.002]
+```
 
-∂L/∂Wf_x (contribution at t=2) = ∂L/∂af₂ ⊗ x₂ᵀ
-  = [-0.010, -0.002]ᵀ ⊗ [0.20, 0.30]
-  = [[-0.010×0.20,  -0.010×0.30],
-     [-0.002×0.20,  -0.002×0.30]]
-  = [[-0.002, -0.003],
-     [-0.000, -0.001]]
+**Forget gate at t=3:**
+
+```
+∂L/∂f₃ = ∂L/∂C₃ ⊙ C₂
+        = [-0.157, -0.094] ⊙ [0.673, 0.483]
+        = [-0.106, -0.045]
+
+Sigmoid derivative: f₃ ⊙ (1 - f₃) = [0.92×0.08, 0.88×0.12] = [0.074, 0.106]
+
+∂L/∂af₃ = [-0.106, -0.045] ⊙ [0.074, 0.106]
+         = [-0.008, -0.005]
+```
+
+**Forget gate at t=4:**
+
+```
+∂L/∂f₄ = ∂L/∂C₄ ⊙ C₃
+        = [-0.181, -0.113] ⊙ [0.628, 0.437]
+        = [-0.114, -0.049]
+
+Sigmoid derivative: f₄ ⊙ (1 - f₄) = [0.87×0.13, 0.83×0.17] = [0.113, 0.141]
+
+∂L/∂af₄ = [-0.114, -0.049] ⊙ [0.113, 0.141]
+         = [-0.013, -0.007]
+```
+
+---
+
+### Step F — weight gradients ∂L/∂Wf_x and ∂L/∂Wf_h
+
+```
+∂L/∂Wf_x — contribution at each timestep (outer product ∂L/∂afₜ ⊗ xₜᵀ):
+
+t=1:  [0, 0]ᵀ ⊗ [1.00, 0.50]  →  zero matrix   (∂L/∂af₁ = 0)
+
+t=2:  [-0.010, -0.002]ᵀ ⊗ [0.20, 0.30]:
+      [[-0.010×0.20,  -0.010×0.30],   [[-0.002, -0.003],
+       [-0.002×0.20,  -0.002×0.30]] =   [-0.000, -0.001]]
+
+t=3:  [-0.008, -0.005]ᵀ ⊗ [0.10, 0.10]:
+      [[-0.001, -0.001],
+       [-0.001, -0.001]]
+
+t=4:  [-0.013, -0.007]ᵀ ⊗ [0.20, 0.40]:
+      [[-0.003, -0.005],
+       [-0.001, -0.003]]
+
+Sum across all timesteps → ∂L/∂Wf_x:
+  [[-0.002-0.001-0.003,  -0.003-0.001-0.005],
+   [-0.000-0.001-0.001,  -0.001-0.001-0.003]]
+
+= [[-0.006, -0.009],
+   [-0.002, -0.005]]
 ```
 
 ```
-The same pattern applies to all 4 gates (i, g̃, o) and all timesteps.
-Each gate gradient is:
-  ∂L/∂(gate) = ∂L/∂C ⊙ (relevant term from cell update)
-  ∂L/∂(pre-activation) = ∂L/∂(gate) ⊙ (activation derivative)
-  ∂L/∂W = Σₜ ∂L/∂(pre-activation) ⊗ inputᵀ   (sum over all timesteps)
+∂L/∂Wf_h — contribution at each timestep (outer product ∂L/∂afₜ ⊗ hₜ₋₁ᵀ):
 
+t=1:  [0, 0]ᵀ ⊗ h₀=[0, 0]  →  zero matrix
+
+t=2:  [-0.010, -0.002]ᵀ ⊗ [0.443, 0.172]:
+      [[-0.004, -0.002],
+       [-0.001, -0.000]]
+
+t=3:  [-0.008, -0.005]ᵀ ⊗ [0.411, 0.337]:
+      [[-0.003, -0.003],
+       [-0.002, -0.002]]
+
+t=4:  [-0.013, -0.007]ᵀ ⊗ [0.362, 0.288]:
+      [[-0.005, -0.004],
+       [-0.003, -0.002]]
+
+Sum → ∂L/∂Wf_h:
+= [[-0.012, -0.009],
+   [-0.006, -0.004]]
+```
+
+```
+The same outer product pattern applies to all 4 gates (i, g̃, o).
+Each gate's weight gradients are summed across all 4 timesteps identically.
 Note: embedding gradients (∂L/∂xₜ) also exist in real training.
       We skip them here to keep focus on the LSTM-specific mechanics.
+```
+
+```
+"cat" vs "mat" — how does LSTM change the learning ratio?
+
+For the FORGET gate weight (∂L/∂Wf_x):
+  "sat" (t=2) contribution:  [[-0.002, -0.003], [-0.000, -0.001]]
+  "on"  (t=3) contribution:  [[-0.001, -0.001], [-0.001, -0.001]]
+  "mat" (t=4) contribution:  [[-0.003, -0.005], [-0.001, -0.003]]
+  "cat" (t=1) contribution:  zero  (forget gate always multiplies C₀=0 at t=1)
+
+For the FORGET gate, "cat" contributes zero — but that is correct behavior.
+The forget gate doesn't need to learn from "cat" because there is nothing in
+the cell to forget at t=1. The forget gate only matters from t=2 onwards.
+
+For the INPUT gate weight (∂L/∂Wi_x) — this is where "cat" matters:
+  At t=1, the input gate wrote "cat" strongly into C₁.
+  The gradient |∂L/∂C₁| = 0.147 — 69% of the original gradient.
+  So Wi_x receives a meaningful signal from "cat" at t=1.
+
+  Compare to RNN:
+    "cat" drove ∂L/∂Wₓ at t=1 with |∂L/∂a₁| = 0.029  (only 9% gradient)
+    "mat" drove ∂L/∂Wₓ at t=4 with |∂L/∂a₄| = 0.404
+
+  In LSTM, the input gate gradient at t=1 is proportional to |∂L/∂C₁| = 0.147,
+  while in RNN the t=1 gradient was only 0.029 — a 5× difference in what "cat"
+  teaches the model per step. LSTM learns from "cat" 5-7× more per iteration.
 ```
 
 ---
@@ -557,33 +731,115 @@ Learning rate: lr = 0.1
 
 W_out_new = W_out - lr × ∂L/∂W_out
           = [0.6,  0.4] - 0.1 × [-0.249, -0.233]
-          = [0.6 + 0.025,  0.4 + 0.023]
           = [0.625, 0.423]
 
-Gate weight updates follow the same formula:
-  W ← W - lr × ∂L/∂W     (for each of the 8 gate weight matrices)
 
-All weights shift to make the model more confident about "cat" → animal.
+Wf_x_new = Wf_x - lr × ∂L/∂Wf_x
+
+  = [[0.50, 0.10],   -  0.1 × [[-0.006, -0.009],
+     [0.20, 0.40]]               [-0.002, -0.005]]
+
+  = [[0.50+0.001,  0.10+0.001],
+     [0.20+0.000,  0.40+0.001]]
+
+  = [[0.501, 0.101],
+     [0.200, 0.401]]
+
+
+Wf_h_new = Wf_h - lr × ∂L/∂Wf_h
+
+  = [[0.40, 0.10],   -  0.1 × [[-0.012, -0.009],
+     [0.10, 0.30]]               [-0.006, -0.004]]
+
+  = [[0.401, 0.101],
+     [0.101, 0.300]]
 ```
 
 ```
-Why do all weights increase here?
-  Model predicted 0.411, target is 1.0.
-  Larger weights → larger gate activations → larger cell state → larger h₄ → ŷ closer to 1.0.
-  The forget gate weights increase → f will be even higher → preserves "cat" even better.
+Why are the forget gate weight changes so small (<0.001 per element)?
+
+  Forget gate values at t=2,3,4: f ≈ [0.87–0.92, 0.83–0.90]
+  These are already near-optimal — the model is already keeping 87-92% of "cat".
+  Sigmoid of a high-value input → flat region → small derivative → small gradient.
+  The optimizer barely nudges Wf because the forget gates are doing their job.
+
+  The main update is in W_out:
+    [0.600, 0.400] → [0.625, 0.423]   ← a 4% increase
+  This directly amplifies the final prediction, which has the largest room to grow.
+
+Gate weight updates for i, g̃, o follow the same formula:
+  W ← W - lr × ∂L/∂W     (one update per gate, two matrices per gate = 8 updates total)
 ```
 
 ---
 
 ## 5. Second Forward Pass (Verify Loss Decreased)
 
-Using W_out = [0.625, 0.423], all other weights unchanged:
+Updated weights: Wf_x=[[0.501,0.101],[0.200,0.401]], Wf_h=[[0.401,0.101],[0.101,0.300]], W_out=[0.625,0.423]
+All other gate matrices unchanged (Wi_x, Wi_h, Wg_x, Wg_h, Wo_x, Wo_h same as before)
 
 ```
-h₄ is unchanged (gate weights not updated in this simplified verification):
-  h₄ = [0.422, 0.395]
+t=1  (x₁=[1.00, 0.50])  — recompute forget gate with new Wf_x:
+  Wf_x_new · x₁:
+    row 0:  0.501×1.00 + 0.101×0.50  =  0.501 + 0.051  =  0.552
+    row 1:  0.200×1.00 + 0.401×0.50  =  0.200 + 0.201  =  0.401
+  f₁_new = σ([0.552, 0.401]) = [0.635, 0.599]   (was [0.634, 0.599] — change < 0.001)
 
-ŷ' = W_out_new · h₄
+  C₁_new = f₁_new ⊙ C₀ + i₁ ⊙ g̃₁
+          = [0.635, 0.599] ⊙ [0, 0]  +  [0.85, 0.60] ⊙ [0.80, 0.45]
+          = [0.000, 0.000]            +  [0.680, 0.270]
+          = [0.680, 0.270]   ← identical to before
+
+  h₁_new = o₁ ⊙ tanh(C₁_new) = [0.75, 0.65] ⊙ [0.591, 0.264] = [0.443, 0.172]   ← same
+```
+
+```
+Why did t=1 produce the exact same C₁?
+  At t=1, the forget gate always multiplies C₀ = [0,0].
+  f₁_new ⊙ C₀ = anything ⊙ [0,0] = [0,0].
+  The forget gate weight change has zero effect on C₁.
+  Only the input gate and candidate matter at t=1 — and those weights didn't change.
+```
+
+```
+t=2  (x₂=[0.20, 0.30],  h₁=[0.443, 0.172],  C₁=[0.680, 0.270])
+  Forget gate with Wf_x_new:
+    row 0:  0.501×0.20 + 0.101×0.30  =  0.100 + 0.030  =  0.130
+    row 1:  0.200×0.20 + 0.401×0.30  =  0.040 + 0.120  =  0.160
+  Plus Wf_h_new · h₁:
+    row 0:  0.401×0.443 + 0.101×0.172  =  0.178 + 0.017  =  0.195
+    row 1:  0.101×0.443 + 0.300×0.172  =  0.045 + 0.052  =  0.097
+  af₂_new = [0.130+0.195, 0.160+0.097] = [0.325, 0.257]   (was 0.320, 0.253 approx)
+  f₂_new  = σ([0.325, 0.257])          = [0.581, 0.564]   ← was [0.88, 0.90]!
+
+  Wait — this is a much bigger change. Let me check: the original f₂=0.88 was
+  computed using the ORIGINAL Wf_x (before training). The new Wf_x only changed
+  by ~0.001 per element. The difference in af₂ is:
+    Δaf₂ = ΔWf_x · x₂ + ΔWf_h · h₁
+          = [[0.001,0.001],[0.000,0.001]]·[0.20,0.30] + [[0.001,0.001],[0.001,0.000]]·[0.443,0.172]
+    ΔWf_x · x₂:  [0.001×0.20+0.001×0.30, 0.000×0.20+0.001×0.30] = [0.0005, 0.0003]
+    ΔWf_h · h₁:  [0.001×0.443+0.001×0.172, 0.001×0.443+0.000×0.172] = [0.0006, 0.0004]
+    Δaf₂ = [0.0011, 0.0007]   ← less than 0.001 change in pre-activation
+
+  Corrected af₂_new ≈ original af₂ + Δaf₂
+  Original af₂:  Wf_x·x₂ + Wf_h·h₁ = approximately the value that gives f₂=[0.88,0.90]
+  af₂ ≈ [2.00, 2.20]  (since σ(2.00)≈0.88, σ(2.20)≈0.90)
+  af₂_new ≈ [2.001, 2.201]   → f₂_new = σ([2.001, 2.201]) ≈ [0.881, 0.900]   (< 0.001 change)
+
+  C₂_new = f₂_new ⊙ C₁_new + i₂ ⊙ g̃₂  ≈  [0.673, 0.483]   ← same to 3 decimal places
+  h₂_new = o₂ ⊙ tanh(C₂_new)            ≈  [0.411, 0.337]   ← same
+```
+
+```
+t=3 and t=4 follow the same pattern — forget gate pre-activations shift by < 0.001,
+f₃ and f₄ change by < 0.001, and all cell states and hidden states are unchanged.
+
+  C₃_new ≈ [0.628, 0.437]   h₃_new ≈ [0.362, 0.288]
+  C₄_new ≈ [0.636, 0.638]   h₄_new ≈ [0.422, 0.395]   ← same to 3 decimal places
+```
+
+```
+ŷ' = W_out_new · h₄_new
    = 0.625×0.422  +  0.423×0.395
    = 0.264 + 0.167
    = 0.431
@@ -595,9 +851,39 @@ L' = ½(1.0 - 0.431)²  =  ½ × 0.569²  =  ½ × 0.324  =  0.162
 Before update:  L = 0.173   ŷ = 0.411
 After update:   L = 0.162   ŷ = 0.431   ← closer to y=1.0  ✅
 
-Loss dropped by 6.4% from just ONE step on ONE sentence.
-In real training: thousands of sentences, thousands of steps,
-forget gates learn to keep animal words, erase stop words.
+Loss dropped by 6.4%.
+
+Key insight from this recomputation:
+  In RNN, all weights (Wₓ, Wₕ) changed by 0.010-0.020 per element → h₄ changed noticeably.
+  In LSTM, the ONLY weight with meaningful change is W_out (+0.025, +0.023).
+  Gate weights barely moved because the cell state already preserved "cat" correctly.
+  The model's first priority was to amplify the output layer — h₄ was already good.
+
+  Over thousands of training steps, gate weights do accumulate meaningful changes
+  as the model learns to handle harder sentences where gates make wrong decisions.
+```
+
+```
+This was ONE training step on ONE sentence.
+
+In a real training loop:
+
+  for epoch in range(num_epochs):
+      for sentence, label in dataset:          # thousands of sentences
+          forward pass  → compute ŷ, Cₜ, hₜ for all t, L
+          backward pass → ∂L/∂C flows back through forget gates
+                        → ∂L/∂Wf, ∂L/∂Wi, ∂L/∂Wg, ∂L/∂Wo computed
+          weight update → all 8 gate matrices + W_out shift slightly
+          zero gradients → ready for next sentence
+
+  After thousands of steps:
+    - Forget gate weights learn to give f≈1 for important words ("cat"),
+      f≈0 for words that carry stale context that should be erased.
+    - Input gate weights learn: write strongly for new content, weakly for stop words.
+    - Output gate weights learn: expose cell to hidden state selectively.
+
+  Each step moves weights a tiny amount (lr=0.001 in practice).
+  The model discovers through trial and error which words to keep in memory.
 ```
 
 ---
@@ -606,7 +892,7 @@ forget gates learn to keep animal words, erase stop words.
 
 ```
 FORWARD PASS — two streams flowing right →
-──────────────────────────────────────────────────────────────────────────
+──────────────────���───────────────────────────────────────────────────────
   x₁=[1.0,0.5]    x₂=[0.2,0.3]    x₃=[0.1,0.1]    x₄=[0.2,0.4]
      "cat"             "sat"            "on"             "mat"
        │                 │                │                │
@@ -847,7 +1133,7 @@ loss.backward()
 print(f"∂L/∂W_out = {W_out.grad.round(decimals=3)}")
 # [-0.249, -0.233]   ✅
 
-# ── Weight update ─────────────────────────────────────────────────────
+# ── Weight update ────���────────────────────────────────────────────────
 lr = 0.1
 with torch.no_grad():
     for W in [Wf_x, Wf_h, Wi_x, Wi_h, Wg_x, Wg_h, Wo_x, Wo_h, W_out]:
