@@ -113,7 +113,35 @@ Training = adjust all weight matrices so L decreases over many examples.
 ```
 embed_dim  = 2   (each word → 2D vector)
 hidden_dim = 2   (hidden state is 2D)
+```
 
+```
+What is hidden_dim?
+
+  hidden_dim is the size of the RNN's memory vector at each timestep.
+
+  embed_dim  controls the INPUT  — how big each word vector is
+  hidden_dim controls the MEMORY — how much the RNN can remember
+
+  These are independent and are usually different in real models:
+    embed_dim  = 300   (word vector from GloVe/Word2Vec)
+    hidden_dim = 128   (RNN memory size — your choice)
+
+  Think of it like RAM:
+    embed_dim  = bytes needed to describe one word
+    hidden_dim = bytes of working memory the RNN has while reading
+
+  With hidden_dim=2, the RNN has 2 "slots" to store information.
+  With hidden_dim=256, it has 256 slots — more capacity, more parameters.
+
+  The size of hidden_dim directly controls the shape of Wₕ:
+    hidden_dim=2   →  Wₕ is (2×2),   hₜ is a 2D vector
+    hidden_dim=128 →  Wₕ is (128×128), hₜ is a 128D vector
+
+  In our example both are 2 to keep every multiply traceable by hand.
+```
+
+```
 Weight matrices (shared across ALL timesteps — the key RNN property):
 
   Wₓ  (2×2)  maps embedding → hidden contribution
@@ -673,6 +701,244 @@ Weight gradients (sum all timesteps — weights are shared!):
 
 Update:
   W ← W - lr × ∂L/∂W       (for each weight matrix)
+```
+
+---
+
+## 8. Code
+
+Three versions — same computation, increasing abstraction.
+
+---
+
+### Version 1 — Pure NumPy (mirrors the hand computation exactly)
+
+```python
+import numpy as np
+
+# ── Embeddings ────────────────────────────────────────────────────────
+E = np.array([
+    [0.00, 0.00],   # 0: <PAD>
+    [1.00, 0.50],   # 1: "cat"
+    [0.20, 0.30],   # 2: "sat"
+    [0.10, 0.10],   # 3: "on"
+    [0.20, 0.40],   # 4: "mat"
+])
+
+# ── Weights ───────────────────────────────────────────────────────────
+Wx = np.array([[0.5, 0.2],   # (hidden_dim × embed_dim)
+               [0.1, 0.8]])
+
+Wh = np.array([[0.4, 0.1],   # (hidden_dim × hidden_dim)
+               [0.2, 0.3]])
+
+Wo = np.array([0.6, 0.4])    # (1 × hidden_dim) — output layer
+
+# ── Input: token indices for "cat sat on mat" ─────────────────────────
+tokens = [1, 2, 3, 4]
+x = E[tokens]               # shape: (4, 2)
+y = 1.0                     # target: yes, animal sentence
+
+# ── Forward pass ──────────────────────────────────────────────────────
+h = np.zeros(2)             # h₀ = [0, 0]
+hidden_states = [h.copy()]
+
+for t, xt in enumerate(x):
+    a = Wx @ xt + Wh @ h    # (2,) = (2×2)@(2,) + (2×2)@(2,)
+    h = np.tanh(a)
+    hidden_states.append(h.copy())
+    print(f"t={t+1}  a={a.round(3)}  h={h.round(3)}")
+
+# t=1  a=[0.6   0.5  ]  h=[0.537 0.462]
+# t=2  a=[0.421 0.506]  h=[0.398 0.467]
+# t=3  a=[0.276 0.31 ]  h=[0.270 0.300]
+# t=4  a=[0.318 0.484]  h=[0.308 0.450]
+
+h4 = h
+y_hat = Wo @ h4
+loss = 0.5 * (y - y_hat) ** 2
+print(f"\nŷ = {y_hat:.3f}   L = {loss:.3f}")
+# ŷ = 0.365   L = 0.201
+
+# ── Backward pass (BPTT) ──────────────────────────────────────────────
+dL_dyhat = -(y - y_hat)                          # scalar: -0.635
+
+dL_dWo   = dL_dyhat * h4                         # (2,): [-0.196, -0.286]
+dL_dh4   = dL_dyhat * Wo                         # (2,): [-0.381, -0.254]
+
+dL_dWx = np.zeros_like(Wx)
+dL_dWh = np.zeros_like(Wh)
+delta  = dL_dh4                                  # start backprop from h₄
+
+for t in range(len(x) - 1, -1, -1):             # t = 3, 2, 1, 0
+    h_curr = hidden_states[t + 1]               # hₜ
+    h_prev = hidden_states[t]                   # hₜ₋₁
+    xt     = x[t]
+
+    dL_da  = delta * (1 - h_curr ** 2)          # elementwise tanh deriv
+    dL_dWx += np.outer(dL_da, xt)               # (2,2) outer product
+    dL_dWh += np.outer(dL_da, h_prev)           # (2,2) outer product
+    delta   = Wh.T @ dL_da                      # pass gradient to t-1
+
+    print(f"t={t+1}  δ={delta.round(3)}  |δ|={np.linalg.norm(delta):.3f}")
+
+# t=4  δ=[-0.179 -0.096]  |δ|=0.203
+# t=3  δ=[-0.083 -0.043]  |δ|=0.094
+# t=2  δ=[-0.035 -0.017]  |δ|=0.039
+# t=1  δ=[-0.015 -0.010]  |δ|=0.018
+
+print(f"\n∂L/∂Wₓ =\n{dL_dWx.round(3)}")
+print(f"\n∂L/∂Wₕ =\n{dL_dWh.round(3)}")
+# ∂L/∂Wₓ = [[-0.125 -0.189] [-0.070 -0.107]]
+# ∂L/∂Wₕ = [[-0.197 -0.214] [-0.108 -0.118]]
+
+# ── Weight update ─────────────────────────────────────────────────────
+lr = 0.1
+Wx_new = Wx - lr * dL_dWx
+Wh_new = Wh - lr * dL_dWh
+Wo_new = Wo - lr * dL_dWo
+print(f"\nWₓ after update =\n{Wx_new.round(3)}")
+# [[0.513 0.219] [0.107 0.811]]
+```
+
+---
+
+### Version 2 — PyTorch manual (same logic, autograd handles backward)
+
+```python
+import torch
+import torch.nn as nn
+
+# ── Same weights as Version 1, loaded as tensors ─────────────────────
+Wx = torch.tensor([[0.5, 0.2], [0.1, 0.8]], dtype=torch.float32, requires_grad=True)
+Wh = torch.tensor([[0.4, 0.1], [0.2, 0.3]], dtype=torch.float32, requires_grad=True)
+Wo = torch.tensor([0.6, 0.4],              dtype=torch.float32, requires_grad=True)
+
+E  = torch.tensor([
+    [0.00, 0.00],
+    [1.00, 0.50],   # cat
+    [0.20, 0.30],   # sat
+    [0.10, 0.10],   # on
+    [0.20, 0.40],   # mat
+])
+
+tokens = torch.tensor([1, 2, 3, 4])
+x      = E[tokens]           # (4, 2)
+y      = torch.tensor(1.0)
+
+# ── Forward pass ──────────────────────────────────────────────────────
+h = torch.zeros(2)
+
+for xt in x:
+    h = torch.tanh(Wx @ xt + Wh @ h)
+
+y_hat = Wo @ h
+loss  = 0.5 * (y - y_hat) ** 2
+print(f"ŷ = {y_hat.item():.3f}   L = {loss.item():.3f}")
+# ŷ = 0.365   L = 0.201   ← same as hand computation ✅
+
+# ── Backward pass (autograd does the BPTT automatically) ──────────────
+loss.backward()
+
+print(f"\n∂L/∂Wₓ =\n{Wx.grad.round(decimals=3)}")
+print(f"\n∂L/∂Wₕ =\n{Wh.grad.round(decimals=3)}")
+print(f"\n∂L/∂Wₒ = {Wo.grad.round(decimals=3)}")
+# ∂L/∂Wₓ = [[-0.125 -0.189] [-0.070 -0.107]]   ← matches hand computation ✅
+# ∂L/∂Wₕ = [[-0.197 -0.214] [-0.108 -0.118]]   ✅
+# ∂L/∂Wₒ = [-0.196 -0.286]                      ✅
+
+# ── Weight update ─────────────────────────────────────────────────────
+lr = 0.1
+with torch.no_grad():
+    Wx -= lr * Wx.grad
+    Wh -= lr * Wh.grad
+    Wo -= lr * Wo.grad
+```
+
+---
+
+### Version 3 — PyTorch nn.RNN (production style, any sentence length)
+
+```python
+import torch
+import torch.nn as nn
+
+class VanillaRNN(nn.Module):
+    def __init__(self, vocab_size, embed_dim, hidden_dim, num_classes):
+        super().__init__()
+        # Step 1: embedding table  (vocab_size × embed_dim)
+        self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=0)
+
+        # Step 2: RNN — shared Wₓ and Wₕ across all timesteps
+        # hidden_dim controls how much memory the RNN has
+        self.rnn = nn.RNN(
+            input_size=embed_dim,    # size of each word vector coming in
+            hidden_size=hidden_dim,  # size of hₜ at each step  ← this is hidden_dim
+            batch_first=True,        # input shape: [batch, seq_len, embed_dim]
+            nonlinearity='tanh'
+        )
+
+        # Step 3: output layer  (hidden_dim → num_classes)
+        self.fc = nn.Linear(hidden_dim, num_classes)
+
+    def forward(self, token_ids):
+        # token_ids: [batch, seq_len]
+        x    = self.embedding(token_ids)      # [batch, seq_len, embed_dim]
+        out, h_n = self.rnn(x)                # out: [batch, seq_len, hidden_dim]
+                                              # h_n: [1, batch, hidden_dim]
+        return self.fc(h_n.squeeze(0))        # [batch, num_classes]
+
+# ── Instantiate ───────────────────────────────────────────────────────
+model = VanillaRNN(
+    vocab_size  = 6,     # <PAD> cat sat on mat <UNK>
+    embed_dim   = 2,     # each word → 2D vector
+    hidden_dim  = 2,     # RNN memory size  ← change this to 128 in real use
+    num_classes = 1      # binary: animal or not
+)
+
+# ── Single example: "cat sat on mat" ─────────────────────────────────
+tokens = torch.tensor([[1, 2, 3, 4]])         # shape: [1, 4]  (batch=1, seq=4)
+y      = torch.tensor([[1.0]])                # target
+
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+criterion = nn.MSELoss()
+
+# Training step
+optimizer.zero_grad()
+y_hat = model(tokens)                         # [1, 1]
+loss  = criterion(y_hat, y)
+loss.backward()                               # BPTT happens here
+optimizer.step()
+
+print(f"Loss: {loss.item():.3f}")
+
+# ── Real usage — different hidden_dim values ──────────────────────────
+# Small dataset / fast prototyping
+model_small = VanillaRNN(vocab_size=10000, embed_dim=100, hidden_dim=64,  num_classes=2)
+
+# Standard classification
+model_mid   = VanillaRNN(vocab_size=10000, embed_dim=300, hidden_dim=256, num_classes=2)
+
+# Count parameters just in the RNN layer:
+# hidden_dim=64:   Wₓ(64×100) + Wₕ(64×64) + bias = 6400 + 4096 + 64 = 10,560
+# hidden_dim=256:  Wₓ(256×300) + Wₕ(256×256) + bias = 76,800 + 65,536 + 256 = 142,592
+```
+
+```
+Changing hidden_dim changes the shape of every weight matrix:
+
+  hidden_dim=2:
+    Wₓ → (2×2)      Wₕ → (2×2)      hₜ → (2,)
+
+  hidden_dim=128:
+    Wₓ → (128×2)    Wₕ → (128×128)  hₜ → (128,)
+
+  hidden_dim=256:
+    Wₓ → (256×2)    Wₕ → (256×256)  hₜ → (256,)
+
+  The vanishing gradient problem gets WORSE with larger hidden_dim
+  because Wₕ (256×256) has more multiplications to survive.
+  That is why LSTM/GRU, not bigger hidden_dim, is the real fix.
 ```
 
 ---
