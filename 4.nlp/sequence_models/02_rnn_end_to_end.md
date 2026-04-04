@@ -66,11 +66,15 @@ The model never sees the string "cat" again — only the integer 1.
 Embedding table  E  (shape: vocab_size × embed_dim = 6 × 2)
 Each row is a learned vector for that word index.
 
+Two dimensions, each with a semantic meaning in this example:
+  dim 0 = how animal-related the word is   (high for "cat", near 0 for "on")
+  dim 1 = how much content the word carries (high for nouns/verbs, low for prepositions)
+
   index 0 → [0.00,  0.00]   <PAD>
-  index 1 → [1.00,  0.50]   "cat"  ← high values: content word, subject, animal
-  index 2 → [0.20,  0.30]   "sat"  ← lower: common verb
-  index 3 → [0.10,  0.10]   "on"   ← low: function word (preposition)
-  index 4 → [0.20,  0.40]   "mat"  ← object noun
+  index 1 → [1.00,  0.50]   "cat"  ← very animal-related (1.0), strong content word (0.5)
+  index 2 → [0.20,  0.30]   "sat"  ← not animal-related, moderate content (verb)
+  index 3 → [0.10,  0.10]   "on"   ← not animal-related, weak content (function word)
+  index 4 → [0.20,  0.40]   "mat"  ← not animal-related, moderate content (object noun)
   index 5 → [0.00,  0.00]   <UNK>
 
 Lookup [1, 2, 3, 4]:
@@ -79,8 +83,9 @@ Lookup [1, 2, 3, 4]:
   x₃ = [0.10, 0.10]   "on"
   x₄ = [0.20, 0.40]   "mat"
 
-In real models these are 100-300 dimensional (GloVe, Word2Vec).
-We use dim=2 so every multiply is traceable by hand.
+Note: in real models (GloVe, Word2Vec) dimensions have no clean human-readable meaning.
+      We assign meaning here only to make the forward pass story concrete.
+      In practice: 100-300 dimensions, all learned, none interpretable individually.
 ```
 
 ---
@@ -164,6 +169,37 @@ Initial hidden state:
 RNN formula at each step:
   aₜ = Wₓ · xₜ + Wₕ · hₜ₋₁ + b     (pre-activation, 2D vector)
   hₜ = tanh(aₜ)                       (applied elementwise)
+```
+
+```
+Why tanh?
+
+  tanh squashes any number into the range (-1, +1).
+
+  Without it:
+    aₜ = Wₓ·xₜ + Wₕ·hₜ₋₁  — just a linear function
+    stacking 4 steps of linear = still just one big linear function
+    the network has no capacity to learn non-linear patterns
+
+  With tanh:
+    values stay bounded — hidden state doesn't explode to 1000s
+    derivative (1 - tanh²) is always between 0 and 1 — needed for backprop
+
+  Why not ReLU?
+    ReLU(x) = max(0,x) — unbounded, can explode in RNNs
+    tanh is the standard for vanilla RNN hidden states
+    (LSTMs use sigmoid for gates and tanh for cell state — more on that next)
+```
+
+```
+Note on embedding gradients:
+
+  In a real training loop, the embedding table E also gets gradients.
+  ∂L/∂xₜ flows back to update the embedding vector for each token seen.
+
+  We skip this here to keep the backward pass focused on Wₓ, Wₕ, Wₒ.
+  In code (Version 2 and 3), PyTorch handles it automatically via
+  nn.Embedding — the embedding vectors update just like any other weight.
 ```
 
 ---
@@ -273,14 +309,21 @@ h₄ = [0.308, 0.450]   ← final hidden state (what the whole sentence "compres
 ### Forward pass summary
 
 ```
-          dim 0     dim 1     what happened to "cat" signal (dim 0)
-  h₁ →  [0.537,   0.462]   ← cat encoded clearly
-  h₂ →  [0.398,   0.467]   ← sat overwrote 26% of cat's signal
-  h₃ →  [0.270,   0.300]   ← on diluted it further  (50% of original)
-  h₄ →  [0.308,   0.450]   ← mat: cat barely survives  (57% of original)
+        dim 0              dim 1
+        (animal-related)   (content)
+  h₁ → [0.537,            0.462]   ← after "cat":  strong animal signal, clear content
+  h₂ → [0.398,            0.467]   ← after "sat":  animal signal fading, content mixed in
+  h₃ → [0.270,            0.300]   ← after "on":   animal signal weak, content dropped too
+  h₄ → [0.308,            0.450]   ← after "mat":  animal signal faint, content from mat added
 
-  ŷ = 0.365   (model says "maybe animal, maybe not")
-  y = 1.000   (correct answer: yes, animal)
+  dim 0 across steps:  0.537 → 0.398 → 0.270 → 0.308
+                        ↑ each step blends in the new word and dilutes what came before
+                        ↑ h₄[dim 0] = 0.308 is NOT "cat preserved at 57%"
+                          it is a blend of cat + sat + on + mat
+                          cat just happened to dominate dim 0 initially
+
+  ŷ = 0.365   (model says "maybe animal, maybe not" — cat's signal too diluted)
+  y = 1.000   (correct answer: yes, animal — because of "cat" at position 1)
 ```
 
 ---
@@ -298,6 +341,23 @@ Error = 0.635.  The model forgot too much of "cat" to predict confidently.
 ## 3. Backward Pass (BPTT — Backpropagation Through Time)
 
 We need: **how should Wₓ, Wₕ, Wₒ change to reduce L?**
+
+```
+Why do we "unroll" through all 4 timesteps?
+
+  Because Wₓ and Wₕ are SHARED across all timesteps.
+  The same Wₕ was used at t=1, t=2, t=3, t=4.
+
+  So the gradient of L with respect to Wₕ is not just from t=4.
+  It is the SUM of contributions from every timestep.
+
+  To collect those contributions, we must walk backwards through
+  every step where Wₕ was used — that is what "unrolling" means.
+
+  Forward:   Wₓ, Wₕ used at t=1 → t=2 → t=3 → t=4
+  Backward:  gradients collected at t=4 → t=3 → t=2 → t=1
+             and summed into ∂L/∂Wₓ and ∂L/∂Wₕ
+```
 
 Backprop unrolls through all 4 timesteps (right → left).
 
@@ -453,6 +513,25 @@ Wₓ and Wₕ accumulate gradients from ALL timesteps (they are shared).
 #### ∂L/∂Wₓ  (2×2 matrix)
 
 ```
+Why outer product?
+
+  In the forward pass:  aₜ = Wₓ · xₜ
+  Wₓ[i, j] affects aₜ[i] through xₜ[j].
+
+  So how much does Wₓ[i,j] affect the loss?
+    ∂L/∂Wₓ[i,j] = ∂L/∂aₜ[i]  ×  xₜ[j]
+
+  Written for all i and j at once:
+    ∂L/∂Wₓ = ∂L/∂aₜ  ⊗  xₜᵀ    (outer product — gives a 2×2 matrix)
+
+  Same logic for Wₕ:
+    ∂L/∂Wₕ[i,j] = ∂L/∂aₜ[i]  ×  hₜ₋₁[j]
+    ∂L/∂Wₕ = ∂L/∂aₜ  ⊗  hₜ₋₁ᵀ
+
+  And since Wₓ is shared, sum these outer products over all timesteps.
+```
+
+```
 At each timestep:   contribution = ∂L/∂aₜ  ⊗  xₜᵀ   (outer product)
 
 t=1:  [-0.025, -0.013]ᵀ ⊗ [1.00, 0.50]:
@@ -605,6 +684,26 @@ The fundamental problem remains though:
   "cat" contributes [[-0.025,-0.013],[-0.013,-0.007]] to ∂L/∂Wₓ
   "mat" contributes [[-0.069,-0.138],[-0.041,-0.081]] to ∂L/∂Wₓ
   The model is learning from "mat" 3-10× harder than from "cat".
+```
+
+```
+This was ONE training step on ONE sentence.
+
+In a real training loop:
+
+  for epoch in range(num_epochs):
+      for sentence, label in dataset:          # thousands of sentences
+          forward pass  → compute ŷ and L
+          backward pass → compute all gradients
+          weight update → Wₓ, Wₕ, Wₒ, E shift slightly
+          zero gradients → ready for next sentence
+
+  After thousands of steps, the weights slowly converge to values
+  that make ŷ close to y for most sentences in the dataset.
+
+  Each step moves the weights a tiny amount (lr=0.1 here, 0.001 in practice).
+  The model never sees the "correct" weights — it finds them through
+  repeated small adjustments guided by the loss gradient.
 ```
 
 ---
