@@ -739,25 +739,229 @@ Sum → ∂L/∂Wz_h:
    [-0.004, -0.002]]
 ```
 
+---
+
+### Step G — reset gate gradients (all timesteps)
+
 ```
-Reset gate gradient — brief overview:
+Chain rule through the reset gate:
 
-The reset gate rₜ affects h̃ₜ through:  h̃ₜ = tanh(Wh_x·xₜ + Wh_h·(rₜ⊙hₜ₋₁))
+  hₜ = (1-zₜ)⊙hₜ₋₁ + zₜ⊙h̃ₜ           → ∂L/∂h̃ₜ = ∂L/∂hₜ ⊙ zₜ
+  h̃ₜ = tanh(ah̃ₜ)                        → ∂L/∂ah̃ₜ = ∂L/∂h̃ₜ ⊙ (1-h̃ₜ²)
+  ah̃ₜ = Wh_x·xₜ + Wh_h·(rₜ⊙hₜ₋₁)      → ∂L/∂(rₜ⊙hₜ₋₁) = Wh_hᵀ · ∂L/∂ah̃ₜ
+  (rₜ⊙hₜ₋₁)[i] = rₜ[i] × hₜ₋₁[i]      → ∂L/∂rₜ = ∂L/∂(rₜ⊙hₜ₋₁) ⊙ hₜ₋₁
+  rₜ = σ(arₜ)                            → ∂L/∂arₜ = ∂L/∂rₜ ⊙ rₜ⊙(1-rₜ)
 
-∂L/∂h̃ₜ  = ∂L/∂hₜ ⊙ zₜ                   (h̃ is weighted by z in the blend)
-∂L/∂ah̃ₜ = ∂L/∂h̃ₜ ⊙ (1-h̃ₜ²)               (tanh derivative)
-∂L/∂rₜ  = ∂L/∂ah̃ₜ ⊙ Wh_hᵀ ⊙ hₜ₋₁         (chain through r in h̃ computation)
-∂L/∂Wr_x = Σₜ ∂L/∂arₜ ⊗ xₜᵀ
+Key difference from update gate gradient:
+  ∂L/∂zₜ = ∂L/∂hₜ ⊙ (h̃ₜ - hₜ₋₁)   — depends on difference between new and old
+  ∂L/∂h̃ₜ = ∂L/∂hₜ ⊙ zₜ             — scaled DOWN by zₜ (small z → tiny h̃ gradient)
 
-Key insight: ∂L/∂h̃ₜ = ∂L/∂hₜ ⊙ zₜ
-  When zₜ is small (0.08-0.12), h̃ₜ contributes very little to hₜ.
-  → ∂L/∂h̃ₜ is small → ∂L/∂rₜ is small → reset gate gradients are small.
-  The reset gate barely matters during "preserve" timesteps (low z).
-  It becomes important when z is high (t=1, when we ARE writing new content).
+  At t=2,3,4: zₜ = 0.10-0.12 → reset gate receives only 10% of the hidden gradient.
+  The reset gate's gradient is structurally suppressed when z is small.
+```
+
+**Reset gate at t=1:**
+
+```
+∂L/∂h̃₁ = ∂L/∂h₁ ⊙ z₁
+        = [-0.246, -0.160] ⊙ [0.70, 0.65]
+        = [-0.172, -0.104]
+
+1 - h̃₁² = 1 - [0.762², 0.454²] = 1 - [0.581, 0.206] = [0.419, 0.794]
+
+∂L/∂ah̃₁ = [-0.172, -0.104] ⊙ [0.419, 0.794]
+          = [-0.072, -0.083]
+
+∂L/∂(r₁⊙h₀) = Wh_hᵀ · ∂L/∂ah̃₁   (Wh_h = [[0.30,0.10],[0.10,0.30]], symmetric → Wh_hᵀ = Wh_h)
+  row 0:  0.30×(-0.072) + 0.10×(-0.083)  =  -0.022 - 0.008  =  -0.030
+  row 1:  0.10×(-0.072) + 0.30×(-0.083)  =  -0.007 - 0.025  =  -0.032
+
+∂L/∂r₁ = ∂L/∂(r₁⊙h₀) ⊙ h₀  =  [-0.030, -0.032] ⊙ [0, 0]  =  [0, 0]
+
+∂L/∂ar₁ = [0, 0]
+
+Note: reset gate gradient is ZERO at t=1 because h₀=0.
+  The reset gate scales past state by r, but h₀=0 means there IS no past state.
+  This is the same pattern as LSTM's forget gate at t=1 (zero because C₀=0).
+  The reset gate only becomes meaningful from t=2 onwards when hₜ₋₁ ≠ 0.
+```
+
+**Reset gate at t=2:**
+
+```
+∂L/∂h̃₂ = ∂L/∂h₂ ⊙ z₂
+        = [-0.279, -0.178] ⊙ [0.12, 0.10]
+        = [-0.033, -0.018]
+
+Why is ∂L/∂h̃₂ so small?
+  z₂ = [0.12, 0.10] — the model decided to KEEP h₁ (low update gate).
+  Only 12% of h̃₂ was actually written into h₂.
+  So h̃₂ contributes only 12% → its gradient is 12% of ∂L/∂h₂.
+
+1 - h̃₂² = 1 - [0.18², 0.55²] = 1 - [0.032, 0.303] = [0.968, 0.697]
+
+∂L/∂ah̃₂ = [-0.033, -0.018] ⊙ [0.968, 0.697]
+          = [-0.032, -0.013]
+
+∂L/∂(r₂⊙h₁) = Wh_hᵀ · [-0.032, -0.013]
+  row 0:  0.30×(-0.032) + 0.10×(-0.013)  =  -0.010 - 0.001  =  -0.011
+  row 1:  0.10×(-0.032) + 0.30×(-0.013)  =  -0.003 - 0.004  =  -0.007
+
+∂L/∂r₂ = [-0.011, -0.007] ⊙ h₁  =  [-0.011, -0.007] ⊙ [0.533, 0.295]
+        = [-0.006, -0.002]
+
+Sigmoid derivative: r₂⊙(1-r₂) = [0.55×0.45, 0.60×0.40] = [0.248, 0.240]
+
+∂L/∂ar₂ = [-0.006, -0.002] ⊙ [0.248, 0.240]
+         = [-0.001, 0.000]
+```
+
+**Reset gate at t=3:**
+
+```
+∂L/∂h̃₃ = ∂L/∂h₃ ⊙ z₃
+        = [-0.303, -0.198] ⊙ [0.08, 0.10]
+        = [-0.024, -0.020]
+
+1 - h̃₃² = 1 - [0.05², 0.09²] = 1 - [0.003, 0.008] = [0.997, 0.992]
+
+∂L/∂ah̃₃ = [-0.024, -0.020] ⊙ [0.997, 0.992]
+          = [-0.024, -0.020]   (h̃₃ is small → tanh derivative ≈ 1)
+
+∂L/∂(r₃⊙h₂) = Wh_hᵀ · [-0.024, -0.020]
+  row 0:  0.30×(-0.024) + 0.10×(-0.020)  =  -0.007 - 0.002  =  -0.009
+  row 1:  0.10×(-0.024) + 0.30×(-0.020)  =  -0.002 - 0.006  =  -0.008
+
+∂L/∂r₃ = [-0.009, -0.008] ⊙ h₂  =  [-0.009, -0.008] ⊙ [0.491, 0.321]
+        = [-0.004, -0.003]
+
+Sigmoid derivative: r₃⊙(1-r₃) = [0.20×0.80, 0.15×0.85] = [0.160, 0.128]
+
+∂L/∂ar₃ = [-0.004, -0.003] ⊙ [0.160, 0.128]
+         = [-0.001, 0.000]
+```
+
+**Reset gate at t=4:**
+
+```
+∂L/∂h̃₄ = ∂L/∂h₄ ⊙ z₄
+        = [-0.370, -0.247] ⊙ [0.18, 0.20]
+        = [-0.067, -0.049]
+
+1 - h̃₄² = 1 - [0.22², 0.50²] = 1 - [0.048, 0.250] = [0.952, 0.750]
+
+∂L/∂ah̃₄ = [-0.067, -0.049] ⊙ [0.952, 0.750]
+          = [-0.064, -0.037]
+
+∂L/∂(r₄⊙h₃) = Wh_hᵀ · [-0.064, -0.037]
+  row 0:  0.30×(-0.064) + 0.10×(-0.037)  =  -0.019 - 0.004  =  -0.023
+  row 1:  0.10×(-0.064) + 0.30×(-0.037)  =  -0.006 - 0.011  =  -0.017
+
+∂L/∂r₄ = [-0.023, -0.017] ⊙ h₃  =  [-0.023, -0.017] ⊙ [0.456, 0.298]
+        = [-0.010, -0.005]
+
+Sigmoid derivative: r₄⊙(1-r₄) = [0.60×0.40, 0.65×0.35] = [0.240, 0.228]
+
+∂L/∂ar₄ = [-0.010, -0.005] ⊙ [0.240, 0.228]
+         = [-0.002, -0.001]
+```
+
+```
+Reset gate gradient summary across all timesteps:
+
+  ∂L/∂ar₁ = [0.000,  0.000]   ← zero (h₀=0, no past to gate)
+  ∂L/∂ar₂ = [-0.001, 0.000]   ← tiny (z₂=0.12 suppressed h̃ gradient)
+  ∂L/∂ar₃ = [-0.001, 0.000]   ← tiny (z₃=0.08 — smallest update gate)
+  ∂L/∂ar₄ = [-0.002, -0.001]  ← small (z₄=0.18 — slightly larger)
+
+Compare to update gate:
+  ∂L/∂az₁ = [-0.039, -0.017]  ← 20-40× larger than reset gate!
+  ∂L/∂az₂ = [0.010,  -0.004]
+  ∂L/∂az₃ = [0.010,   0.004]
+  ∂L/∂az₄ = [0.013,  -0.008]
+
+Why is the reset gate gradient so much smaller?
+  The reset gate gradient is gated by zₜ:  ∂L/∂h̃ₜ = ∂L/∂hₜ ⊙ zₜ
+  When z is low (model in "preserve" mode), h̃ contributes little → r's gradient is tiny.
+  When z is high (t=1, model in "write" mode), r gets more gradient — but h₀=0 kills it.
+  The reset gate gradient is structurally suppressed in this example.
+  It learns more gradually, over many training steps with varied inputs.
 
 Note: embedding gradients (∂L/∂xₜ) also exist in real training.
       We skip them here to keep focus on the 6 GRU weight matrices.
 ```
+
+---
+
+### Step H — weight gradients ∂L/∂Wr_x and ∂L/∂Wr_h
+
+```
+∂L/∂Wr_x — contribution at each timestep (outer product ∂L/∂arₜ ⊗ xₜᵀ):
+
+t=1:  [0.000, 0.000]ᵀ ⊗ [1.00, 0.50]  →  zero matrix   (∂L/∂ar₁=0 because h₀=0)
+
+t=2:  [-0.001, 0.000]ᵀ ⊗ [0.20, 0.30]:
+      [[-0.001×0.20, -0.001×0.30],   [[-0.000, -0.000],
+       [ 0.000×0.20,  0.000×0.30]] =  [ 0.000,  0.000]]
+
+t=3:  [-0.001, 0.000]ᵀ ⊗ [0.10, 0.10]:
+      [[-0.000, -0.000],
+       [ 0.000,  0.000]]
+
+t=4:  [-0.002, -0.001]ᵀ ⊗ [0.20, 0.40]:
+      [[-0.002×0.20, -0.002×0.40],   [[-0.000, -0.001],
+       [-0.001×0.20, -0.001×0.40]] =  [-0.000, -0.000]]
+
+Sum across all timesteps → ∂L/∂Wr_x:
+= [[-0.001, -0.001],
+   [ 0.000, -0.001]]
+```
+
+```
+∂L/∂Wr_h — contribution at each timestep (outer product ∂L/∂arₜ ⊗ hₜ₋₁ᵀ):
+
+t=1:  [0.000, 0.000]ᵀ ⊗ h₀=[0, 0]  →  zero matrix
+
+t=2:  [-0.001, 0.000]ᵀ ⊗ [0.533, 0.295]:
+      [[-0.001×0.533, -0.001×0.295],   [[-0.001, -0.000],
+       [ 0.000×0.533,  0.000×0.295]] =  [ 0.000,  0.000]]
+
+t=3:  [-0.001, 0.000]ᵀ ⊗ [0.491, 0.321]:
+      [[-0.000, -0.000],
+       [ 0.000,  0.000]]
+
+t=4:  [-0.002, -0.001]ᵀ ⊗ [0.456, 0.298]:
+      [[-0.002×0.456, -0.002×0.298],   [[-0.001, -0.001],
+       [-0.001×0.456, -0.001×0.298]] =  [-0.000, -0.000]]
+
+Sum → ∂L/∂Wr_h:
+= [[-0.002, -0.001],
+   [-0.001, -0.001]]
+```
+
+```
+Why are ∂L/∂Wr_x and ∂L/∂Wr_h so small — a comparison:
+
+  Gate      Max |∂L/∂W_x|   Max |∂L/∂W_h|
+  ───────   ─────────────   ─────────────
+  Update    0.033           0.016          ← dominant learner this step
+  Reset     0.001           0.002          ← 15-30× smaller
+
+  The reset gate weight matrices barely move in step 1.
+  This is NOT a bug — it reflects the structure of this input.
+
+  When would reset gate learn more?
+    If the sentence had long-range CONFLICT (e.g., "cat ... dog ... sat"):
+    r≈0 would correctly gate out the irrelevant "dog" from h̃ computation.
+    In that case, z would be moderate AND ∂L/∂h̃ would be larger.
+    The reset gate gets meaningful gradient when: high z AND conflicting context.
+
+  In "cat sat on mat": the sentence is coherent, z is kept low throughout.
+  No context-gating conflict → reset gate gradient stays small.
+```
+
+Note: embedding gradients (∂L/∂xₜ) also exist in real training.
+      We skip them here to keep focus on the 6 GRU weight matrices.
 
 ```
 "cat" vs "mat" — how GRU reverses RNN's learning imbalance:
@@ -821,14 +1025,40 @@ Wz_h_new = Wz_h - lr × ∂L/∂Wz_h
 ```
 
 ```
-Why are the Wz_x and Wz_h changes small?
+Wr_x_new = Wr_x - lr × ∂L/∂Wr_x
 
-  Wz_x changed by < 0.003 per element.
-  Wz_h changed by < 0.002 per element.
+  = [[0.45, 0.15],   -  0.1 × [[-0.001, -0.001],
+     [0.25, 0.15]]               [ 0.000, -0.001]]
 
-  At t=1: ∂L/∂az₁ = [-0.039, -0.017]. These are the LARGEST values.
-  But sigmoid derivative z₁⊙(1-z₁) = [0.210, 0.228] — moderate shrinkage.
-  The final weight gradient [-0.033, -0.011] is still small relative to lr=0.1.
+  = [[0.45+0.000,  0.15+0.000],
+     [0.25-0.000,  0.15+0.000]]
+
+  = [[0.450, 0.150],
+     [0.250, 0.150]]   (essentially unchanged — change < 0.001 per element)
+
+
+Wr_h_new = Wr_h - lr × ∂L/∂Wr_h
+
+  = [[0.25, 0.10],   -  0.1 × [[-0.002, -0.001],
+     [0.10, 0.20]]               [-0.001, -0.001]]
+
+  = [[0.25+0.000,  0.10+0.000],
+     [0.10+0.000,  0.20+0.000]]
+
+  = [[0.250, 0.100],
+     [0.100, 0.200]]   (essentially unchanged — change < 0.001 per element)
+```
+
+```
+Why are the Wz_x, Wz_h changes small — and Wr_x, Wr_h even smaller?
+
+  Weight matrix     Max change per element    Reason
+  ──────────────    ──────────────────────    ──────────────────────────────────────
+  W_out             0.026                     Direct connection to loss — largest
+  Wz_x              0.003                     ∂L/∂az₁=0.039, but sigmoid shrinks it
+  Wz_h              0.002                     ∂L/∂az₁=0.039, h₀=0 zeroes t=1 term
+  Wr_x              < 0.001                   ∂L/∂ar ≈ 0.001-0.002 (z suppresses h̃)
+  Wr_h              < 0.001                   same suppression + h₀=0 zeroes t=1
 
   The main update is in W_out:
     [0.600, 0.400] → [0.626, 0.421]   ← 4.3% increase
@@ -836,8 +1066,10 @@ Why are the Wz_x and Wz_h changes small?
   has the largest room to grow (ŷ=0.383 needs to move to 1.0).
   Gate weights learn more gradually across many training steps.
 
-Reset and candidate weight updates follow the same formula:
-  W ← W - lr × ∂L/∂W     (Wr_x, Wr_h, Wh_x, Wh_h each receive their gradient)
+  Wh_x and Wh_h (candidate weights) also receive gradients via ∂L/∂ah̃ₜ ⊗ xₜᵀ
+  and ∂L/∂ah̃ₜ ⊗ (rₜ⊙hₜ₋₁)ᵀ respectively — the chain follows the same
+  outer-product pattern as all other gate matrices.
+  W ← W - lr × ∂L/∂W     (same formula for all 6 gate matrices + W_out)
 ```
 
 ---
