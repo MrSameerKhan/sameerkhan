@@ -219,6 +219,74 @@ In practice (hidden_dim=512, seq_len=512):
   But attention scales better with sequence length (O(n²) attention, O(n) LSTM).
 ```
 
+```
+Why these design choices?
+
+  Why separate Q, K, V projections instead of using X directly?
+    If we used X directly: score(i,j) = xᵢ · xⱼ — the model can only match by
+    raw embedding similarity. Q, K projections let the model learn DIFFERENT
+    notions of "what to look for" vs "what to offer":
+      q₄ (mat's query) can learn to seek animal features
+      k₁ (cat's key)  can learn to announce animal features
+    These are different transformations of the same embedding. Separation is what
+    makes attention learnable and flexible.
+
+  Why scale by √d_k?
+    The dot product qᵢ·kⱼ has variance d_k when q, k have unit-variance components.
+    Without scaling: for d_k=512, scores ≈ ±22 → softmax becomes near one-hot.
+    Near one-hot softmax has near-zero gradients (saturated) → hard to train.
+    Dividing by √d_k brings variance back to ~1 regardless of dimension.
+
+  Why softmax for attention weights (not sigmoid)?
+    Softmax enforces: Σⱼ A[i,j] = 1   (attention is a DISTRIBUTION over positions)
+    This means c_i is a proper convex combination of value vectors.
+    Sigmoid would allow A[i,j] > 1 or Σⱼ A[i,j] ≠ 1 — values could explode.
+
+  Why sigmoid at the output (not softmax)?
+    Binary classification → one output node → sigmoid maps scalar → (0,1) probability.
+    Same reason as RNN, LSTM, GRU. No change here.
+
+  Why is there no recurrence?
+    In RNN/LSTM/GRU: each state hₜ depends on hₜ₋₁ — must process sequentially.
+    In attention: Q, K, V are computed from ALL positions at once (X @ Wq etc.).
+    The score matrix S[i,j] = qᵢ·kⱼ/√d requires no sequential dependency.
+    Every position can attend to every other in parallel — no temporal ordering.
+```
+
+```
+Attention formulas (full forward pass in one place):
+
+  Q = X @ Wq                       query projection   (T×d @ d×d = T×d)
+  K = X @ Wk                       key projection     (T×d @ d×d = T×d)
+  V = X @ Wv                       value projection   (T×d @ d×d = T×d)
+  S = Q @ Kᵀ / √d_k                scaled dot product scores  (T×d @ d×T = T×T)
+  A = softmax(S, dim=-1)            attention weights  (T×T, each row sums to 1)
+  C = A @ V                         context vectors    (T×T @ T×d = T×d)
+  ŷ = σ(W_out · C[-1])             predict from last position
+  L = ½(y - ŷ)²
+
+Key structural difference from RNN/LSTM/GRU:
+  RNN:        hₜ = tanh(Wₓ·xₜ + Wₕ·hₜ₋₁)        one step at a time, sequential
+  LSTM:       Cₜ = fₜ⊙Cₜ₋₁ + iₜ⊙g̃ₜ              one step at a time, sequential
+  GRU:        hₜ = (1-zₜ)⊙hₜ₋₁ + zₜ⊙h̃ₜ          one step at a time, sequential
+  Attention:  C  = softmax(Q@Kᵀ/√d) @ V           ALL positions simultaneously
+```
+
+```
+Note on embedding gradients:
+
+  In a real training loop, the embedding table E also gets gradients.
+  ∂L/∂xₜ flows back through all three projection paths (Q, K, V) and
+  updates the embedding vector for each token seen.
+
+  Concretely for position 1 ("cat"):
+    ∂L/∂x₁ = ∂L/∂q₁ @ Wqᵀ  +  ∂L/∂k₁ @ Wkᵀ  +  ∂L/∂v₁ @ Wvᵀ
+    Three paths contribute (unlike RNN: only one path through Wₓ).
+
+  We skip this in the backward pass below to keep focus on the 3 attention matrices.
+  In code (Version 2 and 3), PyTorch handles it automatically via autograd.
+```
+
 ---
 
 ## 1. Forward Pass
@@ -443,26 +511,96 @@ C = A @ V   (4×4 @ 4×2 = 4×2)
 
 Each context vector cᵢ = Σⱼ A[i,j] × vⱼ  ("position i's attended summary of all values")
 
-c₄ = A[4,:] @ V
-   = 0.275×v₁  +  0.243×v₂  +  0.236×v₃  +  0.246×v₄
+All 4 context vectors are computed SIMULTANEOUSLY in one matrix multiply C = A @ V.
+In RNN/LSTM/GRU we computed h₁, h₂, h₃, h₄ one at a time in a loop.
+Here all 4 are produced in parallel.
+```
 
-Expanding:
-  0.275 × [0.950, 0.550] = [0.261, 0.151]   ← "cat" contributes 0.261 of 0.417 (63%)
-  0.243 × [0.250, 0.250] = [0.061, 0.061]
-  0.236 × [0.110, 0.090] = [0.026, 0.021]
-  0.246 × [0.280, 0.320] = [0.069, 0.079]
+```
+c₁ — "cat"'s context (what "cat" sees when it attends to the sentence):
 
-  c₄ = [0.261+0.061+0.026+0.069,  0.151+0.061+0.021+0.079]
-     = [0.417,  0.312]
+  c₁ = 0.327×v₁  +  0.229×v₂  +  0.210×v₃  +  0.234×v₄
+     = 0.327×[0.950,0.550] + 0.229×[0.250,0.250] + 0.210×[0.110,0.090] + 0.234×[0.280,0.320]
+
+  dim 0: 0.311 + 0.057 + 0.023 + 0.066 = 0.457
+  dim 1: 0.180 + 0.057 + 0.019 + 0.075 = 0.331
+
+  c₁ = [0.457, 0.331]
+
+  "cat" attends most to itself (a₁₁=0.327) → c₁[dim 0] = 0.457 is the HIGHEST of all 4.
+  cat's view of the sentence is dominated by its own animal content.
+```
+
+```
+c₂ — "sat"'s context:
+
+  c₂ = 0.271×v₁  +  0.244×v₂  +  0.238×v₃  +  0.246×v₄
+     = 0.271×[0.950,0.550] + 0.244×[0.250,0.250] + 0.238×[0.110,0.090] + 0.246×[0.280,0.320]
+
+  dim 0: 0.257 + 0.061 + 0.026 + 0.069 = 0.413
+  dim 1: 0.149 + 0.061 + 0.021 + 0.079 = 0.310
+
+  c₂ = [0.413, 0.310]
+
+  "sat" still has cat-dominated context (0.413 dim 0) even though "sat" is a verb.
+  This is correct: "sat" needs to know WHO sat (animal context helps the prediction).
+```
+
+```
+c₃ — "on"'s context:
+
+  c₃ = 0.259×v₁  +  0.248×v₂  +  0.245×v₃  +  0.248×v₄
+     = 0.259×[0.950,0.550] + 0.248×[0.250,0.250] + 0.245×[0.110,0.090] + 0.248×[0.280,0.320]
+
+  dim 0: 0.246 + 0.062 + 0.027 + 0.069 = 0.404
+  dim 1: 0.142 + 0.062 + 0.022 + 0.079 = 0.305
+
+  c₃ = [0.404, 0.305]
+
+  "on" is a function word — its attention is almost uniform (flat row 3 in A).
+  c₃ is nearly the average of all value vectors.
+```
+
+```
+c₄ — "mat"'s context (used for prediction):
+
+  c₄ = 0.275×v₁  +  0.243×v₂  +  0.236×v₃  +  0.246×v₄
+
+  dim 0: 0.275×0.950 + 0.243×0.250 + 0.236×0.110 + 0.246×0.280
+       = 0.261 + 0.061 + 0.026 + 0.069 = 0.417
+  dim 1: 0.275×0.550 + 0.243×0.250 + 0.236×0.090 + 0.246×0.320
+       = 0.151 + 0.061 + 0.021 + 0.079 = 0.312
+
+  c₄ = [0.417, 0.312]
 
 "cat" contributes 0.261/0.417 = 62.6% of c₄'s first dimension.
-Despite being at position 1 (3 steps away from position 4), cat dominates c₄.
+Despite being at position 1 (3 positions away from position 4), cat dominates c₄.
 No sequential processing needed. No bottleneck. Direct access.
 ```
 
 ```
-Compare:
-  RNN:   h₄[dim 0] = 0.308  ← "cat" at 0.537 decayed to 0.308 over 3 steps (57%)
+Context vector summary — all 4 positions:
+
+  Position   Context vector   dim 0 (animal signal)   Attention to "cat"
+  ────────   ──────────────   ─────────────────────   ──────────────────
+  c₁ "cat"  [0.457, 0.331]   0.457 — highest          a₁₁ = 0.327 (self)
+  c₂ "sat"  [0.413, 0.310]   0.413                    a₂₁ = 0.271
+  c₃ "on"   [0.404, 0.305]   0.404                    a₃₁ = 0.259
+  c₄ "mat"  [0.417, 0.312]   0.417                    a₄₁ = 0.275
+
+  All 4 context vectors carry strong animal signal (0.404-0.457 in dim 0).
+  This is the parallel computation: EVERY position knows about "cat" after
+  one attention operation. In RNN, only h₁ had direct access to "cat" —
+  by h₄ it had decayed to 0.308.
+
+Key difference in computation:
+  GRU:   h₁ computed → used to compute h₂ → used to compute h₃ → h₄  (sequential)
+  Attn:  c₁, c₂, c₃, c₄ all computed in ONE matrix multiply C = A @ V  (parallel)
+```
+
+```
+Compare c₄ to final hidden states in sequential models:
+  RNN:   h₄[dim 0] = 0.308  ← "cat" at 0.537 decayed to 0.308 over 3 steps
   GRU:   h₄[dim 0] = 0.414  ← "cat" preserved via highway (78%)
   LSTM:  C₄[dim 0] = 0.636  ← "cat" accumulated in cell state (protected)
   Attn:  c₄[dim 0] = 0.417  ← "cat" contributes 62.6% directly via attention
@@ -663,6 +801,65 @@ Interpretation:
   Most negative: j=1 (cat) with -0.077.
   Optimizer wants to increase A[4,1] most → attend MORE to cat. ✓
   In relative terms: cat needs the largest boost.
+```
+
+---
+
+### Gradient magnitudes — Attention vs RNN vs LSTM vs GRU
+
+```
+Gradient magnitude arriving at each position's value vector:
+
+  ∂L/∂V[j] = A[4,j] × ∂L/∂c₄
+
+  |∂L/∂c₄| = √(0.059² + 0.039²) = √(0.003481 + 0.001521) = √0.005002 = 0.071
+
+  |∂L/∂V[1]| (cat) = 0.275 × 0.071 = 0.020   ← 27.5% of |∂L/∂c₄|
+  |∂L/∂V[2]| (sat) = 0.243 × 0.071 = 0.017   ← 24.3%
+  |∂L/∂V[3]| (on)  = 0.236 × 0.071 = 0.017   ← 23.6%
+  |∂L/∂V[4]| (mat) = 0.246 × 0.071 = 0.017   ← 24.6%
+
+  cat gets 27.5% — highest. mat gets 24.6%. Ratio: 1.12× only.
+  In RNN: mat got ~100%, cat got 9% → ratio of 11×  (extreme imbalance)
+  In attention: all positions receive gradient in the same ballpark.
+```
+
+```
+Compare how gradient reaches "cat" across all architectures:
+
+  Architecture   Path to "cat"              Formula                    % reaches cat
+  ────────────   ─────────────────────      ─────────────────────────  ─────────────
+  RNN            3 sequential steps         (Wₕᵀ×tanh')³ × ∂L/∂h₄    9%
+  LSTM           3 highway steps            f₂×f₃×f₄  × ∂L/∂C₄       69%
+  GRU            3 highway steps            (1-z₂)(1-z₃)(1-z₄) × δh₄ 66%
+  Attention      1 direct step              A[4,1] × ∂L/∂c₄           27.5%
+
+  27.5% is LOWER than GRU's 66% — but that is a misleading comparison!
+
+  In GRU: 66% flows to ONE position (h₁), distance 3 away.
+          To reach "cat" 100 positions away: 0.88^99 ≈ 0.00014 (0.01%)
+
+  In Attention: 27.5% flows to "cat" regardless of sequence position.
+          To reach "cat" 100 positions away: still A[n,1] × ∂L/∂c_n
+          If the model learns a₄[1]→0.9 (sharp attention):
+            cat gets 90% of ∂L/∂c₄ — MORE than GRU's highway at distance 3!
+
+  The comparison: attention gradient = A[4,1] × |∂L/∂c₄| — a CONSTANT
+                  GRU gradient      = (1-z)^distance × |∂L/∂h_n| — EXPONENTIAL DECAY
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Gradient to "cat" after 3 positions (seq_len=4):                         │
+│    RNN:        9%  (Wₕᵀ × tanh' ≈ 0.44 per step → 0.44³)                │
+│    GRU:       66%  ((1-z) ≈ 0.88 per step → 0.88³)                       │
+│    LSTM:      69%  (fₜ  ≈ 0.88 per step → 0.88³)                         │
+│    Attention: 27.5% at seq_len=4, SAME at seq_len=4000                   │
+│                                                                            │
+│  Gradient to "cat" after 100 positions (seq_len=101):                     │
+│    RNN:        0.44^100 ≈ 0.0   (vanished)                                │
+│    GRU:        0.88^100 ≈ 0.00014   (vanished)                            │
+│    LSTM:       0.88^100 ≈ 0.00014   (vanished)                            │
+│    Attention:  A[n,1] × |∂L/∂c_n| — same formula, no degradation         │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
