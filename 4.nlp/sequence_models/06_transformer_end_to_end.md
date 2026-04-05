@@ -182,6 +182,40 @@ become geometrically distinguishable even if their embeddings were similar.
 After PE: [1.000,1.500] vs [0.341,-0.590] — very different in attention space.
 ```
 
+**Alternative Positional Encodings (used in practice):**
+
+```
+1. LEARNED ABSOLUTE PE (BERT, GPT-2):
+   position_embedding = nn.Embedding(max_position, d_model)
+   x_pe = x + position_embedding(positions)
+
+   Pro:  model learns the "best" encoding for the task
+   Con:  can't extrapolate beyond max_position seen during training
+   Used: BERT (512 max), GPT-2 (1024 max)
+
+2. ROTARY POSITION EMBEDDING / RoPE (LLaMA, Mistral, GPT-NeoX):
+   Encode position as a ROTATION in complex space:
+     Q_rotated[m] = Q[m] · e^(iθm)   where m = position, θ = frequency
+   
+   Key property: dot(Q_m, K_n) depends only on (m-n), not absolute positions
+   → relative distance is baked into the attention score naturally
+   Pro:  better length generalization, relative positions come for free
+   Used: LLaMA-1/2/3, Mistral, Falcon — most modern open-source LLMs
+
+3. ALiBi — Attention with Linear Biases (MPT, BLOOM):
+   Don't add PE to embeddings at all.
+   Instead, subtract a linear bias from attention SCORES:
+     scores[i,j] = QKᵀ/√d - m × |i-j|
+   where m is a head-specific slope, |i-j| = distance between positions
+   
+   Pro:  strong extrapolation (trained on 1K tokens, works on 2K+)
+   Con:  slightly hurts perplexity vs RoPE on same training length
+   Used: MPT-7B, BLOOM
+
+For this walkthrough we use SINUSOIDAL (original paper) because it needs NO
+learned parameters and the math is explicit. In 2024 practice, RoPE is dominant.
+```
+
 ---
 
 ## 3. Weight Setup
@@ -648,12 +682,62 @@ The mechanics here are IDENTICAL to the real case — the formula is the same.
 The degeneracy is a property of this toy example's dimensionality, not a bug.
 ```
 
+**Pre-LN vs Post-LN — which order matters:**
+
+```
+ORIGINAL PAPER (Post-LN, used in this walkthrough):
+   X_attn = LN(X_pe + C)     ← LN applied AFTER residual addition
+   X_final = LN(X_attn + FFN)
+
+MODERN STANDARD (Pre-LN, used in GPT-3, LLaMA):
+   X_attn = X_pe + Attn(LN(X_pe))   ← LN applied INSIDE the branch, BEFORE sublayer
+   X_final = X_attn + FFN(LN(X_attn))
+
+GRADIENT FLOW COMPARISON at the first residual:
+   Post-LN: ∂L/∂X_pe = J_LN × (I + ∂Attn/∂X_pe)   ← LN Jacobian multiplies the highway!
+   Pre-LN:  ∂L/∂X_pe = I + J_LN × ∂Attn/∂LN_in    ← highway I is OUTSIDE LN Jacobian
+
+With Post-LN and d=2 (this walkthrough): J_LN = 0 → highway is partially blocked.
+With Pre-LN: the + comes AFTER LN, so residual bypass is always clean.
+
+PRACTICAL CONSEQUENCE:
+   Post-LN: requires careful warmup (large gradients early → divergence without warmup)
+   Pre-LN:  trains more stably out of the box, easier to scale to 100+ layers
+   LLaMA further replaces LayerNorm with RMSNorm:
+      RMSNorm(x) = γ × x / √(mean(x²))     ← no mean subtraction, simpler, faster
+      Same effect but ~10% faster than LayerNorm
+```
+
 ### Step 4: FFN (Feed-Forward Network)
 
 FFN is applied INDEPENDENTLY to each position using the SAME W1, W2.
 "Position-wise" = same transformation applied to each position's vector.
 
 **FFN formula: H = ReLU(X_ln1 @ W1 + b1);   FFN_out = H @ W2 + b2**
+
+**ReLU vs GELU (activation choice):**
+```
+This walkthrough uses ReLU for clear numbers.
+Modern transformers (BERT, GPT, LLaMA) use GELU or SwiGLU.
+
+ReLU(x) = max(0, x)
+   ReLU(0.1)  = 0.1,  ReLU(-0.1) = 0.0   (hard cutoff at 0)
+
+GELU(x) ≈ x × Φ(x)  where Φ = CDF of standard normal
+   GELU(0.1)  ≈ 0.054  (soft pass)
+   GELU(-0.1) ≈ -0.046  (small negative leaks through!)
+   GELU(2.0)  ≈ 1.954  (large positives ≈ identity)
+
+Why GELU > ReLU empirically:
+   ReLU: dead neuron problem — if pre-activation < 0 always, neuron never updates
+   GELU: stochastic regularization interpretation (smooth "probabilistic" gating)
+   In practice: GELU gives ~0.5-1% better perplexity on language modeling tasks
+
+SwiGLU (LLaMA, PaLM): gated variant
+   SwiGLU(x) = SiLU(W1·x) × W3·x    (two input projections, one gate)
+   SiLU(x) = x × sigmoid(x)
+   Requires 3 weight matrices but d_ff is often set to 2/3 × 4d (so same params)
+```
 
 **cat (X_ln1[cat] = [-1.000, 1.000]):**
 
@@ -1003,6 +1087,31 @@ Now this splits through the first residual:
           ├──► ∂L/∂x_pe_mat = [-0.183, -0.110]   ← direct highway to input embedding+PE
           │
           └──► ∂L/∂c₄ = [-0.183, -0.110]          ← gradient to attention output
+```
+
+**Note on embedding gradients — three gradient paths reach the input:**
+
+```
+In plain attention (no PE), each input embedding x receives gradient from
+THREE independent paths (Q, K, V projections):
+
+   ∂L/∂x = ∂L/∂Q_row × Wq.T     (x contributed to query)
+          + ∂L/∂K_row × Wk.T     (x contributed to key)
+          + ∂L/∂V_row × Wv.T     (x contributed to value)
+
+In the Transformer (with residual):
+   ∂L/∂x_pe_mat = [-0.183, -0.110]  ← from the residual highway (Step G)
+   + (Q path) ∂L/∂q₄ × Wq.T        ← mat as query
+   + (K path) ∂L/∂k₄ × Wk.T        ← mat as key
+   + (V path) ∂L/∂v₄ × Wv.T        ← mat as value
+
+The V path is by far the largest (Wv gradient is dominant, ~0.10 per cell).
+The K path is smaller (keys affect all queries' scores, then softmax).
+The Q path is smallest (mat queries the other keys, gradient through softmax Jacobian).
+
+Compare to RNN: each x gets gradient from ONE path (through Wx).
+Transformer: each x gets gradient from FOUR paths (residual + Q + K + V).
+→ Richer gradient signal per parameter, more efficient learning.
 ```
 
 ### Step H: Attention Weight Gradients (Focus on Wv)
@@ -1392,6 +1501,97 @@ During training: all heads' gradients computed simultaneously.
 
 ---
 
+## 11b. Attention Complexity and Causal Masking
+
+### Attention Complexity
+
+```
+Standard self-attention cost:
+   Time:   O(n² × d)   — n² score pairs, each d-dimensional dot product
+   Memory: O(n²)       — must store full n×n attention matrix A
+
+Concrete numbers:
+   n=4   (this walkthrough):  4×4=16 attention scores   → trivial
+   n=512  (BERT max):         512²=262K scores           → fine, fits in GPU memory
+   n=2048 (GPT-3 context):    2048²=4M scores            → manageable
+   n=8192 (Claude context):   8192²=67M scores           → needs optimization
+   n=100K (long document):    100K²=10B scores           → impossible without Flash Attention
+
+FLASH ATTENTION (Dao et al., 2022):
+   Key insight: don't materialize the full n×n matrix.
+   Process attention in tiles that fit in fast on-chip SRAM.
+   Recompute attention during backward pass (instead of storing it).
+   
+   Result: O(n²) time, O(n) memory   ← same time, 10× less memory
+   Used by: every production LLM (GPT-4, Claude, LLaMA, Mistral)
+   
+   PyTorch usage:
+      F.scaled_dot_product_attention(Q, K, V, is_causal=True)
+      # Automatically uses Flash Attention if on CUDA
+```
+
+### Causal Masking — Numbers
+
+**For a decoder (GPT-style), "mat" at position 4 should ONLY see positions 1-4:**
+
+```
+Full score matrix (no mask):
+         key_cat   key_sat   key_on    key_mat
+q_cat:   1.146     0.912     0.446    -0.037
+q_sat:   0.896     0.723     0.370    -0.016
+q_on:    0.405     0.344     0.212     0.020
+q_mat:  -0.061    -0.035     0.009     0.022
+
+Causal mask: set upper triangle to -∞ (block future positions):
+q_cat sees:  [cat only]     → set sat, on, mat scores to -∞
+q_sat sees:  [cat, sat]     → set on, mat scores to -∞
+q_on  sees:  [cat, sat, on] → set mat score to -∞
+q_mat sees:  [all 4]        → no masking for the last position
+
+After applying causal mask:
+         key_cat   key_sat   key_on    key_mat
+q_cat:   1.146      -∞        -∞       -∞
+q_sat:   0.896     0.723      -∞       -∞
+q_on:    0.405     0.344     0.212      -∞
+q_mat:  -0.061    -0.035     0.009     0.022   ← unchanged
+
+Softmax with -∞ entries → 0 for those positions:
+q_cat softmax([1.146, -∞, -∞, -∞]):
+   Only e^1.146 = 3.145 is non-zero.
+   A_cat = [1.000, 0.000, 0.000, 0.000]   ← cat attends only to itself
+
+q_sat softmax([0.896, 0.723, -∞, -∞]):
+   exp: [2.450, 2.060], sum=4.510
+   A_sat = [0.543, 0.457, 0.000, 0.000]   ← sat sees only cat and itself
+
+q_mat unchanged = [0.239, 0.245, 0.256, 0.260]   ← last position sees all
+
+WHY CAUSAL MASK?
+   In encoder (BERT): no mask → each token sees full context → better representations
+   In decoder (GPT):  causal mask → token i can't see tokens i+1,...,n
+                      This is what makes autoregressive generation possible:
+                      generate token 5 based on tokens 1-4, then append and repeat.
+```
+
+**KV Cache (production inference trick):**
+```
+During generation without cache:
+   Step 1: generate token 5 → compute attention over tokens 1-4 (n=4)
+   Step 2: generate token 6 → compute attention over tokens 1-5 (n=5)
+   ...
+   Step k: recompute K,V for all previous tokens from scratch → O(n²) total
+
+With KV Cache:
+   Store K, V tensors for each layer from all previous tokens.
+   At step k: only compute Q for new token, retrieve cached K, V.
+   → Per-step cost is O(n), total O(n²) → O(n) per generated token.
+   
+   Memory cost: KV cache size = 2 × n_layers × n_heads × d_head × seq_len × 2 bytes
+   For LLaMA-7B (32 layers, 32 heads, d_head=128): ~2GB for 2K tokens
+```
+
+---
+
 ## 12. Full Picture Diagram
 
 ```
@@ -1571,6 +1771,35 @@ to GPT-3. The only difference is scale.
 │  A₄=[0.239,0.245,0.256,0.260]  (mat attends most to itself+on)          │
 │  ŷ=0.635, L=0.454 → L'=0.431 after update ✓                            │
 └─────────────────────────────────────────────────────────────────────────┘
+
+**Parameter Count:**
+
+```
+This toy example (d=2, d_ff=4, vocab=4):
+   Wq, Wk, Wv: 3 × (2×2) = 12 params
+   W_o:        (2×2) = 4 params        (identity in 1-head case)
+   W1, b1:     (2×4) + 4 = 12 params
+   W2, b2:     (4×2) + 2 = 10 params
+   LN params:  2 × 2 = 4 params (γ, β)
+   W_out:      2 params
+   Embeddings: 4×2 = 8 params
+   ──────────────────────────────────
+   TOTAL:      ~52 params
+
+Real models:
+   BERT-base:   d=768,  d_ff=3072, h=12, L=12, vocab=30522 → ~110M params
+   GPT-2:       d=768,  d_ff=3072, h=12, L=12, vocab=50257 → ~117M params
+   GPT-3:       d=12288,d_ff=49152,h=96, L=96, vocab=50257 → ~175B params
+   LLaMA-7B:    d=4096, d_ff=11008,h=32, L=32, vocab=32000 → ~7B params
+
+Per-layer param formula:
+   Attention:   4 × d² (Wq, Wk, Wv, W_o — each d×d)
+   FFN (ReLU):  2 × d × d_ff (W1, W2)
+   FFN (SwiGLU):3 × d × (2/3 × d_ff)  (same total ≈ 2×d×d_ff)
+   LayerNorm:   2 × d (γ and β, usually negligible)
+   Per layer:   ≈ 4d² + 8d²  = 12d²  (since d_ff = 4d)
+   L layers:    12L × d²
+```
 ```
 
 ---
@@ -2003,4 +2232,147 @@ RNN: information flows through time (sequential, lossy).
 Attention: information flows through a weighted sum (parallel, direct).
 Transformer: attention + position awareness + non-linearity + residuals =
              the complete architecture that powers modern AI.
+```
+
+---
+
+## 17. Gotchas
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GOTCHA                       WHAT GOES WRONG              HOW TO FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Post-LN without warmup       Huge gradient variance early  Use Pre-LN, or
+                             → loss spikes → divergence    add 4000-step warmup
+
+Forgetting causal mask       Decoder sees future tokens    Verify mask shape:
+in decoder                   → target leakage              [seq, seq] upper tri
+
+Full-seq generation          Recomputes K,V every step    Enable KV cache:
+without KV cache             → O(n²) per token generated   past_key_values=True
+
+All-pad row in attention     softmax(-inf, -inf, ...) = NaN Detect and clamp
+(variable-length batching)   → NaN propagates everywhere   before masked_fill
+
+d_model not divisible        head_dim = d_model/n_heads   Assert d_model % n_heads == 0
+by n_heads                   → non-integer → crash         before building model
+
+Confusing mask conventions   HuggingFace: 1=attend         Check docs for each
+(HF vs PyTorch)              PyTorch MHA: True=IGNORE       framework carefully
+
+Not scaling down attention   QKᵀ variance = d_k without   Always divide by √d_k
+scores by √d_k               scaling → softmax saturates   scores / math.sqrt(d_k)
+
+Sequence length > max_pe     PE has no entry for pos >     Use RoPE/ALiBi which
+at inference                 max_len → index error          extrapolate naturally
+
+Attention weight ≠ token     High A[i,j] does NOT mean     Use gradient-based
+importance (common mistake)  token j "caused" output i      attribution instead
+
+Positional encodings on      PE should be on embeddings,   Apply PE ONCE, before
+every layer                  not re-added each block        the first encoder block
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+## 18. Interview Q&A
+
+**Q: What problem does positional encoding solve, and why sinusoidal?**
+```
+A: Self-attention is permutation-invariant — "cat sat mat" and "mat sat cat"
+produce the same attention output without PE. Sinusoidal PE adds a unique vector
+to each position's embedding before attention. Sinusoidal is chosen because
+PE(pos+k) can be expressed as a linear function of PE(pos) using trig identities
+— the model can learn to represent relative distances. Alternative: learned PE
+(BERT/GPT-2), but it can't extrapolate beyond training length. Modern choice:
+RoPE (LLaMA), which encodes relative positions directly in Q/K rotation.
+```
+
+**Q: Why does the Transformer need both the residual connection AND LayerNorm?**
+```
+A: They solve different problems:
+   Residual: gradient highway. ∂L/∂x = ∂L/∂(x+sublayer) × 1 → direct path
+             without residuals, gradient must pass through all sublayer Jacobians
+             → vanishes in deep models (same as RNN's problem)
+   LayerNorm: activation stability. After attention (which can produce large values)
+              and FFN (which uses ReLU), activations can grow unboundedly.
+              LN keeps mean=0, std=1 per token → stable training across layers.
+   Together: residual ensures gradient flows, LN ensures activations are stable.
+             Without residuals → no convergence at >6 layers.
+             Without LN → activation explosion, NaN loss.
+```
+
+**Q: What is the role of the FFN in a transformer? Why d_ff = 4×d_model?**
+```
+A: Attention is linear — it computes a weighted sum of value vectors (no activation
+function in the computation of C = A@V). The FFN adds per-token non-linearity:
+   H = ReLU(xW₁),  output = HW₂
+It's often described as "key-value memory": W₁ acts as key lookup (does x match
+any stored pattern?), ReLU as selector, W₂ as value retrieval. In BERT, ~63% of
+factual knowledge is stored in FFN weights, not attention.
+
+The 4× expansion: d_ff=4d provides enough capacity for the non-linear transform.
+Smaller d_ff → model underfits; larger → more params with diminishing returns.
+LLaMA uses SwiGLU with ~2.7× expansion (but 3 matrices) — same params, better perf.
+```
+
+**Q: Explain the difference between Pre-LN and Post-LN. Which do you use?**
+```
+A: Post-LN (original): x + Sublayer(x) → LN(result)
+   Pro: better final performance. Con: training unstable early (large gradient variance),
+   requires careful warmup schedule (4000+ steps at low LR).
+
+   Pre-LN (modern): x + Sublayer(LN(x))
+   Pro: stable training from step 1, easier to scale. Con: very slight performance
+   gap vs Post-LN, but negligible at scale.
+
+   Current practice (2024): Pre-LN with RMSNorm (LLaMA style):
+     RMSNorm(x) = γ × x / √(mean(x²))  — no mean subtraction, ~10% faster
+   This is the default for all modern open-source LLMs.
+```
+
+**Q: What happens in the backward pass through a residual connection?**
+```
+A: x_out = x + sublayer(x)
+   ∂L/∂x = ∂L/∂x_out × ∂x_out/∂x
+          = ∂L/∂x_out × (1 + ∂sublayer/∂x)
+          = ∂L/∂x_out + ∂L/∂x_out × ∂sublayer/∂x
+
+The first term (∂L/∂x_out) is the gradient highway — it reaches x directly
+without passing through any sublayer Jacobian. Even if ∂sublayer/∂x ≈ 0
+(due to vanishing or zero LN Jacobian, as in our d=2 example), the gradient
+still arrives intact. This is why transformers with 100+ layers can be trained.
+```
+
+**Q: Why use multi-head attention instead of single-head?**
+```
+A: With a single head, the model learns ONE attention pattern per layer.
+   With h heads:
+   - Each head projects Q,K,V into a different d_head-dimensional subspace
+   - Each head learns a different type of relationship simultaneously:
+     Head 1: syntactic (subject-verb agreement)
+     Head 2: semantic (co-reference resolution)
+     Head 3: positional proximity
+   - Outputs concatenated → projected by W_o to blend all views
+   
+   Key insight: total compute ≈ same (h smaller heads vs 1 large head),
+   but expressivity increases because h independent attention patterns can
+   capture h different structural relationships in one forward pass.
+```
+
+**Q: Why does the gradient through the softmax Jacobian (for Wq and Wk) sum to zero?**
+```
+A: Softmax has the property that its outputs sum to 1.
+   Therefore its Jacobian (∂softmax_i/∂s_j for all j) sums to 0 over each row.
+   
+   When backpropagating ∂L/∂s through softmax:
+   ∂L/∂s_k = A_k × (∂L/∂A_k - g),  where g = A · ∂L/∂A (dot product)
+   
+   Σ_k ∂L/∂s_k = 0  always (structural property, not data-dependent)
+   
+   This means: the gradient to the scores is a zero-sum redistribution.
+   Some scores increase, others decrease by the same total amount.
+   This constrains how much gradient Wq and Wk receive → they update slower
+   than Wv, which has no such constraint (gradient path: c₄ → V → Wv).
 ```
