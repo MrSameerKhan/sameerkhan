@@ -296,6 +296,159 @@ Watch out for:
 
 ---
 
+## A/B Testing for Recommendation Systems
+
+### Experiment Design
+
+```
+Goal: test whether new ranking model improves CTR vs current model
+
+Treatment: new ranking model (model B)
+Control:   current model (model A)
+
+Randomization unit: user_id (not request)
+  Why user-level? A user must always see the same experience — mixing A/B per
+  request creates inconsistency and dilutes the signal (novelty effect).
+
+Traffic split: 50/50 (or 10/90 for risky experiments)
+Minimum detectable effect: 0.5% CTR lift (set before experiment)
+Statistical power: 80% (β=0.20)
+Significance level: α=0.05
+
+Sample size calculation:
+  Baseline CTR = 4.2%
+  MDE = 0.5% relative → δ = 0.042 × 0.005 = 0.00021 (absolute)
+  σ² = p(1-p) = 0.042 × 0.958 = 0.040
+
+  n = 2 × σ² × (z_α/2 + z_β)² / δ²
+    = 2 × 0.040 × (1.96 + 0.84)² / 0.00021²
+    = 2 × 0.040 × 7.84 / 0.0000000441
+    ≈ 142M users per arm   ← too large; 2-week runtime to reach significance
+```
+
+### Metric Hierarchy
+
+```
+Primary metric (guardrail):
+  CTR — primary engagement; must improve or be neutral
+
+Secondary metrics (informational):
+  Conversion rate       — did click lead to purchase/watch?
+  Session length        — are users staying longer?
+  Return rate (7-day)   — did users come back?
+
+Guardrail metrics (must NOT degrade):
+  Latency p99           — new model must not slow serving
+  Error rate            — no increase in failures
+  Diversity score       — filter bubbles must not worsen
+
+Novelty / primacy effect:
+  Users click new things out of curiosity → inflate initial CTR.
+  Wait at least 1 week before evaluating; compare week 2 metrics only.
+```
+
+### Experiment Code
+
+```python
+import hashlib
+import numpy as np
+from scipy import stats
+
+def assign_variant(user_id: int, experiment_name: str, traffic_pct: float = 0.5) -> str:
+    """Deterministic, stable assignment — same user always gets same variant."""
+    key = f"{experiment_name}_{user_id}"
+    hash_val = int(hashlib.md5(key.encode()).hexdigest(), 16)
+    bucket = (hash_val % 1000) / 1000.0   # [0, 1)
+
+    if bucket >= traffic_pct:
+        return "control"
+    elif bucket < traffic_pct / 2:
+        return "treatment"
+    else:
+        return "control"
+
+def run_ab_test(control_clicks, control_impressions,
+                treatment_clicks, treatment_impressions):
+    """Two-proportion z-test for CTR comparison."""
+    p_c = control_clicks / control_impressions      # baseline CTR
+    p_t = treatment_clicks / treatment_impressions  # new model CTR
+
+    # Pooled proportion under H₀: p_c = p_t
+    p_pool = (control_clicks + treatment_clicks) / (control_impressions + treatment_impressions)
+
+    se = np.sqrt(p_pool * (1 - p_pool) * (1/control_impressions + 1/treatment_impressions))
+    z  = (p_t - p_c) / se
+    p_value = 2 * (1 - stats.norm.cdf(abs(z)))  # two-tailed
+
+    lift = (p_t - p_c) / p_c * 100  # relative lift %
+
+    return {
+        "control_ctr":   round(p_c, 4),
+        "treatment_ctr": round(p_t, 4),
+        "lift_pct":      round(lift, 2),
+        "z_score":       round(z, 3),
+        "p_value":       round(p_value, 4),
+        "significant":   p_value < 0.05
+    }
+
+# Example dry run:
+result = run_ab_test(
+    control_clicks=84_000,    control_impressions=2_000_000,   # CTR = 4.20%
+    treatment_clicks=89_250,  treatment_impressions=2_000_000  # CTR = 4.46%
+)
+# Output:
+# control_ctr:   0.042
+# treatment_ctr: 0.04463
+# lift_pct:      +6.25%
+# z_score:       6.21
+# p_value:       0.0000
+# significant:   True
+# → Ship the new ranking model
+```
+
+### Dry Run — A/B Decision
+
+```
+Experiment: new LightGBM ranking model vs old logistic regression
+Runtime: 14 days, 2M users per arm
+
+Results:
+  Control  (logistic):  84,000 clicks / 2,000,000 impressions = 4.200% CTR
+  Treatment (LightGBM): 89,250 clicks / 2,000,000 impressions = 4.463% CTR
+
+z = (0.04463 - 0.04200) / sqrt(0.0433×0.9567×(1/2M + 1/2M))
+  = 0.00263 / 0.0000423
+  = 6.21
+
+p-value = 2 × (1 - Φ(6.21)) ≈ 0.000 → reject H₀
+
+Lift = (4.463 - 4.200) / 4.200 × 100 = +6.25%
+
+Guardrail check:
+  Latency p99: 48ms (control) vs 51ms (treatment) → +6% → acceptable (<10% budget)
+  Diversity:   0.72 (control) vs 0.73 (treatment) → improved ✓
+
+Decision: ship LightGBM ranking model
+```
+
+### Common Pitfalls
+
+```
+Network effects: recommendations can affect other users (viral content).
+  Mitigate: cluster-based randomization instead of individual user.
+
+Multiple testing: running 5 experiments simultaneously inflates false positive rate.
+  Mitigate: Bonferroni correction (α/n) or FDR control.
+
+Interaction effects: two live experiments on same user population.
+  Mitigate: mutex layers — users assigned to only one experiment at a time.
+
+Underpowered experiments: ending early because "looks significant."
+  Mitigate: pre-commit sample size; use sequential testing if early stopping needed.
+```
+
+---
+
 ## Interview Q&A
 
 **Q: Explain two-tower architecture and why it's used for retrieval.**

@@ -144,21 +144,55 @@ for block in response['Blocks']:
 
 ### LayoutLM Family
 
-**LayoutLM v3 — Layout-aware BERT:**
+**Evolution: v1 → v2 → v3**
+
+| Version | Params | Image | Attention | Pre-training |
+|---------|--------|-------|-----------|--------------|
+| v1 (2020) | 113M | ❌ None | Text+layout only | MLM + Layout Prediction |
+| v2 (2021) | 200M | ✓ CNN features, cross-attention | Text+layout+image (separate streams) | MLM + MIM + ITM |
+| v3 (2022) | 133M | ✓ ViT patches, unified | All modalities in one transformer | MLM + MIM + WPA |
+
+**v3 is the default — use it unless you have a specific reason not to.**
+
+**LayoutLM v3 — Architecture:**
 ```
-Key insight: document understanding requires text + position + image together
+Key insight: text position on page carries semantic meaning.
+"Total: $1,250" in the bottom-right corner = invoice total.
+Same text in the middle = probably a line item.
 
-Inputs to LayoutLM v3:
-  1. Text tokens (from OCR)
-  2. Bounding box coordinates [x0, y0, x1, y1, width, height] for each token
-  3. Image patches (from ResNet or ViT)
+Inputs:
+  1. Text tokens (from OCR) — up to 512 tokens
+  2. Bounding box per token: [x0, y0, x1, y1, width, height]
+     ↳ Normalized to [0, 1000]: x_norm = int(x_pixels / img_width × 1000)
+     ↳ Example: word at pixel (120, 340) in a 1200×1700 image
+       → x0 = int(120/1200 × 1000) = 100
+       → y0 = int(340/1700 × 1000) = 200
+  3. Image patches: 224×224 → 14×14 = 196 patches (16×16 each)
 
-All three modalities fused via unified transformer self-attention.
+Embedding layers:
+  token_emb    = nn.Embedding(vocab_size, 768)
+  x_emb        = nn.Embedding(1001, 128)   # x0, x1, width
+  y_emb        = nn.Embedding(1001, 128)   # y0, y1, height
+  layout_proj  = nn.Linear(128*6, 768)     # fuse all 6 bbox coords → 768
+  patch_proj   = nn.Linear(768, 768)       # flatten 16×16×3 → project
 
-Pre-training objectives:
-  - MLM (Masked Language Modeling) on text tokens
-  - MIM (Masked Image Modeling) on image patches
-  - Word-patch alignment: predict which patches correspond to masked words
+All three streams → concatenated → single 12-layer transformer self-attention.
+
+Pre-training objectives (133M params, IIT-CDIP dataset):
+  MLM: mask 15% of text tokens → predict original token
+       forces model to use layout context for masked word prediction
+  MIM: mask 40% of image patches → predict dVAE discrete tokens
+       forces model to learn visual features from surrounding patches
+  WPA: Word-Patch Alignment — binary classification per token:
+       does this OCR text token spatially overlap with this image patch?
+       forces cross-modal spatial correspondence learning
+```
+
+**Subword inheritance (critical detail):**
+```
+Word "Invoice" → tokenizer splits to ["In", "##vo", "##ice"]
+All 3 subwords inherit the same bbox as the parent word.
+This is why bbox encoding happens per-token, not per-word.
 ```
 
 ```python
@@ -286,6 +320,83 @@ print(parsed)
 # Prepare SynthDoG-style dataset:
 # {"image": PIL.Image, "ground_truth": '{"invoice_number": "INV-001", "date": "2024-01-01"}'}
 ```
+
+---
+
+### Nougat (Neural Optical Understanding for Academic Documents)
+
+**Architecture:**
+```
+Problem: Scientific PDFs contain LaTeX equations, tables, figures, references.
+Standard OCR produces garbage for math: "∫f(x)dx" → "JT(x)dx" (wrong).
+Nougat reads the PDF page as an image and outputs valid Markdown + LaTeX.
+
+Architecture: same as Donut (Swin encoder + mBART decoder), but trained on:
+  - 8M+ academic paper pages from arXiv, PubMed
+  - Ground truth: LaTeX source matched to compiled PDF pages
+  - Output: Markdown with LaTeX math blocks
+
+Donut vs Nougat:
+  Donut     → business documents (invoices, receipts, forms) → structured JSON
+  Nougat    → academic PDFs → readable Markdown with equations
+```
+
+**Output example:**
+```
+Input: scanned page of a ML paper with equations
+
+Nougat output:
+## 3.2 Self-Attention Mechanism
+
+The attention function maps a query and set of key-value pairs to an output:
+
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
+where $d_k$ is the dimension of the keys. We use multi-head attention with $h=8$ parallel heads.
+
+| Layer | d_model | d_ff | Heads |
+|-------|---------|------|-------|
+| 1-6   | 512     | 2048 | 8     |
+```
+
+```python
+# Nougat inference
+from nougat import NougatModel
+from nougat.utils.dataset import LazyDataset
+import torch
+
+model = NougatModel.from_pretrained("facebook/nougat-base").to("cuda")
+model.eval()
+
+# Process PDF
+from nougat.utils.checkpoint import get_checkpoint
+from PIL import Image
+
+# Convert PDF pages to images first
+pages = pdf_to_images("paper.pdf")  # list of PIL Images
+
+predictions = []
+for page in pages:
+    pixel_values = model.encoder.prepare_input(page, random_padding=False)
+    pixel_values = pixel_values.unsqueeze(0).to("cuda")
+
+    with torch.no_grad():
+        outputs = model.inference(image_tensors=pixel_values)
+
+    predictions.append(outputs["predictions"][0])
+
+# Combine pages into single markdown
+full_text = "\n\n".join(predictions)
+```
+
+**When to use Nougat:**
+- ✓ Converting academic papers / technical reports to searchable text
+- ✓ Building RAG systems over scientific literature
+- ✓ Extracting equations, tables, algorithms from papers
+- ✗ Not for business documents (invoices, contracts) — use LayoutLM/Donut
+- ✗ Not for handwritten documents
+
+**Limitation:** Nougat can hallucinate when the PDF is low-quality or heavily scanned. Always check output on representative samples before deploying.
 
 ---
 
