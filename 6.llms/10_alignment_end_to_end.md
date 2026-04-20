@@ -276,7 +276,64 @@ Penalized reward = R(x, y) - β × KL
                  = 1.81
 ```
 
-**Step 4: PPO update**
+**Step 4: PPO update — numerical dry-run**
+```
+Setup: single response y = "The capital of France is Paris."
+  Reward model score:       R(x, y) = 1.9
+  KL penalty:               KL(π_θ || π_SFT) = 0.45 nats
+  β = 0.2
+
+  Total reward:  r = 1.9 - 0.2 × 0.45 = 1.81
+
+Value function estimates (from critic head):
+  V(s₀) = 1.60   (estimated return from start token)
+  V(s₁) = 1.55   (after token "The")
+  V(s₂) = 1.50   (after "capital")
+  ...
+  V(s₇) = 0.00   (terminal — episode over)
+
+Discounted returns (γ=1.0 for RLHF, episode=1 response):
+  G₇ = 1.81           (final reward at EOS token)
+  G₆ = 1.81
+  G₅ = 1.81
+  ...
+  G₀ = 1.81           (same reward for all tokens — reward given at end)
+
+Advantage estimates (A = G - V):
+  A₀ = G₀ - V(s₀) = 1.81 - 1.60 = +0.21
+  A₁ = G₁ - V(s₁) = 1.81 - 1.55 = +0.26
+  A₂ = G₂ - V(s₂) = 1.81 - 1.50 = +0.31
+  ...
+  A₇ = G₇ - V(s₇) = 1.81 - 0.00 = +1.81
+
+  Interpretation: all A > 0 → this was better than expected → increase π(token|context)
+
+PPO clipped objective (at token 0, "The"):
+  Old policy:  π_old("The" | x) = 0.42
+  New policy:  π_θ("The" | x)  = 0.50
+  Ratio:        r₀ = 0.50 / 0.42 = 1.190
+
+  Unclipped: r₀ × A₀ = 1.190 × 0.21 = 0.250
+  Clipped:   clip(1.190, 0.8, 1.2) × 0.21 = 1.190 × 0.21 = 0.250  (within [0.8, 1.2])
+  L_CLIP at t=0: min(0.250, 0.250) = 0.250 → no clipping here
+
+  At a different token "Paris" (strong increase):
+  Old policy: π_old("Paris" | ...) = 0.30
+  New policy: π_θ("Paris" | ...)  = 0.55
+  Ratio: 0.55 / 0.30 = 1.833 > 1.2 → CLIPPED
+  Unclipped: 1.833 × 0.31 = 0.568
+  Clipped:   1.2   × 0.31 = 0.372
+  L_CLIP = min(0.568, 0.372) = 0.372  ← clipping fires, prevents huge update
+
+Value loss (critic):
+  L_VF = (V(s₀) - G₀)² = (1.60 - 1.81)² = (-0.21)² = 0.044
+
+Total loss: L = -L_CLIP + 0.5 × L_VF
+               = -0.372  + 0.5 × 0.044
+               = -0.372  + 0.022
+               = -0.350   ← minimize this → maximize L_CLIP + reduce value error
+```
+
 PPO clips the gradient update to prevent large policy swings:
 ```
 clip ratio = π_θ(y|x) / π_old(y|x)

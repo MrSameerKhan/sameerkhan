@@ -283,6 +283,67 @@ Turn 3 input tokens:
   Total:                  ~290 tokens
 ```
 
+**Token count dry-run — 5-iteration agent:**
+```
+Task: "Analyze Q1 sales data and summarize key trends"
+Model: claude-sonnet-4-6, context limit = 200,000 tokens
+
+Iteration 1:
+  System prompt:        450 tokens
+  User query:           12 tokens
+  LLM response (Thought + Action): 180 tokens
+  Tool: read_file("q1_sales.csv")
+  Tool result:          2,400 tokens  (full CSV)
+  Running total:        3,042 tokens
+
+Iteration 2:
+  Prior context (iter 1): 3,042 tokens  ← CARRIED FORWARD
+  LLM response:            320 tokens
+  Tool: python_repl("df.groupby('region').sum()")
+  Tool result:             280 tokens
+  Running total:           3,642 tokens
+
+Iteration 3:
+  Prior context (iter 1+2): 3,642 tokens
+  LLM response:              250 tokens
+  Tool: python_repl("df.plot(); plt.savefig('chart.png')")
+  Tool result:                 80 tokens
+  Running total:             3,972 tokens
+
+Iteration 4:
+  Prior context (iter 1-3): 3,972 tokens
+  LLM response:               480 tokens  (drafting summary)
+  No tool call
+  Running total:             4,452 tokens
+
+Iteration 5 (final):
+  Prior context (iter 1-4): 4,452 tokens
+  LLM response (FINAL):      620 tokens
+  Total tokens used:         5,072 tokens
+
+Cost (claude-sonnet-4-6 at $3/MTok input, $15/MTok output):
+  Input:  4,452 × $3/1M  = $0.013
+  Output:  620 × $15/1M  = $0.009
+  Total per run:           $0.022
+
+At 1,000 runs/day: $22/day — manageable
+At 100K runs/day:  $2,200/day — need to optimize prompt length
+
+Context window headroom: 5,072 / 200,000 = 2.5% used → plenty of room
+BUT: if CSV was 500K tokens (large file), tool result would immediately exhaust
+     a 32K-token model (GPT-4 Turbo base) → always truncate tool outputs
+
+Max iteration cutoff example:
+  max_turns = 10 set in agent config
+  Agent gets stuck in a loop at iteration 8:
+    Turn 8:  Action: search("Q1 data")  → result: "no data found"
+    Turn 9:  Action: search("Q1 data")  → result: "no data found"
+    Turn 10: Action: search("Q1 data")  → RuntimeError: "Turn budget exceeded (10)"
+    Agent returns: "I was unable to complete the task within the allowed iterations.
+                   Last action: search. Last result: no data found."
+  Without max_turns: infinite loop, context window fills, $∞ cost
+```
+
 **Agents are expensive:** a 10-step agent might use 10× the tokens of a single LLM call. Always set `max_turns` and budget per request.
 
 ---

@@ -56,6 +56,48 @@ print(gnb.class_prior_)  # P(y=k) for each class
 probs = gnb.predict_proba(X_test)   # [n_samples, n_classes]
 ```
 
+### Naive Bayes — Dry Run (Spam Classification)
+
+**Setup:** Vocabulary = {free, money, meeting, tomorrow}. Two training documents per class.
+
+```
+Training corpus:
+  SPAM:  "free money"      → {free:1, money:1, meeting:0, tomorrow:0}
+         "free free money" → {free:2, money:1, meeting:0, tomorrow:0}
+  HAM:   "meeting tomorrow"→ {free:0, money:0, meeting:1, tomorrow:1}
+         "tomorrow meeting"→ {free:0, money:0, meeting:1, tomorrow:1}
+
+Count totals (with Laplace α=1):
+  P(spam) = 2/4 = 0.5,  P(ham) = 2/4 = 0.5
+
+  Word counts in SPAM (raw): free=3, money=2, meeting=0, tomorrow=0  → total=5
+  Word counts in HAM  (raw): free=0, money=0, meeting=2, tomorrow=2  → total=4
+
+  P(free|spam)     = (3+1)/(5+4) = 4/9 = 0.444
+  P(money|spam)    = (2+1)/(5+4) = 3/9 = 0.333
+  P(meeting|spam)  = (0+1)/(5+4) = 1/9 = 0.111
+  P(tomorrow|spam) = (0+1)/(5+4) = 1/9 = 0.111
+
+  P(free|ham)      = (0+1)/(4+4) = 1/8 = 0.125
+  P(money|ham)     = (0+1)/(4+4) = 1/8 = 0.125
+  P(meeting|ham)   = (2+1)/(4+4) = 3/8 = 0.375
+  P(tomorrow|ham)  = (2+1)/(4+4) = 3/8 = 0.375
+
+Classify test message: "free money tomorrow"
+
+  log P(spam|x) ∝ log(0.5) + log(0.444) + log(0.333) + log(0.111)
+                = -0.693 + (-0.811) + (-1.099) + (-2.198)
+                = -4.801
+
+  log P(ham|x)  ∝ log(0.5) + log(0.125) + log(0.125) + log(0.375)
+                = -0.693 + (-2.079) + (-2.079) + (-0.981)
+                = -5.832
+
+  -4.801 > -5.832  →  predict SPAM  ✓
+```
+
+Note: "tomorrow" shifted ham toward spam slightly, but "free money" (high P(word|spam)) dominated.
+
 ### Multinomial Naive Bayes (Text Classification)
 ```
 Assumes features are non-negative integer counts (word frequencies)
@@ -296,7 +338,163 @@ optuna.visualization.plot_param_importances(study).show()
 
 ---
 
-## 5. Calibration and Probability Estimation
+## 5. Hidden Markov Models (HMM)
+
+### What is an HMM?
+
+An HMM models a sequence where:
+- **Hidden states** are unobservable (e.g., Part-of-Speech tags: NOUN, VERB, DET)
+- **Observations** are what we see (e.g., words: "the", "cat", "runs")
+- We want to infer the hidden state sequence given the observations
+
+**5 components:**
+```
+S = {s₁, s₂, ..., sₙ}           Hidden states (e.g., {NOUN, VERB, DET})
+O = {o₁, o₂, ..., oₘ}           Observation symbols (e.g., vocabulary)
+A = [aᵢⱼ]                        Transition probabilities: P(sⱼ|sᵢ)
+B = [bᵢ(oₖ)]                     Emission probabilities: P(oₖ|sᵢ)
+π = [πᵢ]                         Initial state probabilities: P(state i at t=0)
+```
+
+### Dry Run — POS Tagging
+
+**Setup:** 3 states (DET, NOUN, VERB), small vocabulary.
+
+```
+States: DET, NOUN, VERB
+Observations: "the", "dog", "runs"
+
+Initial probabilities (π):
+  P(DET)  = 0.6,  P(NOUN) = 0.3,  P(VERB) = 0.1
+
+Transition probabilities (A):
+  From\To   DET   NOUN   VERB
+  DET       0.0   0.8    0.2
+  NOUN      0.1   0.2    0.7
+  VERB      0.5   0.4    0.1
+
+Emission probabilities (B):
+  State\Word   "the"  "dog"  "runs"
+  DET           0.8    0.1    0.1
+  NOUN          0.1    0.7    0.2
+  VERB          0.05   0.05   0.9
+```
+
+**Viterbi Algorithm** — find the most likely hidden state sequence:
+
+```
+Step t=0, word = "the":
+  δ(DET)  = π(DET)  × B(DET,"the")  = 0.6 × 0.8 = 0.480
+  δ(NOUN) = π(NOUN) × B(NOUN,"the") = 0.3 × 0.1 = 0.030
+  δ(VERB) = π(VERB) × B(VERB,"the") = 0.1 × 0.05= 0.005
+
+Step t=1, word = "dog":
+  δ(DET)  = max[δ(DET)×A(DET,DET), δ(NOUN)×A(NOUN,DET), δ(VERB)×A(VERB,DET)]
+            × B(DET,"dog")
+           = max[0.480×0.0, 0.030×0.1, 0.005×0.5] × 0.1
+           = max[0.000, 0.003, 0.0025] × 0.1 = 0.003 × 0.1 = 0.0003
+             (came from NOUN)
+
+  δ(NOUN) = max[0.480×0.8, 0.030×0.2, 0.005×0.4] × B(NOUN,"dog")
+           = max[0.384, 0.006, 0.002] × 0.7 = 0.384 × 0.7 = 0.2688
+             (came from DET)
+
+  δ(VERB) = max[0.480×0.2, 0.030×0.7, 0.005×0.1] × B(VERB,"dog")
+           = max[0.096, 0.021, 0.0005] × 0.05 = 0.096 × 0.05 = 0.0048
+             (came from DET)
+
+Step t=2, word = "runs":
+  δ(VERB) = max[δ(DET)×A(DET,VERB), δ(NOUN)×A(NOUN,VERB), δ(VERB)×A(VERB,VERB)]
+            × B(VERB,"runs")
+           = max[0.0003×0.2, 0.2688×0.7, 0.0048×0.1] × 0.9
+           = max[0.00006, 0.18816, 0.00048] × 0.9
+           = 0.18816 × 0.9 = 0.16934   (came from NOUN)
+
+Backtrack: t=2: VERB ← t=1: NOUN ← t=0: DET
+Best path: DET → NOUN → VERB = ["the"=DET, "dog"=NOUN, "runs"=VERB]  ✓
+```
+
+### Three Core HMM Problems
+
+```
+1. Evaluation (likelihood):     P(O|λ) using Forward algorithm
+   "How likely is this observation sequence under this HMM?"
+   
+2. Decoding (most likely path): argmax_S P(S|O,λ) using Viterbi algorithm
+   "What hidden state sequence best explains the observations?"
+   
+3. Learning (parameter est.):   argmax_λ P(O|λ) using Baum-Welch (EM for HMMs)
+   "Given observations only, find A, B, π."
+```
+
+### Forward Algorithm (Evaluation)
+
+```python
+import numpy as np
+
+def forward(obs_seq, A, B, pi):
+    """
+    obs_seq: list of observation indices
+    A: [n_states, n_states] transition matrix
+    B: [n_states, n_obs] emission matrix
+    pi: [n_states] initial probabilities
+    Returns: total probability P(obs_seq | model)
+    """
+    T = len(obs_seq)
+    N = len(pi)
+    alpha = np.zeros((T, N))
+
+    # Initialization
+    alpha[0] = pi * B[:, obs_seq[0]]
+
+    # Recursion
+    for t in range(1, T):
+        for j in range(N):
+            alpha[t, j] = np.sum(alpha[t-1] * A[:, j]) * B[j, obs_seq[t]]
+
+    return alpha.sum(axis=1)[-1]   # P(obs_seq)
+```
+
+### Viterbi Algorithm (Decoding)
+
+```python
+def viterbi(obs_seq, A, B, pi):
+    T = len(obs_seq)
+    N = len(pi)
+    delta = np.zeros((T, N))
+    psi = np.zeros((T, N), dtype=int)   # backpointers
+
+    delta[0] = pi * B[:, obs_seq[0]]
+
+    for t in range(1, T):
+        for j in range(N):
+            scores = delta[t-1] * A[:, j]
+            psi[t, j] = np.argmax(scores)
+            delta[t, j] = np.max(scores) * B[j, obs_seq[t]]
+
+    # Backtrack
+    path = np.zeros(T, dtype=int)
+    path[-1] = np.argmax(delta[-1])
+    for t in range(T-2, -1, -1):
+        path[t] = psi[t+1, path[t+1]]
+
+    return path
+```
+
+### HMM Use Cases in NLP
+
+```
+POS tagging:        States=POS tags, Obs=words
+Named entity recog: States=BIO tags (B-PER, I-PER, O), Obs=words
+Speech recognition: States=phonemes, Obs=acoustic features
+Spell correction:   States=intended chars, Obs=typed chars (edit distance model)
+```
+
+**Modern note:** Transformers (BERT with CRF head) have largely replaced HMMs for sequence labeling tasks, but HMMs are still used in speech recognition and are a core interview topic for understanding probabilistic sequence models.
+
+---
+
+## 6. Calibration and Probability Estimation
 
 ### When Naive Bayes Needs Calibration
 NB probabilities are often overconfident (pushed toward 0 and 1). Calibrate:
@@ -374,6 +572,9 @@ A: The independence assumption is clearly violated in text ("New" and "York" co-
 
 **Q: What is the EM algorithm and when does it apply?**
 A: EM is used when the likelihood function has latent (unobserved) variables that make direct maximization intractable. E-step: compute the expected value of the log-likelihood under the current parameter estimates (soft assignments of latent variables). M-step: maximize this expected log-likelihood with respect to parameters (update parameters given soft assignments). Repeat until convergence. Applies to: GMM (latent: which Gaussian generated each point), hidden Markov models (latent: hidden state sequence), k-means (hard-EM variant). Guaranteed to converge (likelihood never decreases) but to a local maximum — multiple initializations required.
+
+**Q: Explain the three problems in HMMs and how each is solved.**
+A: (1) **Evaluation** — given model parameters and an observation sequence, compute P(O|λ). Solved by the Forward algorithm: DP where α(t,j) = probability of being in state j at time t having seen observations o₁..oₜ. O(T·N²) complexity. (2) **Decoding** — find the most likely hidden state sequence given observations. Solved by Viterbi: same DP structure as Forward but takes max instead of sum over previous states, with backpointers to reconstruct the path. (3) **Learning** — given only observations, estimate A, B, π. Solved by Baum-Welch, which is EM applied to HMMs: E-step computes forward-backward probabilities (soft state assignments), M-step updates A, B, π using those soft assignments. Baum-Welch converges to a local maximum of the likelihood.
 
 **Q: When would you use Bayesian Optimization over Random Search for hyperparameter tuning?**
 A: Bayesian Optimization when: (1) each trial is expensive (training a large neural net takes hours), (2) you have a budget of < 100 trials, (3) the objective function is smooth (good params have nearby good params). Random search when: (1) trials are cheap (linear model, small dataset), (2) you can afford > 100 trials, (3) parallelism is more valuable than intelligence (random search parallelizes perfectly; BO is sequential). Practical rule: use Optuna (Bayesian) for any model that takes > 5 minutes to train. For quick models, 100 random trials often beats 50 Bayesian trials.

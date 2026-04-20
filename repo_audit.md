@@ -12,7 +12,7 @@
 |---|---|---|
 | Missing file | `02_algorithms/06_semi_supervised_learning.md` — co-training, self-training, pseudo-labeling | ❌ |
 | Created | `02_algorithms/07_reinforcement_learning.md` — MDP, Q-Learning, SARSA, Policy Gradient, REINFORCE | ✅ |
-| Incomplete | `02_algorithms/04_probabilistic.md` — shallow; no worked examples for Naive Bayes/HMM | ❌ |
+| Incomplete | `02_algorithms/04_probabilistic.md` — NB spam dry-run + full HMM section (Viterbi dry-run, Forward algo, Baum-Welch) added | ✅ |
 | Addressed | `01_fundamentals/01_statistics_foundations.md` — p-value + distributions now covered in `01c_statistics_end_to_end.md` | ✅ |
 | Addressed | Time series end-to-end — now covered in `05b_time_series_end_to_end.md` | ✅ |
 
@@ -38,7 +38,7 @@
 | Gap Type | Detail | Status |
 |---|---|---|
 | Verified complete | `01_cnn_mechanics.md` and `02_cnn_architectures.md` — both have full content + Key Takeaway | ✅ |
-| Improvement | No end-to-end trace files (all 6 are reference-only; NLP pattern would add depth) | ❌ |
+| Created | `01_fundamentals/03_cnn_end_to_end.md` — full forward pass + backprop dry run, augmentation, CV metrics, interview Q&A | ✅ |
 | Improvement | Data augmentation scattered — could be standalone file | ❌ |
 | Improvement | No consolidated CV evaluation metrics file | ❌ |
 
@@ -50,8 +50,8 @@
 
 | Gap Type | Detail | Status |
 |---|---|---|
-| Missing file | `02_embeddings/02_sentence_embeddings.md` — reference file (only end-to-end exists) | ❌ |
-| Missing file | `02_embeddings/03_tokenization.md` — reference file (only end-to-end exists) | ❌ |
+| Missing file | `02_embeddings/02_sentence_embeddings.md` — reference file (only end-to-end exists) | ✅ |
+| Missing file | `02_embeddings/03_tokenization.md` — reference file (only end-to-end exists) | ✅ |
 | Missing file | Decoding strategies file — beam search, top-k, nucleus sampling, temperature | ❌ |
 | Missing file | Semantic similarity / STS / retrieval file — directly relevant to RAG | ❌ |
 | Missing file | Machine translation reference | ❌ |
@@ -168,21 +168,21 @@
 | **High** | `08_model_registry_end_to_end.md` — MLflow register → stage → deploy | `8.mlops/` | ✅ |
 | **High** | `09_monitoring_end_to_end.md` — drift detection → alert → retrain | `8.mlops/` | ✅ |
 | **High** | `10_serving_optimization_end_to_end.md` — PyTorch → ONNX → INT8 → vLLM | `8.mlops/` | ✅ |
-| **Medium** | `06_semi_supervised_learning.md` | `1.machine learning/` | ❌ |
-| **Medium** | `08_semi_supervised.md` | `2.deep learning/` | ❌ |
-| **Medium** | `09_parameter_efficient_tuning.md` — LoRA, QLoRA, adapters | `5.transformers/` | ❌ |
-| **Medium** | `01_fundamentals/05_vision_transformers.md` | `5.transformers/` | ❌ |
-| **Medium** | MoE file — GPT-4, Mixtral | `5.transformers/` | ❌ |
-| **Medium** | Decoding strategies file | `4.nlp/` | ❌ |
-| **Medium** | Semantic similarity / STS file | `4.nlp/` | ❌ |
-| **Medium** | `06_question_answering_system.md` | `9.system_design/` | ❌ |
-| **Medium** | `07_feed_ranking_system.md` | `9.system_design/` | ❌ |
-| **Medium** | `08_content_moderation_system.md` | `9.system_design/` | ❌ |
-| **Medium** | Fill numerical gaps in LLM end-to-end files | `6.llms/` | ❌ |
-| **Low** | `00_roadmap.md` files for transformers, mlops, system_design | Multiple | ❌ |
-| **Low** | `02_sentence_embeddings.md` + `03_tokenization.md` reference files | `4.nlp/` | ❌ |
-| **Low** | Deepen `04_probabilistic.md` | `1.machine learning/` | ❌ |
-| **Low** | CV end-to-end trace files | `3.computerVision/` | ❌ |
+| **Medium** | `06_semi_supervised_learning.md` — self-training, label prop, FixMatch | `1.machine learning/` | ✅ |
+| **Medium** | `08_semi_supervised.md` — SimCLR, MAE, BERT as SSL | `2.deep learning/` | ✅ |
+| **Medium** | `09_parameter_efficient_tuning.md` — LoRA, QLoRA, adapters | `5.transformers/` | ✅ |
+| **Medium** | `01_fundamentals/05_vision_transformers.md` — ViT, DeiT, DINO, Swin | `5.transformers/` | ✅ |
+| **Medium** | `10_mixture_of_experts.md` — Mixtral 8×7B, routing, load balancing | `5.transformers/` | ✅ |
+| **Medium** | `07_decoding_strategies.md` — greedy, beam, temperature, top-k, top-p | `4.nlp/` | ✅ |
+| **Medium** | `05_semantic_similarity.md` — bi-encoder, cross-encoder, cosine, SBERT | `4.nlp/` | ✅ |
+| **Medium** | `06_question_answering_system.md` — multi-turn, streaming, citations, fallback | `9.system_design/` | ✅ |
+| **Medium** | `07_feed_ranking_system.md` — candidate gen, LTR ranker, freshness, diversity | `9.system_design/` | ✅ |
+| **Medium** | `08_content_moderation_system.md` — pre-filter, ML classifiers, policy engine | `9.system_design/` | ✅ |
+| **Medium** | Fill numerical gaps in LLM end-to-end files — LoRA gradient trace, PPO advantage dry-run, agent token budget trace | `6.llms/` | ✅ |
+| **Low** | `00_roadmap.md` files for transformers, mlops, system_design | Multiple | ✅ |
+| **Low** | `02_sentence_embeddings.md` + `03_tokenization.md` reference files | `4.nlp/` | ✅ |
+| **Low** | Deepen `04_probabilistic.md` | `1.machine learning/` | ✅ |
+| **Low** | CV end-to-end trace files | `3.computerVision/` | ✅ |
 
 ### Code Phase (after theory complete)
 
