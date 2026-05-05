@@ -7,6 +7,29 @@
 
 ---
 
+## Table of Contents
+- [Folder → Phase Mapping](#repo-folder--checklist-phase-mapping)
+- [Phase 1 — Machine Learning Fundamentals](#phase-1--machine-learning-fundamentals)
+- [Phase 2 — Deep Learning Fundamentals](#phase-2--deep-learning-fundamentals)
+- [Phase 3 — Computer Vision](#phase-3--computer-vision)
+- [Phase 4 — NLP](#phase-4--nlp)
+- [Phase 5 — Transformers (Architecture Internals)](#phase-5--transformers-architecture-internals)
+- [Phase 6 — LLMs: Prompting + Alignment](#phase-6--llms-prompting--alignment)
+- [Phase 7 — RAG Pipelines](#phase-7--rag-pipelines)
+- [Phase 8 — LLM Fine-tuning](#phase-8--llm-fine-tuning)
+- [Phase 9 — LLM Agents](#phase-9--llm-agents)
+- [Phase 10 — MLOps for LLMs](#phase-10--mlops-for-llms)
+- [Phase 11 — Multimodal](#phase-11--multimodal)
+- [Phase 12 — ML System Design](#phase-12--ml-system-design)
+- [Capstone Projects](#capstone-projects-one-per-phase-goes-on-github--resume)
+- [Estimated Timeline](#estimated-timeline)
+- [Quick Reference — Importance Summary](#quick-reference--importance-summary)
+- [High-Level Roadmap at a Glance](#high-level-roadmap-at-a-glance)
+
+---
+
+---
+
 ## Repo Folder ↔ Checklist Phase Mapping
 
 | Folder | Checklist Phase |

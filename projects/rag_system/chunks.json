@@ -1,0 +1,97 @@
+[
+  {
+    "source": "ml_notes.txt",
+    "text": "MACHINE LEARNING AND DEEP LEARNING NOTES\n\n=== GRADIENT DESCENT ===\n\nGradient descent is an optimization algorithm used to minimize a loss function by iteratively moving in the direction of steepest descent. The update rule is: theta = theta - learning_rate * gradient(loss). There are three variants: batch gradient descent (uses all data, stable but slow), stochastic gradient descent or SGD (uses one sample, noisy but fast), and mini-batch gradient descent (uses small batches, balances speed and",
+    "start": 0
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "t descent (uses small batches, balances speed and stability). Common learning rates range from 0.001 to 0.1. The learning rate controls how large each step is. Too large causes overshooting; too small causes slow convergence. Adaptive optimizers like Adam adjust the learning rate per parameter using first and second moment estimates.\n\n=== BACKPROPAGATION ===\n\nBackpropagation is the algorithm used to compute gradients in neural networks. It applies the chain rule of calculus to propagate error si",
+    "start": 450
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "s the chain rule of calculus to propagate error signals from the output layer back to earlier layers. In the forward pass, inputs flow through the network and a loss is computed. In the backward pass, the gradient of the loss with respect to each weight is computed using the chain rule: dL/dW = dL/dY * dY/dW. This gradient is then used by gradient descent to update weights. Backpropagation requires storing intermediate activations during the forward pass for use in the backward pass, which is wh",
+    "start": 900
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "ard pass for use in the backward pass, which is why memory usage grows with sequence length and batch size.\n\n=== ATTENTION MECHANISM ===\n\nThe attention mechanism allows a model to focus on different parts of the input when producing each output. It computes a weighted sum of values, where weights are determined by the compatibility between a query and a set of keys. The formula is: Attention(Q, K, V) = softmax(QK^T / sqrt(d_k)) * V. Here Q is the query matrix, K is the key matrix, V is the value",
+    "start": 1350
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "query matrix, K is the key matrix, V is the value matrix, and d_k is the key dimension used for scaling to prevent vanishing gradients from large dot products. Self-attention applies this mechanism where Q, K, V all come from the same sequence. Multi-head attention runs attention in parallel across multiple representation subspaces (heads) and concatenates the results, allowing the model to attend to information at different positions simultaneously.\n\n=== TRANSFORMER ARCHITECTURE ===\n\nThe Trans",
+    "start": 1800
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "usly.\n\n=== TRANSFORMER ARCHITECTURE ===\n\nThe Transformer is a sequence model based entirely on the attention mechanism, introduced in \"Attention Is All You Need\" (Vaswani et al., 2017). It replaces recurrence with self-attention, enabling full parallelization during training. The encoder consists of stacked layers, each with two sublayers: multi-head self-attention and a position-wise feed-forward network. Residual connections and layer normalization are applied after each sublayer. The decoder",
+    "start": 2250
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "tion are applied after each sublayer. The decoder is similar but adds a cross-attention layer that attends to the encoder output. Positional encodings are added to embeddings to give the model information about token order, since attention itself is permutation-invariant. BERT uses only the encoder; GPT uses only the decoder.\n\n=== CONVOLUTIONAL NEURAL NETWORKS ===\n\nA convolutional neural network (CNN) is designed for grid-like data such as images. The core operation is convolution: a small filte",
+    "start": 2700
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": ". The core operation is convolution: a small filter (kernel) slides across the input, computing dot products at each position. This exploits local connectivity (each neuron sees only a small region) and weight sharing (the same filter is reused across positions), dramatically reducing parameters compared to fully connected layers. Pooling layers (max pooling, average pooling) downsample feature maps and add translation invariance. Typical CNN architecture: input -> Conv -> ReLU -> Pool -> Conv -",
+    "start": 3150
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "hitecture: input -> Conv -> ReLU -> Pool -> Conv -> ReLU -> Pool -> Flatten -> Dense -> Softmax. Famous architectures include AlexNet, VGG, ResNet (skip connections to address vanishing gradients), and EfficientNet.\n\n=== RECURRENT NEURAL NETWORKS ===\n\nA recurrent neural network (RNN) processes sequential data by maintaining a hidden state that is updated at each time step: h_t = tanh(W_h * h_{t-1} + W_x * x_t + b). This hidden state acts as a memory of previous inputs. However, vanilla RNNs suff",
+    "start": 3600
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "ory of previous inputs. However, vanilla RNNs suffer from the vanishing gradient problem: gradients shrink exponentially as they propagate back through many time steps, making it hard to learn long-range dependencies.\n\n=== LSTM \u2014 LONG SHORT-TERM MEMORY ===\n\nLSTM solves the vanishing gradient problem by introducing a cell state (long-term memory) controlled by three gates. The forget gate decides what to remove from the cell state. The input gate decides what new information to add. The output ga",
+    "start": 4050
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "decides what new information to add. The output gate decides what to output based on the cell state. The cell state can carry information across many time steps without being repeatedly multiplied by the same weight matrix, because it flows through additive connections. This allows LSTMs to capture dependencies spanning hundreds of time steps. LSTMs are used for language modeling, machine translation, speech recognition, and time series forecasting.\n\n=== LOSS FUNCTIONS ===\n\nCross-entropy loss is",
+    "start": 4500
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "ng.\n\n=== LOSS FUNCTIONS ===\n\nCross-entropy loss is used for classification: L = -sum(y * log(y_hat)), where y is the one-hot true label and y_hat is the predicted probability. Binary cross-entropy is the special case for two classes. Mean squared error (MSE) is used for regression: L = mean((y - y_hat)^2). Huber loss is robust to outliers, combining MSE for small errors and MAE for large errors. Contrastive loss and triplet loss are used in metric learning to pull similar embeddings together and",
+    "start": 4950
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "c learning to pull similar embeddings together and push dissimilar ones apart.\n\n=== REGULARIZATION ===\n\nRegularization techniques reduce overfitting by constraining model complexity. L2 regularization (weight decay) adds a penalty proportional to the sum of squared weights to the loss, shrinking weights toward zero. L1 regularization adds a penalty proportional to the sum of absolute weights, inducing sparsity. Dropout randomly sets a fraction of neuron activations to zero during training, forci",
+    "start": 5400
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "neuron activations to zero during training, forcing the network to learn redundant representations. Batch normalization normalizes activations within each mini-batch, stabilizing training and acting as a mild regularizer.\n\n=== EMBEDDINGS ===\n\nAn embedding is a dense vector representation of a discrete object (word, sentence, user, item). Word embeddings like Word2Vec and GloVe map words to vectors such that semantically similar words are close in vector space. Word2Vec is trained with either CB",
+    "start": 5850
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "n vector space. Word2Vec is trained with either CBOW (predict word from context) or Skip-gram (predict context from word). Sentence embeddings (SBERT) represent entire sentences as vectors by fine-tuning BERT with siamese networks on natural language inference data. The key property is that cosine similarity between embeddings reflects semantic similarity. Embeddings are the foundation of retrieval-augmented generation, recommendation systems, and semantic search.\n\n=== RAG \u2014 RETRIEVAL AUGMENTED",
+    "start": 6300
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "d semantic search.\n\n=== RAG \u2014 RETRIEVAL AUGMENTED GENERATION ===\n\nRetrieval-Augmented Generation (RAG) combines a retriever with a language model to answer questions using external knowledge. The pipeline has two stages: offline (index) and online (query). In the offline stage, documents are split into chunks, embedded using a sentence encoder, and stored in a vector database such as FAISS. In the online stage, the user query is embedded, the nearest chunks are retrieved by cosine similarity, an",
+    "start": 6750
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "rest chunks are retrieved by cosine similarity, and a language model generates an answer conditioned on both the query and retrieved context. RAG reduces hallucination by grounding responses in retrieved facts, and allows updating knowledge without retraining the model. Key metrics: Precision@K (fraction of retrieved chunks that are relevant) and Mean Reciprocal Rank (MRR).\n\n=== FINE-TUNING ===\n\nFine-tuning adapts a pre-trained model to a specific task by continuing training on task-specific dat",
+    "start": 7200
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "c task by continuing training on task-specific data. Full fine-tuning updates all parameters, which is expensive for large models. Parameter-efficient fine-tuning (PEFT) methods update only a small subset of parameters. LoRA (Low-Rank Adaptation) decomposes weight updates into two low-rank matrices: delta_W = B * A, where B is (d x r) and A is (r x d) with r << d. This reduces trainable parameters by 100x or more. QLoRA combines LoRA with 4-bit quantization (NF4), enabling fine-tuning of 7B para",
+    "start": 7650
+  },
+  {
+    "source": "ml_notes.txt",
+    "text": "uantization (NF4), enabling fine-tuning of 7B parameter models on a single 24GB GPU. The fine-tuned LoRA weights can be merged back into the base model for zero inference overhead.",
+    "start": 8100
+  }
+]

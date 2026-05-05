@@ -3,6 +3,45 @@
 
 ---
 
+## Table of Contents
+- [Positioning Statement](#positioning-statement)
+- [Job Roles to Target](#job-roles-to-target)
+- [Companies to Target](#companies-to-target)
+  - [Tier 1 — Best fit for your exact profile](#tier-1--best-fit-for-your-exact-profile)
+  - [Tier 2 — Strong fit after completing checklist](#tier-2--strong-fit-after-completing-checklist)
+- [Salary Packages](#salary-packages)
+  - [India (Hyderabad / Bangalore / Remote)](#india-hyderabad--bangalore--remote-india)
+  - [International / Remote (USD / GBP / AED)](#international--remote-usd--gbp--aed)
+- [Salary Trajectory](#salary-trajectory)
+- [Highest ROI Career Moves](#highest-roi-career-moves)
+  - [UAE / Middle East](#1-uae--middle-east-)
+  - [Remote US/EU Jobs](#2-remote-useu-jobs-)
+  - [Document AI Startups India](#3-document-ai-startups-india-)
+  - [FAANG India Centers](#4-faang-india-centers-)
+  - [Indian Unicorns / Fintech](#5-indian-unicorns--fintech-)
+- [What Will Actually Get You Calls](#what-will-actually-get-you-calls)
+- [Skills Gap to Each Role](#skills-gap-to-each-role)
+- [Timeline to Next Role](#timeline-to-next-role)
+- [Salary Negotiation Tables](#salary-negotiation-tables)
+  - [Table 1 — Hike on Total CTC](#table-1--hike-on-total-ctc-what-recruiters-default-to)
+  - [Table 2 — Hike on Fixed Only](#table-2--hike-on-fixed-only-what-you-should-push-for)
+  - [Negotiation Scripts](#negotiation-scripts)
+- [Interview Prep by Company Type](#interview-prep-by-company-type)
+  - [FAANG / Big Tech](#faang--big-tech-google-microsoft-amazon-india)
+  - [Fintech / Banking AI](#fintech--banking-ai-jpmorgan-goldman-hsbc-razorpay)
+  - [Document AI Startups](#document-ai-startups-nanonets-docsumo-hyperverge-instabase)
+  - [UAE / Middle East](#uae--middle-east-emirates-nbd-fab-adcb-mashreq)
+- [LinkedIn & Resume Strategy](#linkedin--resume-strategy)
+  - [LinkedIn Headlines](#linkedin-headline-choose-one-based-on-where-youre-applying)
+  - [LinkedIn About Section Template](#linkedin-about-section-template)
+  - [Resume Key Rules](#resume--key-rules)
+  - [GitHub Projects That Get Recruiter Attention](#github-projects-that-get-recruiter-attention)
+- [Networking Strategy](#networking-strategy)
+- [30-60-90 Day Action Plan](#30-60-90-day-action-plan)
+- [Weekly Routine](#weekly-routine-non-negotiable)
+
+---
+
 ## Positioning Statement
 > *"I build LLM-powered document intelligence systems for financial services — end to end,
 > from OCR and multimodal extraction through RAG pipelines, fine-tuned models,
@@ -27,6 +66,27 @@ This describes ~500 people in India. That's your target identity.
 ---
 
 ## Companies to Target
+
+### Top 12 Active Matches — Apply First (scraped April 2026, verify still open)
+
+| # | Company | Role | Salary | Exp | Why |
+|---|---------|------|--------|-----|-----|
+| 1 | **Firstsource** | Sr GenAI/ML Engineer | Not disc. | 10–18y | Remote · RAG + Agentic AI + LangChain — perfect match |
+| 2 | **Broadridge** | Sr Data/ML Engineer (LLM & Agentic) | Not disc. | 6–10y | LLM + Agentic AI + RAG — core skills, Hybrid BLR |
+| 3 | **IAT Networks** | Principal Scientist | 35–45L | 10–15y | Salary disclosed · 50 openings · LLM, NLP, Agentic AI |
+| 4 | **Fractal Analytics** | GenAI / Agentic AI Architect | Not disc. | 10–15y | Top-rated firm, GenAI + Agents — exact profile |
+| 5 | **Hartford Financial** | AI/ML Engineer | Not disc. | 5–7y | AWS SageMaker + Agentic AI — matches production exp. |
+| 6 | **Intersoft Data Labs** | Architect — Python/ML | Not disc. | 10–15y | Remote · Python + LLM + GenAI + AWS |
+| 7 | **Aspyra Hr Svcs** | Lead Data Scientist | 27.5–42.5L | 6–10y | Salary disclosed · RAG + LLM + GenAI + NLP, Hybrid |
+| 8 | **Tavant** | Agentic AI Engineer | Not disc. | 6–13y | Agentic AI + GenAI + RAG + Python |
+| 9 | **Naveera Technology** | ML Engineer | Not disc. | 5–10y | Remote · MLOps (Docker/AWS) + RAG |
+| 10 | **Hartford Financial** | AI ML Engineer | Not disc. | 8–9y | RAG + Vertex AI + GenAI + LangChain — Hyderabad |
+| 11 | **Tredence** | Data Science Manager | Not disc. | 8–13y | GenAI + NLP + Python — leadership path |
+| 12 | **CAI** | Lead Data Scientist | Not disc. | 10–15y | AWS SageMaker + CI/CD + PySpark — strong MLOps match |
+
+> Apply in order: rows 1–4 first (remote or salary disclosed). Tailor 2–3 lines of resume summary per role — 10 min per application, significant callback improvement.
+
+---
 
 ### Tier 1 — Best fit for your exact profile
 

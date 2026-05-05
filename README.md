@@ -3,6 +3,8 @@
 Personal ML/DL mastery repo — built for deep understanding, interview prep, and long-term reference.
 Covers the full stack from classical ML to LLM systems and production MLOps.
 
+> **Start here → [Daily Hub](00_Master_daily_action_hub_status_resume_projects.md)** — current status, what to build next, resume bullets, JD coverage.
+
 ---
 
 ## Structure

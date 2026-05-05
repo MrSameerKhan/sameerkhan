@@ -1,10 +1,187 @@
-# Behavioral Interview Prep — STAR Method for BarRaiser
+# Interview Prep — Technical Q&A + Behavioral STAR
+
+---
+
+## Table of Contents
+- [Technical Q&A Bank](#technical-qa-bank)
+  - [4.1 Transformer & Architecture](#41-transformer--architecture)
+  - [4.2 RAG Pipelines](#42-rag-pipelines)
+  - [4.3 Fine-tuning & Alignment](#43-fine-tuning--alignment)
+  - [4.4 Agentic AI](#44-agentic-ai)
+  - [4.5 Your Production System](#45-your-production-system)
+  - [4.6 MLOps & System Design](#46-mlops--system-design)
+- [Behavioral — BarRaiser](#behavioral--barraiser)
+  - [What BarRaiser Actually Tests](#what-barraiser-actually-tests)
+  - [The STAR Method](#the-star-method)
+  - [The 10 Questions BarRaiser Will Ask](#the-10-questions-barraiser-will-ask)
+  - [Q1: Tell me about yourself](#q1-tell-me-about-yourself)
+  - [Q2: Tell me about a time you failed](#q2-tell-me-about-a-time-you-failed)
+  - [Q3: Tell me about your biggest achievement](#q3-tell-me-about-your-biggest-achievement)
+  - [Q4: Tell me about a time you disagreed with leadership](#q4-tell-me-about-a-time-you-disagreed-with-your-manager-or-leadership)
+  - [Q5: Tell me about a time you worked with a difficult person](#q5-tell-me-about-a-time-you-had-to-work-with-a-difficult-person)
+  - [Q6: Decision with incomplete information](#q6-tell-me-about-a-time-you-had-to-make-a-decision-with-incomplete-information)
+  - [Q7: Learning something quickly](#q7-tell-me-about-a-time-you-had-to-learn-something-quickly)
+  - [Q8: Going above and beyond](#q8-tell-me-about-a-time-you-went-above-and-beyond)
+  - [Q9: Why leaving / Why this company](#q9-why-are-you-leaving-your-current-role--why-this-company)
+  - [Q10: Where do you see yourself in 3-5 years](#q10-where-do-you-see-yourself-in-3-5-years)
+- [BarRaiser-Specific Tips](#barraiser-specific-tips)
+- [Your 5 Core Stories](#your-5-core-stories--fill-these-in-before-the-interview)
+- [Day-Before Checklist](#day-before-checklist)
+
+---
+
+---
+
+## Technical Q&A Bank
+> Top 20 questions for LLM / GenAI Engineer roles. Answers tailored to your profile.
+> Target: 2–3 minutes per answer. Practice aloud, not in your head.
+
+---
+
+### 4.1 Transformer & Architecture
+
+**Q1: Explain self-attention mathematically.**
+
+`Attention(Q,K,V) = softmax(Q·Kᵀ / √d_k) · V` where Q=XW_Q, K=XW_K, V=XW_V. The query (what I am looking for) dots with each key (what each position offers) to produce attention weights, scaled by √d_k to prevent softmax saturation at high dimensions, then used to weight the values. Multi-head repeats this h times with different learned projections, concatenates and projects — each head captures different patterns (syntax, coreference, semantics). You use this in your BERT and Donut architectures at ICE.
+
+---
+
+**Q2: What is KV Cache and why does it matter?**
+
+During autoregressive generation, each new token must attend to all previous tokens. Without caching, we recompute K and V for all prior tokens every step — O(n²). KV Cache stores K and V tensors for all previous tokens; each step only computes K/V for the new token and appends to cache, making inference O(n) per step. The cost: GPU memory grows linearly with context length. This is exactly what vLLM's PagedAttention solves — treating KV cache like virtual memory with non-contiguous page allocation.
+
+---
+
+**Q3: BERT vs GPT architecturally — and where you have used each.**
+
+BERT = encoder-only, bidirectional attention — reads full sequence at once, MLM pretraining, ideal for classification/NER/embeddings. You used BERT at ICE to push page-level accuracy from 93% to 94%. GPT = decoder-only, causal left-to-right attention, autoregressive next-token prediction, ideal for generation. Donut (your OCR-free pipeline) uses Swin Transformer encoder + BART decoder — an encoder-decoder architecture. You have hands-on experience with all three architectural families.
+
+---
+
+**Q4: What is Flash Attention?**
+
+Standard attention materialises the full n×n attention matrix in HBM (slow GPU memory), creating an O(n²) memory bottleneck. Flash Attention tiles the computation into blocks that fit in fast SRAM, fusing the softmax into the tiled computation to avoid slow round-trips. Produces identical results to standard attention but is 2–4× faster and uses O(n) memory. Critical for long-context models and fine-tuning on large financial documents — directly relevant to your ICE pipeline.
+
+---
+
+### 4.2 RAG Pipelines
+
+**Q5: Walk me through your RAG pipeline end-to-end.**
+
+From your project: PDF/text ingestion → fixed-size chunking (500 chars, 50 overlap) → sentence-transformers `all-MiniLM-L6-v2` embeddings → FAISS `IndexFlatIP` (exact cosine via L2-normalised inner product) → top-K=5 retrieval → prompt assembly with source attribution → Ollama `llama3.2:1b` (local) or HF InferenceClient (cloud). FastAPI backend (`/ingest`, `/query`, `/evaluate`), Streamlit UI, RAGAS-style evaluation (P@K, R@K, MRR=1.0). Key design decision: `IndexFlatIP` over IVF because corpus is small (<100K docs) — exact search with no recall loss, under 5ms latency.
+
+---
+
+**Q6: What is hybrid search and why is it better than pure vector search?**
+
+Vector search captures semantic similarity but misses exact keyword matches — product codes, ISIN numbers, document IDs, proper nouns. BM25 (sparse retrieval) is great at exact matches but misses paraphrases. Hybrid search combines both using Reciprocal Rank Fusion: each method's rank is converted to 1/(k+rank), scores summed. Consistently outperforms either alone — especially on financial documents where exact terms (ISIN codes, contract numbers) AND semantic context both matter. Direct extension of your current FAISS system.
+
+---
+
+**Q7: What is HyDE?**
+
+Hypothetical Document Embeddings: instead of embedding the short user query directly, prompt the LLM to generate a hypothetical answer first, then embed that hypothetical answer for retrieval. The hypothesis is in the same semantic space as the real documents, so retrieval is more precise. Works especially well when queries are short and documents are long — common in Q&A over annual reports, regulatory filings, and financial disclosures. A strong differentiator to mention alongside your RAG project.
+
+---
+
+**Q8: How do you evaluate a RAG system?**
+
+RAGAS framework: (1) **Faithfulness** — does the answer contain only information from retrieved context, no hallucination? (2) **Answer Relevancy** — is the answer actually addressing the question? (3) **Context Precision** — are retrieved chunks relevant? (4) **Context Recall** — are all ground-truth relevant chunks being retrieved? Build an eval dataset of 50–100 expert question-answer-context triplets from your domain. Run RAGAS, identify the weakest metric, fix that specific component. Your project has MRR=1.0 and P@5=1.0 on the ML domain test set — speak to this directly.
+
+---
+
+### 4.3 Fine-tuning & Alignment
+
+**Q9: Explain LoRA. What is the math?**
+
+Instead of updating the full weight matrix W (d×k, millions of parameters), freeze W and add ΔW = B·A where B is (d×r) and A is (r×k), with rank r << d. Only train B and A — a tiny fraction of original parameters. The rank r controls capacity: r=8 to 64 in practice. Why it works: the hypothesis is that weight updates during fine-tuning lie in a low intrinsic rank subspace. At inference: W_eff = W + (α/r)·B·A where α is a scaling hyperparameter. In your QLoRA project you target q_proj and v_proj.
+
+---
+
+**Q10: What is QLoRA and how does it differ from LoRA?**
+
+QLoRA = Quantized LoRA. Base model weights are quantized to 4-bit NF4 (Normal Float 4 — information-optimal for normally-distributed weights) and kept frozen. LoRA adapters are trained in BF16/FP16 as usual. Two additional innovations: NF4 quantization data type, and double quantization (quantize the quantization constants themselves, saves ~0.5 GB). Result: fine-tune a 7B model on a single 24GB GPU instead of needing 4×80GB A100s. You have done this with Mistral-7B — speak from direct experience.
+
+---
+
+**Q11: When do you fine-tune vs use RAG vs prompting?**
+
+**Decision tree:** try prompting first → if insufficient add RAG → if still insufficient fine-tune.
+- **Prompting:** model already has the knowledge, just need output format — zero-shot/few-shot.
+- **RAG:** factual, up-to-date, domain-specific knowledge from private documents — exactly your ICE use case.
+- **Fine-tuning:** when you need consistent style/tone/format deeply embedded in weights, or the task requires knowledge not available at query time. QLoRA when GPU-constrained.
+
+This framework alone answers 30% of LLM Engineer interview questions.
+
+---
+
+**Q12: Explain DPO and why it is replacing RLHF.**
+
+RLHF requires: (1) train a reward model on human preference pairs, (2) run PPO loop to optimise the LLM against that reward model — complex, unstable, requires multiple models in memory. DPO (Direct Preference Optimisation) eliminates the reward model entirely. It derives a closed-form loss directly from preference pairs (chosen vs rejected response), using the insight that the optimal policy under RLHF has an analytic solution. DPO loss: `-log σ(β·(log π(y_w|x)/π_ref(y_w|x) − log π(y_l|x)/π_ref(y_l|x)))`. Simpler, stable, single model in memory. Now standard in open-source pipelines.
+
+---
+
+### 4.4 Agentic AI
+
+**Q13: Explain the ReAct pattern and how you have implemented it.**
+
+ReAct = Reason + Act. The LLM follows a **Thought → Action → Observation** loop. Thought: LLM reasons about current state. Action: outputs a structured tool call (function name + JSON arguments). Observation: tool executes and returns result. Loop continues until Final Answer. In your document agent: OCR extraction tool + FAISS vector search tool + database validation tool. The LLM autonomously routes documents based on content type and confidence scores. This is a direct production-inspired example — lead with it.
+
+---
+
+**Q14: What is LangGraph and how does it differ from LangChain AgentExecutor?**
+
+LangChain AgentExecutor = fixed linear ReAct loop, no branching. LangGraph models the agent as a directed graph: nodes are processing steps (LLM calls or tool calls), edges define transitions, state is a typed dict flowing through the graph. This enables: cycles, conditional routing (if OCR confidence < 0.7 route to re-extraction, else continue), parallel branches, and checkpointing for resumable state. For your document triage workflow, LangGraph lets you add a human-in-the-loop node for low-confidence documents — a natural extension of your ICE pipeline.
+
+---
+
+**Q15: What are the main production challenges with agents?**
+
+(1) **Reliability** — LLMs can call wrong tools, misparse outputs, loop indefinitely → need retry logic, fallbacks, loop detection. (2) **Cost** — each ReAct step = LLM call, multi-step tasks compound → budget tokens and add early stopping. (3) **State management** — context window fills fast for multi-step workflows → need external memory (vector store) for long sessions. (4) **Evaluation** — task completion rate is harder to measure than output quality. (5) **Safety** — agents with write access (DB mutations, email) can cause irreversible actions → always add a confirmation step for destructive operations.
+
+---
+
+### 4.5 Your Production System
+
+**Q16: Tell me about your Document AI system at ICE. What was the hardest part?**
+
+Lead with impact: **94% page-level accuracy** on financial document classification, **60% reduction** in RCA investigation time. Architecture: PySpark ingestion on Databricks → Tesseract OCR + GloVe embeddings + CNN image normalisation → CNN+BiLSTM+Transformer ensemble (Horovod distributed, 30% training time reduction) → BERT integration pushed accuracy from 93% to 94% → Donut as OCR-free parallel pipeline → AWS SageMaker endpoints via Jenkins+Docker CI/CD. **Hardest part:** heterogeneous document quality — scanned at different DPIs, mixed content, varying layouts. Built adaptive preprocessing with skew correction, thresholding, and confidence-based routing.
+
+---
+
+**Q17: How would you add an LLM agent layer to your existing Document AI system?**
+
+The OCR + classification pipeline already runs. Add: (1) LangGraph orchestrator node that receives classified documents. (2) If classification confidence > 0.9 → route to automated extraction tool. (3) If confidence 0.6–0.9 → route to LLM-based re-extraction with structured output. (4) If confidence < 0.6 → route to human review queue. The FAISS vector search RCA tool you built IS already a retrieval tool in this agent — you are already 60% of the way there. Frame this as your roadmap answer.
+
+---
+
+### 4.6 MLOps & System Design
+
+**Q18: Design a RAG system for 1 million financial documents.**
+
+Ingestion: Kafka (streaming) or S3+SQS (batch). Preprocessing: Spark for distributed PDF parsing and chunking. Embedding: GPU fleet with BGE-M3 or E5-large, write to Pinecone (managed vector DB at scale). Retrieval service: FastAPI + BM25 (Elasticsearch) + dense (Pinecone) → RRF fusion → BGE cross-encoder reranker → vLLM serving. Monitoring: Evidently for embedding drift, Prometheus+Grafana for latency and error rates. Updates: Prefect pipeline to re-embed new docs nightly. Your ICE Databricks+SageMaker architecture is a smaller version of exactly this — position it explicitly.
+
+---
+
+**Q19: What is vLLM and why use it instead of native HuggingFace serving?**
+
+vLLM's key innovation is **PagedAttention**: inspired by virtual memory in OS, it stores KV Cache in non-contiguous memory blocks (pages) mapped virtually. Standard serving wastes 60–80% of KV cache GPU memory due to fragmentation (pre-allocating max context per request). PagedAttention eliminates fragmentation entirely. Additionally, vLLM supports **continuous batching**: new requests join a running batch mid-generation instead of waiting for a full batch to complete. Combined result: 2–4× higher throughput at same latency vs HuggingFace `generate()`. Essential for production LLM APIs with concurrent users.
+
+---
+
+**Q20: How do you monitor an LLM in production?**
+
+Five layers: (1) **Infrastructure** — latency p50/p95/p99, GPU utilisation, tokens/second via Prometheus+Grafana. (2) **Data drift** — input token distribution shifts using Evidently, compare embedding centroids over time. (3) **LLM quality** — RAGAS faithfulness score on sampled outputs, user feedback rate (thumbs up/down), hallucination detection via NLI model. (4) **Cost** — track token usage per request, per user, per endpoint. (5) **Alerting** — PagerDuty on accuracy drop >5%, latency spike >2× baseline, error rate >1%. At ICE you tracked model accuracy on held-out pages — extend that pattern to all five layers.
+
+---
+
+## Behavioral — BarRaiser
 
 ## What BarRaiser Actually Tests
 
 BarRaiser is a third-party interviewer specifically trained to evaluate **behavioral signals** — not just what you did, but how you think, communicate, and handle adversity. They are looking for patterns in your answers that predict how you'll perform on the job.
 
-McDonald's BarRaiser (April 14) explicitly lists **Communication** as a focus area. This means:
+BarRaiser explicitly lists **Communication** as a focus area. This means:
 - Can you tell a story clearly and concisely?
 - Do you own your actions and mistakes?
 - Do you show self-awareness?
@@ -438,17 +615,17 @@ Story 5 — Ambiguity / incomplete information
 ## Day-Before Checklist
 
 ```
-Night before McDonald's BarRaiser (April 13):
-  ✅ Read your 5 core stories out loud (not in your head — speak them)
-  ✅ Time each story: aim for 90 seconds
-  ✅ Research McDonald's specifically:
-       - What does McDonald's tech team build?
+Night before any BarRaiser interview:
+  [ ] Read your 5 core stories out loud (not in your head — speak them)
+  [ ] Time each story: aim for 90 seconds
+  [ ] Research the company specifically:
+       - What does their ML/AI team build?
        - Recent news about their technology investments?
-       - Why does ML matter for fast food operations? (recommendations, demand forecasting, etc.)
-  ✅ Prepare 3 questions to ask the interviewer:
+       - Why does ML matter for their domain?
+  [ ] Prepare 3 questions to ask the interviewer:
        - "What does success look like in this role in the first 6 months?"
        - "What's the biggest technical challenge the team is working on right now?"
        - "How does the ML team collaborate with the product and business teams?"
-  ✅ Logistics: link working, quiet room, camera on, good lighting
-  ✅ Sleep by 10 PM
+  [ ] Logistics: link working, quiet room, camera on, good lighting
+  [ ] Sleep by 10 PM
 ```
