@@ -12,7 +12,7 @@ GitHub: github.com/MrSameerKhan | LinkedIn: linkedin.com/in/mrsameerkhan3
 
 - Shipped a multimodal document classifier (CNN + BiLSTM + Transformer) achieving **94% page-level accuracy** on **100K+ mortgage documents**; built a FAISS vector search pipeline that reduced root-cause analysis time by **60%**.
 
-- Specialised in LLM-powered document intelligence: RAG pipelines (FAISS + FastAPI + Streamlit), QLoRA fine-tuning (Mistral-7B), LangChain agents, and LangGraph agentic workflows.
+- Specialised in LLM-powered document intelligence: **RAG pipelines** (FAISS + FastAPI + Streamlit), QLoRA fine-tuning (Mistral-7B), LangChain agents, and LangGraph agentic workflows.
 
 - End-to-end pipeline ownership — multimodal extraction → distributed training (Horovod, **−30% training time**) → AWS SageMaker + Databricks deployment → MLflow monitoring.
 
@@ -49,11 +49,11 @@ GitHub: github.com/MrSameerKhan | LinkedIn: linkedin.com/in/mrsameerkhan3
 
 ### **Aug 2019 – Mar 2021 | Zyclyx (Client: Al Rajhi Bank, Riyadh, Saudi Arabia) | Data Scientist**
 
-- Designed a ResNet50 document classification pipeline for English-Arabic banking documents — categorised incoming files by type to route each to the correct extraction workflow.
+- Designed a **ResNet50** document classification pipeline for **English-Arabic** banking documents — categorised incoming files by type to route each to the correct extraction workflow.
 
-- Built Tesseract + TensorFlow OCR pipeline for key-field extraction from English-Arabic financial forms; developed GRU-based NER to identify customer, transaction, and compliance entities; integrated output with bank APIs for automated database validation.
+- Built Tesseract + TensorFlow OCR pipeline for key-field extraction from **English-Arabic** financial forms; developed **GRU-based NER** to identify customer, transaction, and compliance entities; integrated output with bank APIs for automated database validation.
 
-- Built a Signature Verification System using deep learning to detect fraudulent and mismatched signatures in offline banking documents, reducing manual compliance review overhead.
+- Built a **Signature Verification System** using deep learning to detect fraudulent and mismatched signatures in offline banking documents, reducing manual compliance review overhead.
 
 - Deployed the full pipeline on-premise via Flask + Gunicorn microservices — from raw Arabic document ingestion to structured API output for production banking workflows.
 
@@ -63,21 +63,21 @@ GitHub: github.com/MrSameerKhan | LinkedIn: linkedin.com/in/mrsameerkhan3
 
 - Built identity verification and multi-object tracking pipelines — face detection (Haar Cascade, HOG, CNN-based), feature matching (SIFT/SURF/FLANN), and TensorFlow object detection for real-time video tracking.
 
-- Developed image preprocessing pipelines (morphological ops, denoising, thresholding, skew correction) to improve OCR accuracy — foundation carried into Document AI work at Al Rajhi Bank and ICE Data Services.
+- Developed image preprocessing pipelines (morphological ops, denoising, thresholding, skew correction) to improve OCR accuracy — foundation carried into Document AI work at **Al Rajhi Bank** and **ICE Data Services**.
 
 ---
 
 ## PROJECTS
 
 **RAG System — Production (2026)**
-End-to-end RAG pipeline — sentence-transformers (all-MiniLM-L6-v2), FAISS IndexFlatIP, FastAPI backend (/ingest, /query, /evaluate), Streamlit UI. MRR=1.0 on ML domain evaluation set.
+End-to-end RAG pipeline — sentence-transformers (all-MiniLM-L6-v2), FAISS IndexFlatIP, FastAPI backend (/ingest, /query, /evaluate), Streamlit UI. **MRR=1.0** on ML domain evaluation set.
 GitHub: github.com/MrSameerKhan
 
-**Vector Search RCA Tool (ICE Data Services)**
-Designed and deployed an embedding-based semantic search pipeline using production ensemble model vectors, replacing manual keyword search and reducing root-cause analysis time by 60%.
+**Document Deduplication Pipeline (ICE Data Services, 2023)**
+Distributed deduplication across **7.1M mortgage pages** — DonutSwin page embeddings, FAISS IndexFlatIP cosine search, Union-Find transitive clustering across **40 GPU nodes** (TorchDistributor + NCCL). Reduced training corpus by **67% pages and 69% documents**, eliminating template overfitting.
 
-**BERT & Donut LLM — OCR and OCR-Free Models (ICE Data Services)**
-Developed a Donut LLM-based extraction system as an OCR-free alternative, enabling direct document text retrieval without traditional OCR.
+**Signature Verification System (Al Rajhi Bank, 2020)**
+Deep learning pipeline to detect fraudulent and mismatched signatures in Arabic banking documents — contrastive learning model deployed on-premise via Flask + Gunicorn for production compliance workflows.
 
 ---
 
