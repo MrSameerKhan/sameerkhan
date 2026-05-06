@@ -35,31 +35,35 @@ GitHub: github.com/MrSameerKhan | LinkedIn: linkedin.com/in/mrsameerkhan3
 ### **Aug 2021 – Present | ICE Data Services, Hyderabad, India | Sr. ML Engineer**
 *(Aug 2021–Nov 2023 via Persistent Systems; Nov 2023–Present direct hire)*
 
-- Architected a multimodal document classifier (CNN + BiLSTM + Transformer) for ICE's automated mortgage processing pipeline, achieving **93% page-level / 85% document-level accuracy** across **100+ document types**; extended with BERT NER to improve page accuracy to **94%**, deployed to production on SageMaker.
+- Architected a CNN + BiLSTM + Transformer document classifier for ICE's mortgage pipeline — **93% page-level / 85% document-level accuracy** across **100+ document types**; integrated BERT NER to push accuracy to **94%**, deployed on SageMaker.
 
-- Designed and scaled a document deduplication pipeline across a **7.1M-page** mortgage document bank — DonutSwin page embeddings, GPU-accelerated FAISS IndexFlatIP cosine search, and Union-Find transitive clustering deployed across **40 GPU nodes** (TorchDistributor + NCCL); reduced training corpus by **67% pages and 69% documents**, eliminating template overfitting.
+- Deployed **Donut LLM** as an OCR-free document extraction system, enabling direct text retrieval from mortgage documents without traditional OCR — reducing preprocessing complexity and improving extraction reliability.
 
-- Built a FAISS semantic search system using sentence-transformer embeddings for model prediction root-cause analysis, replacing keyword lookup and reducing investigation time by **60%** — establishing vector search as a core pattern in ICE's document AI stack.
+- Scaled a deduplication pipeline across **7.1M mortgage pages** — DonutSwin embeddings, FAISS IndexFlatIP cosine search, Union-Find clustering on **40 GPU nodes** (TorchDistributor + NCCL); cut training corpus by **67% pages and 69% documents**, eliminating template overfitting.
 
-- Owned MLOps infrastructure across the document AI pipeline — distributed training with Horovod (**−30% training time**), MLflow experiment tracking, Jenkins CI/CD, and Databricks + SageMaker production serving.
+- Built a FAISS semantic search system for model root-cause analysis, replacing keyword lookup and cutting investigation time by **60%**.
+
+- Owned MLOps across the document AI pipeline — Horovod distributed training (**−30% training time**), MLflow, Jenkins CI/CD, Databricks + SageMaker serving.
 
 ---
 
 ### **Aug 2019 – Mar 2021 | Zyclyx (Client: Al Rajhi Bank, Riyadh, Saudi Arabia) | Data Scientist**
 
-- Designed and deployed an end-to-end document intelligence pipeline for English-Arabic financial documents — ResNet50 document classification, Tesseract + TensorFlow OCR for key-field extraction, and GRU-based NER to identify customer, transaction, and compliance entities; integrated extracted records with bank APIs for automated database validation.
+- Designed a ResNet50 document classification pipeline for English-Arabic banking documents — categorised incoming files by type to route each to the correct extraction workflow.
+
+- Built Tesseract + TensorFlow OCR pipeline for key-field extraction from English-Arabic financial forms; developed GRU-based NER to identify customer, transaction, and compliance entities; integrated output with bank APIs for automated database validation.
 
 - Built a Signature Verification System using deep learning to detect fraudulent and mismatched signatures in offline banking documents, reducing manual compliance review overhead.
 
-- Deployed all ML models on-premise via Flask + Gunicorn microservices — full pipeline from raw Arabic document ingestion to structured API output for production banking workflows.
+- Deployed the full pipeline on-premise via Flask + Gunicorn microservices — from raw Arabic document ingestion to structured API output for production banking workflows.
 
 ---
 
 ### **Feb 2017 – Aug 2019 | VISSINDIA, Hyderabad | Python & Computer Vision Engineer**
 
-- Built computer vision pipelines for identity verification — face detection (Haar Cascade, HOG, CNN-based), feature matching (SIFT, SURF, FLANN), and TensorFlow object detection for multi-object tracking in images and video.
+- Built identity verification and multi-object tracking pipelines — face detection (Haar Cascade, HOG, CNN-based), feature matching (SIFT/SURF/FLANN), and TensorFlow object detection for real-time video tracking.
 
-- Developed image preprocessing pipelines (morphological operations, denoising, thresholding, skew correction) to improve OCR accuracy — foundational to the Document AI work carried forward at Al Rajhi Bank and ICE Data Services.
+- Developed image preprocessing pipelines (morphological ops, denoising, thresholding, skew correction) to improve OCR accuracy — foundation carried into Document AI work at Al Rajhi Bank and ICE Data Services.
 
 ---
 
