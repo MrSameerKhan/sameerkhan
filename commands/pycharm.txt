@@ -1,3 +1,0 @@
-Project
-Add Interpreter
-Load Env
