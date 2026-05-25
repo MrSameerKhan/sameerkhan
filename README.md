@@ -9,6 +9,34 @@ Covers the full stack from classical ML to LLM systems and production MLOps.
 
 ---
 
+## Environment Setup
+
+Use the Conda environment file before running code in this repo.
+
+```powershell
+conda env create -f environment.yml
+conda activate sameerkhan
+python test.py
+```
+
+`environment.yml` is the primary, human-maintained setup file. It uses Python 3.12 and compatible version ranges for the ML, deep learning, transformer, RAG, and agent libraries used across the repo.
+
+If a future install has dependency conflicts or package compatibility issues, recreate the environment from the exact lock snapshot:
+
+```powershell
+conda env create -f environment.lock.yml
+conda activate sameerkhan
+python test.py
+```
+
+Production-style convention:
+
+- Update `environment.yml` when adding or changing top-level dependencies.
+- After verifying the environment works, refresh `environment.lock.yml` with the exact working versions.
+- Use `test.py` as the smoke test after environment changes.
+
+---
+
 ## Structure
 
 | # | Topic | What's Inside |
