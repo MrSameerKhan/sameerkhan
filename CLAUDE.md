@@ -18,7 +18,7 @@ If there are dependency conflicts, use the locked snapshot instead: `environment
 |------|-------|------|--------------|
 | 1. Personal-Org | `00_HUB.md`, `01_CAREER_PACK.md`, `02_INTERVIEW_PACK.md`, `03_LEARNING_PACK.md` | Action plan, interview answers, study navigation | Technical explanations |
 | 2. Theory | Folders `1.machine learning/` → `11.system_design/` | All technical explanations, math, comparison tables | Daily actions, code |
-| 3. Practice | `code_practice/` | From-scratch implementations (68 sessions) | Conceptual explanations |
+| 3. Practice | `code_practice/` | Implementations (73 sessions across Phases 01-10) | Conceptual explanations |
 | 4. Audit/Meta | `README.md`, `STRUCTURE.md`, `RULES.md` | Repo navigation, structure, conventions | Concept-specific content |
 
 Tier 1 and Tier 3 **link to** Tier 2 — they never re-explain. Tier 4 describes structure — it never explains concepts.
@@ -44,15 +44,17 @@ Never use bare URLs — always use markdown link syntax. Verify every path resol
 
 ## Code Practice Session Structure
 
-Each `code_practice/<phase>/<session>/` contains:
-- `model.py` — architecture
-- `train.py` — training or end-to-end script
-- `predict.py` — CLI inference
-- `all_details.md` — objective, tensor shapes, how-to-run, and captured ACTUALS
+**Phases 01-04 (legacy):** `code_practice/<phase>/<session>/` with `model.py`, `train.py`, `predict.py`, `all_details.md`
 
-Status badges in `all_details.md` headers:
-- `✅ Run` — executed end-to-end on target hardware; results captured
-- `🔧 Code-built` — code complete, awaiting hardware run
+**Phases 05-10 (current):** `code_practice/<phase>/` with flat files:
+- Single-file sessions: `NN_session_name.py` + `NN_session_name_details.md`
+- Multi-file sessions: `NN_session_name/` folder with role-specific files + `details.md`
+- Shared corpus: `_corpus.py` in phase folder (Phase 07)
+- Windows notes: `code_practice/WINDOWS_SETUP.md`
+
+Status badges in `_details.md` (or `all_details.md`) headers:
+- `✅ Run` — executed end-to-end; real output captured in details file
+- `🔧 Code-built` — code complete, awaiting run (most of Phases 05-10)
 - `📄 Docs-only` — spec written, code not yet implemented
 
 ## Theory Folder Ownership (quick ref)

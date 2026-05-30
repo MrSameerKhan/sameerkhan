@@ -96,3 +96,30 @@ If a topic deserves depth, it gets one canonical home. Every other mention is a 
 When a path changes (file moved, folder renamed): 1. Update all references in the same commit (use grep + sed) 2. Update SSOT map in STRUCTURE.md 3. Verify with a final grep — zero stale paths should remain.
 
 The Phase 3 cross-reference pass in PLAN.md is what happens when this rule is broken. Don't break it again.
+
+---
+
+## Rule 9 — Update Checklist for New Files
+
+Every new file requires a checklist. Do these in the same session as the file creation.
+
+### New theory file (`NN_topic_name.md` in a theory folder)
+
+| Step | What to update | What to add |
+|------|---------------|-------------|
+| 1 | **Folder `README.md`** | Add to Reading Order + Folder TOC + SSOT list |
+| 2 | **`STRUCTURE.md`** | Add to SSOT map — which file owns this topic |
+| 3 | Root `README.md` | Only if the overall Structure table changes (rare) |
+
+### New code practice file (`code_practice/<phase>/`)
+
+| Step | What to update | What to add |
+|------|---------------|-------------|
+| 1 | Root `README.md` | Update session status badge (📄 → 🔧 → ✅) in the practice plan table |
+| 2 | Phase `README.md` | Add session row if it exists |
+
+### Never needed for routine file creation
+
+- `00_HUB.md` — only update when a **portfolio milestone** is hit or career status changes
+- `01_CAREER_PACK.md` / `02_INTERVIEW_PACK.md` — only update when job search strategy changes
+- `RULES.md` / `STRUCTURE.md` folder contract section — only update when a folder's scope changes

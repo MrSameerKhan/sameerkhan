@@ -69,93 +69,93 @@ Production-style convention:
 
 ---
 
-## Active Coding Practice (`code_practice/`)
+---
 
-Hands-on, from-scratch implementations following the 68-session sequence in 03_LEARNING_PACK §
-Part C: Sequence Models → Transformers → Prompting → LLMs → RAG → Agents.
+## New Practice Series — Phase 05 onwards
 
-```
-code_practice/
-├── shared_dataset.py       # Synthetic Acme Financial Services data (compliance-safe)
-├── 01_seq_models/
-│   ├── 01_rnn/             # Done - vanilla RNN from scratch (NumPy + BPTT)
-│   ├── 02_rnn/             # Done - same model with nn.RNN (4× lower loss)
-│   ├── 03_lstm/            # Done - LSTM from scratch (4 gates + cell state)
-│   ├── 04_lstm_torch/      # Done - nn.LSTM (cross types, fluent grammar)
-│   ├── 05_gru/             # Done - GRU from scratch (2 gates, beat NumPy LSTM)
-│   ├── 06_gru_vs_lstm/     # Done - head-to-head: GRU smaller + lower loss, LSTM faster on CPU
-│   ├── 07_bilstm_ner/      # Done - BiLSTM NER, train/val/test, F1 0.93, tokenizer bug
-│   └── 08_bilstm_attention/
-│       └── 08_bilstm_attention/  # Done - Bahdanau attention, interpretable weights, bridge to transformers
-├── 02_transformers/
-│   ├── 09_seq2seq/         # Done - Seq2Seq + attention, full Bahdanau 2014 architecture
-│   │   └── 10_bpe/         # (Phase 1 finale)
-│   ├── 10_bpe/             # Done - BPE tokenizer from scratch (240 merges, byte-level vs char-level lesson)
-│   ├── 11_attention/       # Done - Scaled dot-product attention, real misclassification bug discovered
-│   ├── 12_mha/             # Done - Multi-head attention FIXED the Session 11 bug (loan 93% checking 4%)
-│   ├── 13_pos_enc/         # Done only - Sinusoidal + learned + RoPE; permutation-equivariance proof + order sensitivity
-│   ├── 14_encoder_block/   # Done - Full transformer block (LayerNorm + MHA+RoPE + FFN + residual)
-│   ├── 15_mini_transformer/ # Done - 4 stacked blocks; depth speeds convergence, attention stays uniform on each mat
-│   ├── 16_chunking/        # Done - Causal masking + LN (loss 0.19, beats LSTM 0.37 by 2×)
-│   ├── 17_tiny_gpt/        # Done - Tiny GPT with 4 sampling strategies, loss 0.12, fluent generation
-│   ├── 18_kv_cache/        # Done - KV cache inference (4× speedup, long-context degradation observed)
-│   ├── 19_cross_attention/ # Done - Encoder-decoder transformer; beat BiLSTM+Bahdanau (21% on 1B test, fewer params)
-│   └── 11_bf_load/         # Done - Architecture inspection; verified TinyGPT = GPT-2 (143M params, weight tying explains 38M)
-├── 03_prompting/
-│   ├── 01_first_call/      # Done - Ollama HTTP client; revealed small-model hallucination on "RAG" question
-│   ├── 02_few_shot/        # Done - Few-shot only helps if model is big enough (1B: no lift, 8B: 93%→100%)
-│   ├── 03_cot/             # Done - CoT gave 0% lift on 8B (direct already 100%) and hurt 1B: saturation + hallucinated steps
-│   ├── 04_self_consistency/ # Done - B×5 vote rescued 6 problems on 1B but regressed 1 (out 0%); 8B saturated; 4-5× cost
-│   ├── 05_json_output/     # Done - Free-text 0/10 (markdown formatting breaks repro), JSON mode 100%/98%; Pydantic caught hallucinated enum
-│   ├── 06_function_call/   # Done - 8B 0/6 (failed multi-tool + tools-as-text); 1B 1/6 (wrong args, hallucinated math next to a calculator)
-│   ├── 07_react_manual/    # Done - 8B 5/6 (finish fixed Q5 but post-success wander on Q3/Q6); 1B 0/6 (never exits Finish)
-│   ├── 08_system_prompts/  # Done - 8B personas separated cleanly (formal 1.76× verbose, 4.6× jargon); 1B collapsed; disclaimer compliance 0-12%
-│   ├── 09_injection/       # Done - Strict prompt INCREASED 1B leak (28→40%); L2 input filter caught all; security lives in code, not prompts
-│   └── 10_streaming/       # Done - TTFT improved 84% on 1B, 95% on 8B (88s→2.5s); same total work, transformative UX. Phase 3 complete.
-├── 04_llms/                # Phase 4 = 14 sessions: docs ✓, code on 10 sessions, awaiting traction
-│   ├── 01_load_generate/   # Code - load TinyLlama + .generate() + chat template (MPS-clean)
-│   ├── 02_decoding/        # Docs only - greedy/beam/top-k/top-p comparison
-│   ├── 03_quant_8bit/      # Docs only - Code pivot ONLY + GGUF Q8, no bitsandbytes
-│   ├── 04_quant_4bit/      # Docs only - Q4_K_M + CPU Q4 (the 4× memory cut)
-│   ├── 05_dataset_prep/    # Docs only - Acme fin Chats / Length audit
-│   ├── 06_lora_scratch/    # Code - LoRALinear from scratch (no training, math demo)
-│   ├── 07_qlora_train/     # Code - THE BIG ONE: real fine-tune on Acme data
-│   ├── 08_merge_save/      # Code - merge_and_unload + push_to_hub
-│   ├── 09_eval_compare/    # Code - 20-prompt eval, 5 axes, McNemar significance
-│   ├── 10_dpo/             # Code - preference tuning via TRL DPOTrainer
-│   ├── 11_fastapi_serve/   # Code - FastAPI + streaming inference
-│   ├── 12_vllm_serve/      # Code - vLLM + sequential + batched comparison
-│   ├── 13_lm_eval_harness/ # Code - ARC + HellaSwag + TruthfulQA, catastrophic-forgetting check
-│   └── 14_observability/   # Code - Prometheus metrics + structured logs + request IDs
-├── 04.5_advanced/
-│   ├── 01_cpt/             # Code - Continue pretraining on Acme articles
-│   ├── 02_function_calling_ft/ # Code - train model to natively exit tool calls
-│   ├── 03_distillation/    # Code - TinyLlama teacher + DistilGPT-2 student
-│   └── 04_speculative_decoding/ # Code - draft/verify via assistant_model API
-├── 05_rag/                 # Phase 5 = 10 sessions: docs complete, code on request
-│   ├── 01_chunking/        # Docs only - 4 chunking strategies compared
-│   ├── 02_embeddings/      # Docs only - MiniLM vs BGE, async vs sym
-│   ├── 03_vector_db/       # Docs only - Chroma / FAISS / qdrant
-│   ├── 04_basic_rag/       # Docs only - end-to-end pipeline
-│   ├── 05_reranking/       # Docs only - cross-encoder two-stage
-│   ├── 06_hybrid_search/   # Docs only - BM25 + dense + RRF
-│   ├── 07_query_expansion/ # Docs only - HyDE + multi-query
-│   ├── 08_rag_eval/        # Docs only - recall@k, MRR, faithfulness, answer relevance
-│   ├── 09_indirect_injection/ # Docs only - defense against poisoned docs
-│   └── 10_production_rag/  # Docs only - semantic cache + observability + cost
-└── 06_agents/              # Phase 6 = 10 sessions: docs complete, code on request
-    ├── 01_fundamentals/    # Docs only - production ReAct with guards
-    ├── 02_langchain_primer/ # Docs only - LCEL, chains, tools
-    ├── 03_langgraph/       # Docs only - state-machine orchestration
-    ├── 04_tools_registry/  # Docs only - Pydantic schemas + auth + audit
-    ├── 05_memory/          # Docs only - short + mid + long term
-    ├── 06_planner_executor/ # Docs only - separate plan from act
-    ├── 07_multi_agent/     # Docs only - supervisor + researcher + analyst + composer
-    ├── 08_mcp_protocol/    # Docs only - MCP server + client
-    ├── 09_agent_eval/      # Docs only - 5 axes: success, tool acc, efficiency, cost, safety
-    └── 10_production_agents/ # Docs only - budgets + timeouts + HITL + audit
-```
+Problem-first, use-case-driven sessions. Every session answers: what problem, who has it, when you'd use it, how you solve it.
 
-Per-session structure: `model.py` (architecture) · `train.py` (training or end-to-end) · `predict.py` (CLI inference) · `all_details.md` (objective, shapes, how-to-run, ACTUALS)
+**Narrative arc:** Apply pretrained models → Use LLM APIs → Augment with knowledge → Orchestrate with tools → Customize weights → Own your differentiator (Document AI)
 
-**Sequence totals:** 9 + 11 + 10 (Phase 1-3, all run) + 14 + 4 + 10 + 10 (Phase 4-6, code/docs at various levels) = **68 sessions across 6.5 phases.**
+**File structure:** Single file = learning a pattern. Multi-file = building something shippable.
+
+**Theory link rule:** Line 1 of every session file: `# Theory: ../path/to/theory_file.md` — keeps code and theory wired together.
+
+### Phase 05: Transformers — "Apply pretrained models to real NLP tasks"
+> Single file per session — applying HuggingFace pretrained models, no custom architecture
+
+| # | Session | Real use case | Problem solved | Who uses it | Status |
+|---|---------|--------------|---------------|-------------|--------|
+| 01 | `01_bert_classification.py` | Loan feedback sentiment classifier | Label thousands of customer reviews manually → automate with BERT | ML engineer at any bank / fintech | ✅ Run |
+| 02 | `02_bert_ner.py` | Financial news entity extractor | Extract company names, amounts, dates from news at scale | Data engineer, quant team | ✅ Run |
+| 03 | `03_bert_qa.py` | Policy document QA | "What is the max loan amount?" — answered from PDF without search infra | Document AI engineer | 🔧 Code-built |
+| 04 | `04_bart_summarization.py` | Earnings report summarizer | 50-page report → 3 bullet points for analysts in seconds | Research analyst, fintech | 🔧 Code-built |
+| 05 | `05_t5_translation.py` | Multilingual document processor | Arabic financial docs → English | Any company with multilingual docs | 🔧 Code-built |
+| 06 | `06_gpt2_generation.py` | Synthetic training data generator | Need 10K training examples, only have 500 real ones | ML engineer with data scarcity problem | 🔧 Code-built |
+| 07 | `07_sentence_transformers.py` | Semantic document search | "Find all contracts similar to this one" — keyword search fails | Search engineer — bridge to RAG | 🔧 Code-built |
+
+### Phase 06: LLMs Core — "Use LLM APIs to build real features"
+> Single file per session — API calls and prompting patterns
+
+| # | Session | Real use case | Problem solved | Who uses it | Status |
+|---|---------|--------------|---------------|-------------|--------|
+| 01 | `01_prompt_engineering.py` | Domain-aware customer support bot | Base LLM gives generic answers → few-shot makes it domain-specific instantly | Any team before spending on fine-tuning | 🔧 Code-built |
+| 02 | `02_structured_extraction.py` | Invoice / contract parser | Unstructured PDF text → clean validated JSON (Pydantic + Instructor) | Document AI engineer | 🔧 Code-built |
+| 03 | `03_llm_evaluation.py` | A/B test two model versions | Can't ship without proof v2 > v1 → ROUGE + LLM-as-judge pipeline | Every ML engineer before deployment | 🔧 Code-built |
+
+### Phase 07: RAG — "Augment LLM with external knowledge"
+> Sessions 01-04 single file · Session 05 multi-file (pipeline + server are separate concerns)
+
+| # | Session | Real use case | Problem solved | Who uses it | Structure | Status |
+|---|---------|--------------|---------------|-------------|-----------|--------|
+| 01 | `01_basic_rag.py` | Policy document QA bot | LLM hallucinates policy details → ground answers in real docs | Any company with internal knowledge base | single file | 🔧 Code-built |
+| 02 | `02_chunking_strategies.py` | Long financial doc processor | Wrong chunk size → missed context or irrelevant noise | Every RAG builder | single file | 🔧 Code-built |
+| 03 | `03_advanced_rag.py` | High-precision financial QA | Basic RAG retrieves wrong chunks → reranking + hybrid search fixes it | ML engineer shipping RAG to prod | single file | 🔧 Code-built |
+| 04 | `04_rag_evaluation.py` | Prove RAG actually works | "Is our RAG better than no RAG?" → RAGAS: faithfulness + relevance scores | ML engineer, product team | single file | 🔧 Code-built |
+| 05 | `05_production_rag/` | Prod-grade RAG with semantic cache + REST API | Repeated queries waste LLM budget → semantic cache cuts costs 30-40% | Senior ML / MLOps engineer | `pipeline.py` · `serve.py` | 🔧 Code-built |
+
+### Phase 08: Agents — "Orchestrate LLM with tools and memory"
+> Sessions 01-02 single file · Sessions 03-04 multi-file (graph, tools, entry point are distinct)
+
+| # | Session | Real use case | Problem solved | Who uses it | Structure | Status |
+|---|---------|--------------|---------------|-------------|-----------|--------|
+| 01 | `01_react_agent.py` | Multi-step research assistant | Single LLM call can't search + calculate + synthesize → ReAct loop can | Any LLM product team | single file | 🔧 Code-built |
+| 02 | `02_tool_calling.py` | Financial data agent | Connect LLM to live APIs: calculator, account lookup, eligibility check | ML engineer building LLM features | single file | 🔧 Code-built |
+| 03 | `03_langgraph_agent/` | Production workflow agent | Prototype agent loses state + can't HITL → LangGraph: checkpoints + multi-turn + streaming | Senior engineer shipping agents to prod | `graph.py` · `tools.py` · `run.py` | 🔧 Code-built |
+| 04 | `04_document_agent/` | **Portfolio project:** Mortgage document pipeline — classify → extract → policy → eligibility → HITL → report | One monolithic agent fails on edge cases → specialist agents + supervisor + conditional HITL approval | ML architect at fintech / bank — resume bullet | `agents.py` · `graph.py` · `run.py` | 🔧 Code-built |
+
+### Phase 09: Fine-tuning — "Change model weights for your domain"
+> Sessions 01, 03-04, 06 run on MPS · Session 02 needs CUDA · Session 05 needs Linux+CUDA
+
+| # | Session | Real use case | Problem solved | Who uses it | Structure | Status |
+|---|---------|--------------|---------------|-------------|-----------|--------|
+| 01 | `01_lora_finetune.py` | Domain-adapted financial assistant | Base LLM gives generic answers → LoRA adapts in 0.24% of params | ML engineer with domain data | single file | 🔧 Code-built |
+| 02 | `02_qlora_finetune.py` | Same on consumer GPU (8-16GB) | LoRA needs float32 in memory → QLoRA: 4-bit NF4 + adapter | Any engineer without A100s | single file | 🔧 Code-built |
+| 03 | `03_dataset_prep.py` | Build training data from raw docs | Have 10K policy docs, no pairs → LLM-generated SFT + DPO dataset pipeline | ML engineer starting fine-tuning | single file | 🔧 Code-built |
+| 04 | `04_dpo_alignment.py` | Make fine-tuned model less robotic | SFT model accurate but dry → DPO on (chosen, rejected) pairs | Alignment-aware ML engineer | single file | 🔧 Code-built |
+| 05 | `05_vllm_serving/` | Serve fine-tuned model at scale | `.generate()` = 1 req at a time → vLLM PagedAttention: 50× throughput | MLOps / deployment engineer | `server.py` · `client.py` | 🔧 Code-built |
+| 06 | `06_llm_monitoring.py` | Production LLM observability | No visibility into latency/cost/drift → Prometheus + PSI drift + structured traces | Senior ML / MLOps engineer | single file | 🔧 Code-built |
+
+### Phase 10: Document AI — "Own your differentiator"
+> Your biggest interview edge — 8 years of production Document AI, now in code
+
+| # | Session | Real use case | Problem solved | Who uses it | Structure | Status |
+|---|---------|--------------|---------------|-------------|-----------|--------|
+| 01 | `01_layoutlm_extraction.py` | Invoice / form key-value extraction | Rule-based fails on varied layouts → LayoutLMv3 learns text + bbox + image jointly | Document AI engineer (Nanonets, Docsumo, ICE) | single file | 🔧 Code-built |
+| 02 | `02_donut_parsing.py` | OCR-free document understanding | OCR errors cascade → Donut reads image → JSON end-to-end with no OCR step | Senior Document AI engineer | single file | 🔧 Code-built |
+| 03 | `03_colpali_rag.py` | Vision-RAG on document images | Text RAG misses tables/charts → ColPali embeds 1030 patches per page, MaxSim retrieval | Frontier Document AI engineer | single file | 🔧 Code-built |
+| 04 | `04_document_pipeline.py` | **Portfolio:** Full ICE-style pipeline | Components work alone but not connected → ingest → OCR → classify → extract → answer | **Your differentiator** — pin to GitHub, update resume | single file | 🔧 Code-built |
+
+**Series totals:** 7 + 3 + 5 + 4 + 6 + 4 = **29 sessions across 6 phases.**
+
+---
+
+### Portfolio milestones (when to update resume)
+
+| After completing | Resume / LinkedIn action |
+|-----------------|--------------------------|
+| Phase 07/05 `production_rag` | Update RAG project → v2 with RAGAS eval + semantic cache |
+| Phase 08/04 `document_agent` | Add: "Built LangGraph document agent — classify → retrieve → extract → answer, HITL approval" |
+| Phase 09/02 `qlora_finetune` | Add: "Fine-tuned TinyLlama with QLoRA on synthetic banking dataset, McNemar-significant improvement" |
+| Phase 09/06 `llm_monitoring` | Add: "vLLM serving + Prometheus + Evidently drift monitoring pipeline" |
+| Phase 10/04 `document_pipeline` | Pin to GitHub — this is your biggest differentiator demo |

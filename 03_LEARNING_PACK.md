@@ -123,13 +123,16 @@ Every interview question reduces to one of:
 
 | Phase | Layer | What you build | What you can claim after |
 |-------|-------|----------------|--------------------------|
-| Phase 1 — Sequence Models (9) | L0 | RNN / LSTM / GRU / BiLSTM / Bahdanau attention from scratch | "I understand sequence modeling deeply." |
-| Phase 2 — Transformers (11) | L0 | BPE / attention / MHA / RoPE / encoder / decoder / KV cache / Tiny GPT | "I can build a transformer from scratch and explain every component." |
-| Phase 3 — Prompting (10) | L1 | Few-shot / CoT / self-consistency / JSON / function call / ReAct / injection defense / streaming | "I can pick the right prompting technique for any task and defend it with data." |
-| Phase 4 — LLMs (14) | L2 + L5 | Load / decode / quantize / SFT / CPT / DPO / merge / eval / vLLM / FastAPI / observability | "I have fine-tuned and deployed an LLM end-to-end on my own data." |
-| Phase 4.5 — Advanced (4) | L2 deep | CPT + function-calling FT, distillation + speculative decoding | "I know the advanced training and inference techniques." |
-| Phase 5 — RAG (10) | L3 | Chunking / embeddings / vector DB / retrieval / re-ranking / hybrid / eval | "I can build production RAG with eval, hybrid retrieval, and injection defense." |
-| Phase 6 — Agents (10) | L4 | LangGraph / MCP / memory / planner / multi-agent / safety / production | "I can architect an agent system with tools, memory, and planning." |
+| Phase 01 — Sequence Models (9) | L0 | RNN / LSTM / GRU / BiLSTM / Bahdanau attention from scratch | "I understand sequence modeling deeply." |
+| Phase 02 — Transformers (11) | L0 | BPE / attention / MHA / RoPE / encoder / decoder / KV cache / Tiny GPT | "I can build a transformer from scratch and explain every component." |
+| Phase 03 — Prompting (10) | L1 | Few-shot / CoT / self-consistency / JSON / function call / ReAct / injection defense / streaming | "I can pick the right prompting technique for any task and defend it with data." |
+| Phase 04 — LLMs legacy (14) | L2 | Load / decode / quantize / SFT / CPT / DPO / merge / eval / vLLM / FastAPI / observability | "I have fine-tuned and deployed an LLM end-to-end." |
+| Phase 05 — Transformers HF (7) | L0+L1 | BERT classification / NER / QA · BART summarization · T5 translation · GPT-2 generation · Sentence Transformers | "I apply pretrained models to real NLP tasks using HuggingFace." |
+| Phase 06 — LLMs Core (3) | L1 | Prompt engineering · Pydantic + Instructor extraction · LLM-as-judge evaluation | "I use LLM APIs to build production features." |
+| Phase 07 — RAG (5) | L3 | Basic RAG · 5 chunking strategies · BM25+dense+RRF+reranker · RAGAS eval · semantic cache + FastAPI | "I can build production RAG with eval, hybrid retrieval, and semantic cache." |
+| Phase 08 — Agents (4) | L4 | ReAct from scratch · OpenAI tool calling · LangGraph multi-turn · document agent (HITL portfolio project) | "I can architect an agent system with LangGraph, memory, and HITL." |
+| Phase 09 — Fine-tuning (6) | L2 | LoRA · QLoRA NF4 · synthetic dataset pipeline · DPO · vLLM serving · LLM monitoring | "I have fine-tuned, aligned, and deployed LLMs end-to-end." |
+| Phase 10 — Document AI (4) | L5 | LayoutLMv3 · Donut OCR-free · ColPali vision-RAG · full ICE-style pipeline | "I own end-to-end Document AI from OCR through multimodal extraction — my differentiator." |
 
 ---
 
@@ -293,16 +296,19 @@ Every interview question reduces to one of:
 ### 13. Combined Sequence at a Glance
 
 ```
-Phase 1: Sequence Models  (9 sessions)  →  RNN + LSTM + GRU + BiLSTM + attention bridge
-Phase 2: Transformers     (11 sessions) →  understand the engine (incl. cross-attention)
-Phase 3: Prompting        (10 sessions) →  call LLMs fluently
-Phase 4: LLMs             (14 sessions) →  fine-tune + serve + observability   [Project 2]
-Phase 4.5: Advanced       (4 sessions)  →  CPT + FC-FT + distillation + spec-decoding
-Phase 5: RAG              (10 sessions) →  full RAG layer with eval + safety   [Project 1+]
-Phase 6: Agents           (10 sessions) →  production agent stack              [Project 3]
+Phase 01: Sequence Models  (9 sessions)  ✅ Run  —  RNN + LSTM + GRU + BiLSTM + attention
+Phase 02: Transformers     (11 sessions) ✅ Run  —  understand the engine (incl. cross-attention)
+Phase 03: Prompting        (10 sessions) ✅ Run  —  call LLMs fluently
+Phase 04: LLMs legacy      (14 sessions) ✅ Run  —  fine-tune + serve + observability
+Phase 05: Transformers HF  (7 sessions)  🔧 Code-built  —  apply pretrained models to NLP tasks
+Phase 06: LLMs Core        (3 sessions)  🔧 Code-built  —  LLM APIs: prompting, extraction, eval
+Phase 07: RAG              (5 sessions)  🔧 Code-built  —  full RAG with hybrid search + eval   [Project 1+]
+Phase 08: Agents           (4 sessions)  🔧 Code-built  —  ReAct → LangGraph → portfolio agent  [Project 3]
+Phase 09: Fine-tuning      (6 sessions)  🔧 Code-built  —  LoRA/QLoRA/DPO/vLLM/monitoring       [Project 2]
+Phase 10: Document AI      (4 sessions)  🔧 Code-built  —  LayoutLM + Donut + ColPali + pipeline [Differentiator]
 ```
 
-**Total: 68 coding sessions — ~1-2 hours each — 10-14 weeks at 5 sessions/week.**
+**Total coded: 73 sessions (phases 01-10) · Phases 01-04 run · Phases 05-10 coded, awaiting run.**
 
 ---
 
@@ -551,38 +557,47 @@ For each topic, ask the **5 questions**. If you can answer all 5, you KNOW it. I
 - [ ] Strict system prompts can INCREASE leak rate
 - [ ] Streaming TTFT vs total time
 
-**Phase 4 — LLMs**
+**Phases 04 — LLMs (legacy, all run)**
 - [ ] Load HF model + apply chat template
 - [ ] 4 decoding strategies
 - [ ] Memory math: INT8 vs NF4
-- [ ] Speculative decoding (draft + verify)
 - [ ] LoRA math: W = W + B·A, why low rank works
 - [ ] QLoRA = LoRA + NF4 base
-- [ ] CPT vs SFT (different paradigms)
 - [ ] DPO loss vs PPO (no reward model needed)
-- [ ] Distillation (teacher / student)
-- [ ] McNemar test for paired eval significance
 - [ ] vLLM continuous batching + paged attention
-- [ ] FastAPI / SSE streaming
 - [ ] Observability — 4 golden signals for LLMs
 
-**Phase 5 — RAG**
-- [ ] Chunking strategies (token vs sentence vs semantic)
-- [ ] Embedding models (sentence-transformers, BGE)
-- [ ] Vector DB choice (Chroma, FAISS, Qdrant)
-- [ ] Hybrid search (BM25 + dense via RRF)
-- [ ] Re-ranking (cross-encoder)
-- [ ] RAG eval (recall@k, faithfulness, answer relevance)
+**Phase 07 — RAG (coded)**
+- [ ] Chunking strategies — fixed / sentence / hierarchical / semantic
+- [ ] FAISS IndexFlatIP + L2-normalised embeddings
+- [ ] Hybrid search: BM25 + dense + RRF fusion
+- [ ] Cross-encoder reranking (two-stage pipeline)
+- [ ] HyDE + multi-query query transformation
+- [ ] RAGAS 4 metrics: faithfulness, relevancy, precision, recall
+- [ ] Semantic cache (two-tier: exact + cosine)
 - [ ] Indirect prompt injection in RAG
 
-**Phase 6 — Agents**
-- [ ] ReAct from scratch (Phase 3 S27)
-- [ ] LangGraph state machine
-- [ ] MCP protocol
-- [ ] Multi-agent coordination
-- [ ] Long-term memory (vector store of past actions)
-- [ ] Planner / executor split
-- [ ] Tool safety (authorization, audit, rate-limit)
+**Phase 08 — Agents (coded)**
+- [ ] ReAct loop from scratch (parse Thought/Action/Observation)
+- [ ] OpenAI function calling (tool schemas, parallel tool calls)
+- [ ] LangGraph state machine (StateGraph, MemorySaver, tools_condition)
+- [ ] HITL interrupt + Command(resume=...) pattern
+- [ ] Specialist agent pattern (supervisor + workers)
+- [ ] Planner-executor patterns: ReAct vs Plan&Execute vs ReWoo vs LATS vs Reflexion
+
+**Phase 09 — Fine-tuning (coded)**
+- [ ] LoRA config: r, alpha, target_modules — what each does
+- [ ] QLoRA = NF4 4-bit base + LoRA adapters (6× memory reduction)
+- [ ] SFT with trl SFTTrainer + SFTConfig
+- [ ] DPO objective: β parameter, chosen vs rejected format
+- [ ] vLLM PagedAttention + continuous batching
+- [ ] Prometheus + PSI drift detection for LLM observability
+
+**Phase 10 — Document AI (coded)**
+- [ ] LayoutLMv3: text + bbox + image patches fused — why layout matters
+- [ ] Donut: image → JSON end-to-end, no OCR step
+- [ ] ColPali: 1030 patch embeddings per page, MaxSim late interaction
+- [ ] Full pipeline: ingest → OCR → classify → extract → QA
 
 **If you check ALL: you're L4-ready for any senior LLM interview.**
 
@@ -630,29 +645,35 @@ For each topic, ask the **5 questions**. If you can answer all 5, you KNOW it. I
 
 ### 23. What You Can Claim After This Sequence
 
-**You CAN claim with full integrity:**
+**You CAN claim with full integrity (Phases 01-04 run, 05-10 coded):**
 
 - "I built RNN, LSTM, GRU, BiLSTM, Bahdanau attention from scratch in NumPy and PyTorch."
 - "I built a Tiny GPT from scratch (BPE → attention → blocks → decoder)."
-- "I verified my implementation matches GPT-2's parameter count and architecture."
 - "I have hands-on experience with 10 prompting techniques and can defend when each applies."
-- "I have fine-tuned an open-weights LLM (TinyLlama) on a custom dataset using PEFT + LoRA."
-- "I evaluated the fine-tuning quantitatively (5-axis comparison, paired significance test)."
-- "I built RAG end-to-end (chunking, embedding, retrieval, generation, eval, safety)."
-- "I built an agent system with tools, planning, memory."
-- "I deployed an LLM via FastAPI streaming and via vLLM."
+- "I built and fine-tuned LLMs end-to-end — LoRA, QLoRA (NF4 4-bit), DPO alignment."
+- "I built production RAG: hybrid search (BM25 + dense + RRF), cross-encoder reranking, RAGAS evaluation, semantic cache."
+- "I built LangGraph agents with HITL interrupts, memory, and specialist agent routing."
+- "I have 8 years of production Document AI — LayoutLMv3, Donut OCR-free, ColPali vision-RAG, full pipeline."
+- "I deployed LLMs with vLLM (PagedAttention + continuous batching) and built Prometheus observability."
+
+**Add these after running Phases 05-10:**
+
+- "I applied BERT, BART, T5, GPT-2, Sentence Transformers to financial NLP tasks using HuggingFace."
+- "I fine-tuned TinyLlama-1.1B with QLoRA — model fits in 700 MB GPU vs 4.4 GB float32."
+- "I built a LangGraph mortgage document agent: classify → extract → policy RAG → eligibility → HITL → report."
+- "I built an end-to-end document AI pipeline (PDF → OCR → classify → LayoutLM extract → QA) — open-sourced."
 
 **You CAN claim if asked specifically:**
 
-- "I understand QLoRA — the only reason I used LoRA on fp16 was lack of CUDA; the code change is one flag."
-- "I haven't run pretraining from scratch — that requires $1M+ in compute."
-- "I haven't done RLHF/PPO — DPO is the modern replacement and I've done that."
+- "I understand QLoRA fully — NF4 quantization + LoRA adapters. bitsandbytes needs CUDA; code runs on Windows with flag."
+- "I haven't run pretraining from scratch — that requires $1M+ compute."
+- "RLHF/PPO is legacy — DPO is the modern replacement and I've built it."
 
 **Do NOT claim:**
 
 - "I've trained a 70B model!" — interviewer will detect in 30 seconds.
-- "I'm an expert in multimodal LLMs" — not in this sequence.
 - "I've contributed to model research" — different career path.
+- "I've run ColPali in production" — coded and documented; needs CUDA to run.
 
 ---
 

@@ -27,8 +27,11 @@ mindmap
 
 1. `01_rag.md` — conceptual RAG (architecture, chunking, retrieval, generation patterns)
 2. `01b_rag_end_to_end.md` — worked example with numbers + RAGAS evaluation
-3. `02_rag_pipeline.md` — pipeline depth + RAGAS metrics + production considerations
-4. `03_indirect_prompt_injection.md` — threat model + 6 defense layers (this is the #1 RAG security concern)
+3. `02_rag_pipeline.md` — pipeline depth: chunking decisions, hybrid retrieval (RRF), cross-encoder reranking
+4. `03_indirect_prompt_injection.md` — threat model + 6 defense layers (the #1 RAG security concern)
+5. `04_advanced_rag.md` — query transformation: HyDE, multi-query, Self-RAG, CRAG, Adaptive RAG
+6. `05_rag_evaluation.md` — RAGAS 4 metrics in depth, retrieval eval, LLM-as-judge, synthetic datasets
+7. `06_production_rag.md` — semantic cache, incremental indexing, cost model, A/B testing RAG versions
 
 ---
 
@@ -36,18 +39,24 @@ mindmap
 
 | File | Owns |
 |------|------|
-| `01_rag.md` | Conceptual RAG architecture + Self-RAG / CRAG / Adaptive RAG patterns |
+| `01_rag.md` | Conceptual RAG architecture + overview of advanced patterns |
 | `01b_rag_end_to_end.md` | Worked example — chunking → embedding → retrieval → reranking → generation |
-| `02_rag_pipeline.md` | RAG pipeline depth + RAGAS metrics + production considerations |
+| `02_rag_pipeline.md` | SSOT: chunking strategies, hybrid retrieval (RRF code), cross-encoder reranking, embedding fine-tuning |
 | `03_indirect_prompt_injection.md` | SSOT: Indirect prompt injection threat + 6 defense layers (capability isolation, structured outputs, CaMeL dual-LLM) |
+| `04_advanced_rag.md` | SSOT: Query transformation — HyDE, multi-query, query decomposition, step-back, Self-RAG, CRAG, Adaptive RAG |
+| `05_rag_evaluation.md` | SSOT: RAGAS 4 metrics in depth, retrieval-only eval (Recall@k / MRR), LLM-as-judge, synthetic dataset creation |
+| `06_production_rag.md` | SSOT: Semantic cache (two-tier), incremental index freshness, cost model, A/B testing RAG versions |
 
 ---
 
 ## SSOT Topics Owned Here
 
-- RAG conceptual + advanced patterns (Self-RAG / CRAG / Adaptive RAG) → `01_rag.md`
-- RAG pipeline depth → `02_rag_pipeline.md`
+- RAG conceptual architecture → `01_rag.md`
+- RAG pipeline mechanics (chunking, RRF, reranking) → `02_rag_pipeline.md`
 - Indirect prompt injection defenses → `03_indirect_prompt_injection.md`
+- Query transformation (HyDE, multi-query, Self-RAG, CRAG) → `04_advanced_rag.md`
+- RAG evaluation (RAGAS, LLM-as-judge, synthetic datasets) → `05_rag_evaluation.md`
+- Production RAG (semantic cache, freshness, cost, A/B) → `06_production_rag.md`
 
 ---
 

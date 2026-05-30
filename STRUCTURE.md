@@ -58,14 +58,32 @@ For each "hot topic" added in 2024-2025, **one canonical file** owns the depth. 
 
 ### Retrieval / RAG Topics
 
-| Topic | SSOT (canonical home) | Currently duplicated in |
-|-------|----------------------|------------------------|
-| Modern embeddings (BGE, E5, Nomic, jina-v3, stella) | `6.nlp/02_embeddings/02_sentence_embeddings.md` | `4.nlp/09_applications/08_evaluation_metrics.md` (filter only — CKL); `6.nlp/01_fundamentals/03_text_representations.md` |
-| Hybrid retrieval (BM25 + dense + RRF) | `6.nlp/02_embeddings/02_semantic_similarity.md` | `4.nlp/02_embeddings/02_sentence_embeddings.md`; `6.nlp/01_fundamentals/03_text_representations.md` |
-| Contrastive training (how BGE/E5 are trained) | `6.nlp/02_embeddings/04_contrastive_training.md` | Currently free — single home; just needs more links to it |
-| RAG pipeline + RAGAS | `6.nlp/04_applications/03_rag_pipeline.md` | `8.llms/06_evaluation.md`; `4.nlp/04_applications/08_evaluation_metrics.md`; `4.llms/04_rag_generation_eval.md` |
-| Self-RAG / CRAG / Adaptive RAG | `6.nlp/04_applications/03_rag_pipeline.md` | `8.llms/04_rag.md` |
-| Production RAG ops (eval, freshness, multi-tenant) | `8.steps/11_production_rag_ops.md` + `9.system_design/10_multi_tenant.md` | `8.llms/04_rag.md` |
+| Topic | SSOT (canonical home) | Notes |
+|-------|----------------------|-------|
+| Modern embeddings (BGE, E5, Nomic, jina-v3, stella) | `4.nlp/02_embeddings/02_sentence_embeddings.md` | |
+| Hybrid retrieval (BM25 + dense + RRF) + cross-encoder reranking | `7.rag/02_rag_pipeline.md` | Also covers chunking strategies |
+| Contrastive training (how BGE/E5 are trained) | `4.nlp/02_embeddings/06_contrastive_training.md` | |
+| RAG conceptual architecture | `7.rag/01_rag.md` | |
+| Query transformation (HyDE, multi-query, Self-RAG, CRAG, Adaptive RAG) | `7.rag/04_advanced_rag.md` | Added 2026-05-31 |
+| RAG evaluation (RAGAS 4 metrics, LLM-as-judge, synthetic datasets) | `7.rag/05_rag_evaluation.md` | Added 2026-05-31 |
+| Production RAG (semantic cache, freshness, cost model, A/B) | `7.rag/06_production_rag.md` | Added 2026-05-31; ops depth → `10.mlops/13_production_rag_ops.md` |
+| Indirect prompt injection defenses | `7.rag/03_indirect_prompt_injection.md` | |
+| Multi-tenant RAG system design | `11.system_design/10_multi_tenant_rag.md` | |
+
+### Agent Topics
+
+| Topic | SSOT (canonical home) | Notes |
+|-------|----------------------|-------|
+| Agent fundamentals (ReAct loop, tool calling, MCP overview) | `8.agents/01_agents.md` | |
+| Agent reliability patterns (retries, HITL, audit log) | `8.agents/02_agent_reliability_patterns.md` | |
+| LangGraph (state machines, checkpointing, HITL interrupts) | `8.agents/04_langgraph_deep.md` | |
+| Agent memory (working / short / long-term subtypes) | `8.agents/05_agent_memory.md` | |
+| Planner-executor patterns (ReAct, Plan&Execute, ReWoo, LATS, Reflexion, Self-Refine) | `8.agents/06_planner_executor_patterns.md` | Added 2026-05-31 |
+| Multi-agent orchestration (CrewAI, AutoGen, Swarm, smolagents) | `8.agents/07_multi_agent_orchestration.md` | |
+| MCP protocol (tools, resources, prompts, transports) | `8.agents/08_mcp_protocol_deep.md` | |
+| Agent evaluation (success / trajectory / cost / safety) | `8.agents/09_agent_evaluation.md` | |
+
+---
 
 ### Evaluation Topics
 

@@ -321,19 +321,19 @@ ML Classical                  ████████████▊         64
 SQL                           ██████████▋           54% ✅
 RAG                           ██████████▏           51% ✅ project done
 MLOps / CI-CD                 █████████▊            49% ✅
-LangChain / LangGraph         █████████▏            46% + critical gap
-Prompt Engineering            ███████▋              38% + gap
+LangChain / LangGraph         █████████▏            46% ✅ Phase 08 coded
+Prompt Engineering            ███████▋              38% ✅ Phase 06 coded
 Embeddings / Vector Search    ███████▋              38% ✅ project done
 Vector DB (FAISS/Pinecone)    ███████▋              38% ✅ project done
 AWS (SageMaker/Bedrock)       ███████▋              38% ✅ SageMaker
-LLM Fine-tuning (LoRA/QLoRA)  ███████▏              36% + critical gap
+LLM Fine-tuning (LoRA/QLoRA)  ███████▏              36% ✅ Phase 09 coded
 Spark / PySpark               ██████▏               31% ✅
 HuggingFace                   ██████▏               31% ▲ needs proof
 Statistics                    █████▏                26% ✅
-Agents (LangGraph/CrewAI)     ████▌                 23% + growing gap
+Agents (LangGraph/CrewAI)     ████▌                 23% ✅ Phase 08 coded
 Azure ML / Databricks         ████▌                 23% ✅
 Docker / Kubernetes           ████▏                 21% ✅ Docker
-PEFT / LoRA / QLoRA           ███                   15% gap
+PEFT / LoRA / QLoRA           ███                   15% ✅ Phase 09 coded
 RLHF / DPO                    ██                    10% low priority
 GCP / Vertex AI               ██                    10% low priority
 
@@ -348,23 +348,27 @@ Legend: ✅ = you have it · ▲ = partial · + = gap
 
 Python (97%), PyTorch/TF (79%), NLP (69%), DL (64%), Classical ML (64%), SQL (54%), MLOps (49%), PySpark (31%), AWS SageMaker (38%), Azure/Databricks (23%).
 
-### Critical gaps (35-51% of JDs — blocking interview calls)
+### Critical gaps — NOW CLOSED (all coded in Phases 06-10)
 
-| Gap | % of JDs | Fix |
-|-----|----------|-----|
-| RAG | 51% | Add RAG project to resume NOW |
-| LangChain / LangGraph | 46% | Build doc_agent project (Phase 6) |
-| LLM fine-tuning (LoRA/QLoRA) | 36% | Build llm_finetuning project (Phase 4) |
-| Prompt Engineering | 38% | Theory + practice with examples (Phase 3 done) |
-| Embeddings / Vector DB | 38% | Add to resume — already done |
+| Skill | % of JDs | Status |
+|-------|----------|--------|
+| RAG | 51% | ✅ `archive/projects/rag_system/` built + `code_practice/07_rag/` coded |
+| LangChain / LangGraph | 46% | ✅ `code_practice/08_agents/03_langgraph_agent/` + `04_document_agent/` coded |
+| LLM fine-tuning (LoRA/QLoRA) | 36% | ✅ `code_practice/09_finetuning/01_lora_finetune.py` + `02_qlora_finetune.py` coded |
+| Prompt Engineering | 38% | ✅ `code_practice/06_llms/01_prompt_engineering.py` coded |
+| Embeddings / Vector DB | 38% | ✅ Project + `code_practice/07_rag/` + `05_transformers/07_sentence_transformers.py` |
+| Agent frameworks | 23% | ✅ `code_practice/08_agents/` — ReAct, tool calling, LangGraph, supervisor agent |
 
-### Growing gaps (23% of JDs → will be 40% in 6 months)
+**Remaining action:** run these sessions to capture real output → add resume bullets. Code is done.
 
-| Gap | Signal | Fix |
-|-----|--------|-----|
-| Agent frameworks (LangGraph, CrewAI) | Infosys mandatory; 9 JDs | doc_agent project with LangGraph |
-| AWS Bedrock | 4 JDs, increasing | Add to vllm_monitoring or doc_agent |
-| Agentic AI (tools + memory + planning) | 9 JDs | Phase 6 covers this |
+### Still low priority (< 10% of JDs)
+
+| Gap | Signal | Action |
+|-----|--------|--------|
+| AWS Bedrock | 10% | Skip for now |
+| GCP / Vertex AI | 10% | Skip for now |
+| RLHF / PPO | 10% | DPO is the modern replacement — coded in Phase 09 |
+| Kubernetes | 5% | Docker knowledge covers most roles |
 
 ### Not worth chasing (< 10% of JDs)
 
@@ -372,29 +376,19 @@ GCP / Vertex AI, Kubernetes (Docker is enough), RLHF/DPO (research-heavy roles o
 
 ---
 
-## 16. Project Build Priority (closes the gaps)
+## 16. Project Build Priority — UPDATED May 2026
 
-| Order | Project | Gap it closes | JD frequency | Est. time |
-|-------|---------|--------------|--------------|-----------|
-| ✅ Done | rag_system | RAG (51%), Embeddings (38%), Vector DB (38%) | — | Done |
-| 1 | llm_finetuning (Phase 4 — DOING NOW) | LLM fine-tuning (36%), LoRA/QLoRA (15%), HuggingFace | Critical | 2 weeks |
-| 2 | doc_agent (Phase 6) | LangChain (46%), LangGraph (mandatory), Agents (23%) | Critical | 2 weeks |
-| 3 | vllm_monitoring | vLLM serving, Evidently drift, LLMOps | Medium | 1 week |
-| 4 | layoutlm_docs | Document AI (your differentiator) | Differentiator | 1 week |
+All projects are now coded. Action = run + capture output + add resume bullet.
 
-### Build timeline
+| Project | Code location | Gap it closes | Status | Resume bullet trigger |
+|---------|--------------|--------------|--------|----------------------|
+| rag_system | `archive/projects/rag_system/` | RAG 51%, Embed 38% | ✅ Built + on resume | Deploy HF Spaces → add live link |
+| llm_finetuning | `code_practice/09_finetuning/01-02` | LoRA/QLoRA 36%, HuggingFace 31% | 🔧 Coded → run on Windows | After Phase 09/02 run |
+| doc_agent | `code_practice/08_agents/04_document_agent/` | LangGraph 46%, Agents 23% | 🔧 Coded → run on Windows | After Phase 08/04 run |
+| vllm_monitoring | `code_practice/09_finetuning/05-06` | vLLM serving, Evidently, LLMOps | 🔧 Coded (05 needs Linux+CUDA) | After Phase 09/06 run |
+| document_pipeline | `code_practice/10_document_ai/04` | Document AI differentiator | 🔧 Coded → run on Windows | Run + pin to GitHub |
 
-```
-Week 0          Week 1-2         Week 3-4         Week 5              Week 6
-|               |                |                |                   |
-|               ▼                ▼                ▼                   ▼
-[✅ rag_system]→[llm_finetuning]→[doc_agent]─────→[vllm_monitoring]→[layoutlm_docs]
-|               |                |                |                   |
-closes:         closes:          closes:          closes:             closes:
-RAG 51%         LoRA/QLoRA 36%   LangChain 46%    LLMOps              Doc AI
-Embed 38%       HuggingFace      LangGraph mand.  vLLM serving        LayoutLM v3
-Vector DB 38%   fine-tuning      Agents 23%       Evidently drift     differentiator
-```
+**Next action:** run sessions in this order — 06 → 07/01-04 → 08/01-04 → 10/04 → 09/01-02
 
 ---
 
@@ -429,14 +423,14 @@ RAG System (Personal, 2026) — End-to-end RAG pipeline using sentence-transform
 MRR=1.0 on ML domain Q&A evaluation. GitHub: github.com/MrSameerKhan
 ```
 
-### Do these after each project is built
+### Add to resume after running each session
 
-| After building | Add to resume |
-|---------------|---------------|
-| llm_finetuning (Phase 4) | "Fine-tuned TinyLlama-1.1B using LoRA (PEFT) on synthetic banking dataset, 0.13% trainable params, McNemar-significant improvement vs base on key-fact recall" |
-| doc_agent (Phase 6) | "Built LangGraph agent with tool registry, memory, and planner/executor for document workflows, with HITL approval for high-stakes actions" |
-| vllm_monitoring | "Deployed model with vLLM (PagedAttention), 10× throughput improvement + Prometheus observability + Evidently drift monitoring" |
-| layoutlm_docs | "Fine-tuned LayoutLM v3 on invoice extraction, 94% F1 on key-value extraction from financial documents" |
+| After running | Add to resume |
+|--------------|---------------|
+| Phase 09/01-02 | "Fine-tuned LLM with LoRA (0.24% trainable params) and QLoRA (NF4 4-bit, 6× memory reduction) on synthetic banking dataset" |
+| Phase 08/04 | "Built LangGraph mortgage document agent: 5 specialist agents (classify → extract → policy RAG → eligibility → HITL approval → report)" |
+| Phase 09/05-06 | "Deployed fine-tuned model with vLLM (PagedAttention + continuous batching); production observability with Prometheus + Evidently drift" |
+| Phase 10/04 | "End-to-end document AI pipeline (PDF ingest → OCR → classify → LayoutLM extract → QA) — open-source ICE-style system on GitHub" |
 
 ---
 
@@ -598,12 +592,12 @@ No pressure at all — just genuine curiosity.
 
 ## 23. 30-60-90 Day Plan
 
-### Day 1-30 (the resume + projects sprint)
+### Day 1-30 (the run + resume sprint)
 
-- Week 1: Fix resume (positioning, skills, ICE bullets) + finish Phase 4 fine-tuning on MacBook
-- Week 2: Update LinkedIn (headline + About + Featured); start applying to Top 12
-- Week 3: Build vllm_monitoring or start Phase 5 RAG (depending on energy)
-- Week 4: 5 LinkedIn outreaches/week; first round interviews start
+- Week 1: Run Phase 06 + 07 sessions (API-only, Windows) → capture output → update `_details.md`
+- Week 2: Run Phase 08/04 document agent → update resume bullet → update LinkedIn
+- Week 3: Run Phase 10/04 document pipeline → pin to GitHub; deploy RAG to HF Spaces
+- Week 4: Start applying to Top 12; 5 LinkedIn outreaches/week; first round interviews
 
 ### Day 31-60
 

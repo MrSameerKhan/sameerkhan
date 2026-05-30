@@ -36,55 +36,59 @@
 
 | Area | Status |
 |------|--------|
-| Theory + Mental Model | ✅ Complete — 03_LEARNING_PACK |
-| Phase 1 — Sequence Models | ✅ Complete (9/9 sessions run on work laptop) |
-| Phase 2 — Transformers | ✅ Complete (11/11 sessions run on work laptop) |
-| Phase 3 — Prompting | ✅ Complete (10/10 sessions run on work laptop with Ollama) |
-| Phase 4 — LLMs | ⏳ Code built; waiting for MacBook + model downloads to RUN |
-| Phase 4.5 — Advanced | ⏳ Code built (CPT, FC-FT, distillation, speculative decoding) |
-| Phase 5 — RAG | ⏳ Docs complete (10/10); code on request |
-| Phase 6 — Agents | ⏳ Docs complete (10/10); code on request |
+| Theory — all 11 folders | ✅ Complete · 7.rag + 8.agents theory gaps filled May 2026 |
+| Code Phase 01 — Sequence Models | ✅ Run (9/9 on work laptop) |
+| Code Phase 02 — Transformers | ✅ Run (11/11 on work laptop) |
+| Code Phase 03 — Prompting | ✅ Run (10/10 on work laptop with Ollama) |
+| Code Phase 04 — LLMs (legacy) | ✅ Run (14/14 on work laptop) |
+| Code Phase 05 — Transformers (HF models) | ✅ 01-02 Run · 🔧 03-07 Code-built — run on Windows |
+| Code Phase 06 — LLMs Core | 🔧 Code-built (3/3) · needs `OPENAI_API_KEY` |
+| Code Phase 07 — RAG | 🔧 Code-built (5/5) · needs `OPENAI_API_KEY` |
+| Code Phase 08 — Agents / LangGraph | 🔧 Code-built (4/4) · needs `OPENAI_API_KEY` |
+| Code Phase 09 — Fine-tuning | 🔧 Code-built (6/6) · sessions 01+04 run on CPU/MPS |
+| Code Phase 10 — Document AI | 🔧 Code-built (4/4) · run on Windows |
 | RAG project (`archive/projects/rag_system/`) | ✅ Built: FastAPI + Streamlit + eval · ⏳ HF Spaces deploy pending |
-| Resume | ✅ Tagline, summary, skills, ICE bullets, RAG project added |
-| LLM fine-tune resume bullet | ⏳ Add after Phase 4 Session 7 run on MacBook |
-| LangGraph agent resume bullet | ⏳ Add after Phase 6 (currently docs-only) |
-| Job applications | ⏸ Hold — finish Phase 4 fine-tune on MacBook + add to resume first |
+| Resume | ✅ Updated: tagline, summary, skills, ICE bullets, RAG project |
+| LLM fine-tune resume bullet | ⏳ Add after Phase 09/02 QLoRA runs + output captured |
+| LangGraph agent resume bullet | ⏳ Add after Phase 08/04 document agent runs |
+| Document AI pipeline resume bullet | ⏳ Add after Phase 10/04 runs + pin to GitHub |
+| Job applications | ⏸ Hold — run API sessions + portfolio milestones first |
 
 ---
 
 ## What To Do RIGHT NOW (priority order)
 
-### 1. Finish Phase 4 LLM Fine-Tune on MacBook ⏳ ACTIVE
+### 1. Run API sessions on Windows — no GPU, no MacBook needed ⏳ ACTIVE
 
-- [ ] Download TinyLlama-1.1B-Chat-v1.0, gpt2, distilgpt2 to MacBook
-- [ ] Transfer to ICE-laptop OneDrive (or use MacBook for entire phase)
-- [ ] Run Phase 4 sessions 1 → 6 → 7 → 8 → 9 in order
-- [ ] Capture loss curves + eval numbers in each session's `all_details.md`
-- [ ] Update resume: "Fine-tuned TinyLlama with LoRA on synthetic banking dataset; X% key-fact recall improvement over base"
+All three phases below run with just `$env:OPENAI_API_KEY = "sk-..."`. See `code_practice/WINDOWS_SETUP.md`.
 
-### 2. Deploy RAG project to HuggingFace Spaces
+- [ ] **Phase 06** — `01_prompt_engineering.py`, `02_structured_extraction.py`, `03_llm_evaluation.py`
+- [ ] **Phase 07** — `01_basic_rag.py` → `04_rag_evaluation.py` (sessions 01-04; 05 needs FastAPI separately)
+- [ ] **Phase 08** — `01_react_agent.py`, `02_tool_calling.py`, `03_langgraph_agent/run.py`, `04_document_agent/run.py`
+- [ ] For each: capture real output in `_details.md`, flip badge `🔧 → ✅`
+
+### 2. Run the two portfolio milestone sessions
+
+- [ ] **Phase 08/04** `04_document_agent/run.py` → add resume bullet: *"Built LangGraph mortgage document agent: classify → extract → policy retrieval → eligibility → HITL approval → report"*
+- [ ] **Phase 10/04** `04_document_pipeline.py` → pin repo to GitHub → add to resume as differentiator demo
+
+### 3. Deploy RAG project to HuggingFace Spaces
 
 - [ ] Set `LLM_PROVIDER=huggingface` + `HF_TOKEN` in Spaces secrets
 - [ ] Test live link
 - [ ] Add live demo link to resume + LinkedIn
 
-### 3. Update LinkedIn (after #1 + #2 complete)
+### 4. Update LinkedIn (after #1 + #2 complete)
 
 - [ ] Headline per audience — see 01 CAREER PACK §19
 - [ ] About section — see 01 CAREER PACK §20
-- [ ] Featured projects: pin RAG + fine-tune
+- [ ] Featured projects: pin RAG + document agent + pipeline
 
-### 4. Start applying (after #1, #2, #3)
+### 5. Start applying (after #1-4)
 
 - [ ] Top 12 active matches first — see 01 CAREER PACK §6
 - [ ] Tailor 2-3 lines of resume summary per role
 - [ ] Weekly: 5 applications + 5 LinkedIn outreaches
-
-### 5. Build Phase 6 Agent project (after applications submitted)
-
-- [ ] Move from docs-only to actual code execution
-- [ ] LangGraph + tool registry + memory
-- [ ] Add to resume: "Built LangGraph agent with tool registry, memory, planner/executor"
 
 ---
 
@@ -125,19 +129,29 @@ Live: huggingface.co/spaces/MrSameerKhan/rag-system
 
 ---
 
-## Personal Projects — add AFTER Phase 4 run completes
+## Personal Projects — add after running (code is ready, run to capture output)
 
-**LLM Fine-tuning POC (2026)** &nbsp;&nbsp;&nbsp;&nbsp;+ add after Phase 4 Session 7 run on MacBook
+**LLM Fine-tuning POC (2026)** &nbsp;&nbsp;&nbsp;&nbsp;→ run `code_practice/09_finetuning/01_lora_finetune.py` + `02_qlora_finetune.py`
 
-LoRA fine-tuning of TinyLlama-1.1B-Chat-v1.0 on synthetic Acme Financial Services instruction dataset using PEFT + Trainer (Mac MPS). 0.13% trainable params (r=8, q/k/v/o projections). McNemar-significant improvement on key-fact recall over base.
+LoRA fine-tuning of `facebook/opt-125m` on synthetic banking instruction dataset using PEFT + trl SFTTrainer. 0.24% trainable params (r=8). QLoRA variant: NF4 4-bit base + adapter — TinyLlama-1.1B in 700 MB vs 4.4 GB float32.
+
+Add to resume after run: *"Fine-tuned LLM (LoRA + QLoRA) on synthetic banking dataset; 0.24% trainable params; QLoRA reduces memory 6× — TinyLlama-1.1B fits in 700 MB GPU"*
 
 ---
 
-## Personal Projects — add AFTER Phase 6 code execution
+**Document Agent POC (2026)** &nbsp;&nbsp;&nbsp;&nbsp;→ run `code_practice/08_agents/04_document_agent/run.py`
 
-**Document Agent POC (2026)** &nbsp;&nbsp;&nbsp;&nbsp;+ add after Phase 6 build + run
+LangGraph supervisor agent for mortgage document processing — classify → extract fields → retrieve policy → eligibility check → HITL manager approval (interrupt/resume) → decision report. 5 specialist agents wired with conditional routing.
 
-LangGraph multi-step agent for mortgage document processing — classify + retrieve + extract + answer. Tool registry with Pydantic schemas + authz + audit log. HITL approval for high-stakes actions. Production ReAct with iteration caps and duplicate-call detection.
+Add to resume after run: *"Built LangGraph mortgage document processing agent: classify → extract → policy RAG → eligibility → HITL approval → report; handles borderline cases via interrupt-based manager review"*
+
+---
+
+**Document AI Pipeline (2026)** &nbsp;&nbsp;&nbsp;&nbsp;→ run `code_practice/10_document_ai/04_document_pipeline.py` then pin to GitHub
+
+Full ICE-style pipeline: PDF ingest (PyMuPDF) → OCR (EasyOCR) → document classification → field extraction → natural language QA. Production upgrade path: LayoutLMv3 → Donut → ColPali + RAG.
+
+Add to resume after run + pin: *"End-to-end document AI pipeline (ingest → OCR → classify → extract → QA) — 8 years production experience now in open-source code"*
 
 ---
 
