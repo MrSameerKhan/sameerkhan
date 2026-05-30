@@ -16,6 +16,34 @@ Senior interview Q: "What's different about o1 vs GPT-4o?" or "How would you tra
 
 ## 2. Core concept — scaling test-time compute
 
+```mermaid
+stateDiagram-v2
+    [*] --> receive_query
+
+    receive_query --> answer_direct : simple query · low difficulty
+    receive_query --> thinking : hard query · math · code · logic
+
+    state thinking {
+        [*] --> decompose
+        decompose --> step_reasoning : break into sub-problems
+        step_reasoning --> verify_step : check this step
+        verify_step --> step_reasoning : wrong → backtrack · retry
+        verify_step --> [*] : all steps verified ✓
+    }
+
+    thinking --> generate_answer
+    answer_direct --> generate_answer
+    generate_answer --> [*] : final answer
+
+    note right of thinking
+        RLVR trains model to allocate
+        compute proportional to difficulty
+        Hard math → 10K thinking tokens
+        Simple greeting → 5 tokens
+        GPT-4o: 30% AIME · o1: 83% · o3: 96%
+    end note
+```
+
 ### The breakthrough
 
 Pre-2024: scaling laws said "more pretraining data + bigger model = better." Saturating.

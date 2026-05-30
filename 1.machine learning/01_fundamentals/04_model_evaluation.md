@@ -17,6 +17,29 @@
 
 ---
 
+```mermaid
+flowchart TD
+    A([Choose metric]) --> B{Task?}
+
+    B -->|Classification| C{Class balance?}
+    C -->|Balanced| D["Accuracy or ROC-AUC"]
+    C -->|Imbalanced| E{Cost asymmetry?}
+    E -->|FP costly\nspam · fraud alert| F["Precision or PR-AUC"]
+    E -->|FN costly\ncancer · fraud miss| G["Recall  sensitivity "]
+    E -->|Both matter| H["F1 score"]
+
+    B -->|Regression| I{Outliers?}
+    I -->|Yes| J["MAE\nrobust · interpretable units"]
+    I -->|No| K["RMSE\npenalizes large errors"]
+
+    B -->|Ranking| M["NDCG · MAP · MRR"]
+    B -->|Generation| N["BLEU · ROUGE · BERTScore\nor LLM-as-Judge"]
+
+    style D fill:#27ae60,color:#fff
+    style H fill:#2980b9,color:#fff
+    style J fill:#f39c12,color:#fff
+```
+
 ## 1. Classification Metrics
 
 ### Confusion Matrix

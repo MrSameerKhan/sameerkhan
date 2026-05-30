@@ -34,6 +34,37 @@
    - Cost per task
 ```
 
+```mermaid
+graph LR
+    task(["🎯 Agent Task"])
+
+    task --> outcome
+    task --> process
+
+    subgraph outcome["📊 Outcome Eval — Did it work?"]
+        O1["Task success rate\npass/fail · golden set"]
+        O2["Output quality\nLLM judge · human eval"]
+        O3["User satisfaction\nproduction thumbs"]
+    end
+
+    subgraph process["⚙️ Process Eval — How did it get there?"]
+        P1["Tool-call accuracy\nright tool · right args · right order"]
+        P2["Trajectory efficiency\nstep count · loop detection"]
+        P3["Cost per task\n$ + input+output tokens"]
+        P4["Safety\ntool allowlist · injection red-team"]
+    end
+
+    style task fill:#2980b9,color:#fff
+    style O1 fill:#27ae6022
+    style O2 fill:#27ae6022
+    style O3 fill:#27ae6022
+    style P1 fill:#8e44ad22
+    style P2 fill:#8e44ad22
+    style P3 fill:#8e44ad22
+    style P4 fill:#e74c3c22
+```
+> A high-success agent taking 50 steps at $5/task is unshippable. An efficient 3-step agent wrong 40% of the time is also unshippable. You need both sides.
+
 Both matter. A high-success-rate agent that takes 50 steps and $5 per task is unshippable. A 3-step efficient agent that's wrong 40% of the time is also unshippable.
 
 ---
@@ -152,7 +183,7 @@ A successful trajectory with 50 steps when 5 would suffice is still bad — pays
 
 **Production thresholds (typical):** Cost per task: < $0.10 for high-volume; < $1 for premium · Wall-clock p50: < 5s for chat-style; < 30s for batch/research · Wall-clock p99: < 3× p50 (no extreme tail).
 
-Cost optimization levers covered in `../10.mlops/12_llm_cost_tracking_routing.md`.
+Cost optimization levers covered in `../10.mlops/12_llm_cost_tracking.md`.
 
 ---
 
@@ -229,7 +260,7 @@ Production targets in 2025: acceptance < 5%, side-effect < 1%. See `../7.rag/03_
 
 **For agent eval specifically:** LangFuse + LangSmith are the most direct fit. Phoenix has growing agent-eval features. Inspect AI is what alignment researchers use.
 
-See `../10.mlops/11_llm_observability_tools.md` for the broader observability landscape.
+See `../10.mlops/11_llm_observability.md` for the broader observability landscape.
 
 ---
 
@@ -336,8 +367,8 @@ All single-agent metrics, plus: (1) **Routing accuracy** — did the supervisor 
 | Multi-agent | `07_multi_agent_orchestration.md` | Multi-agent specific eval |
 | LLM evaluation (general) | `../6.llms/04_evaluation.md` | The broader evaluation landscape |
 | LLM eval frameworks (MTEB, RAGAS, lm-eval-harness, Arena-Hard) | `../4.nlp/04_applications/04_evaluation_metrics.md` | Eval framework depth |
-| LLM observability | `../10.mlops/11_llm_observability_tools.md` | Production tracing |
-| LLM evaluation system design | `../11.system_design/11_llm_eval_systems.md` | Building the eval system |
+| LLM observability | `../10.mlops/11_llm_observability.md` | Production tracing |
+| LLM evaluation system design | `../11.system_design/11_llm_evaluation_systems.md` | Building the eval system |
 | Indirect injection (robustness eval input) | `../7.rag/03_indirect_prompt_injection.md` | Red-team corpus |
 | Code practice | `code_practice/06_agents/09_agent_eval/` | Hands-on |
 

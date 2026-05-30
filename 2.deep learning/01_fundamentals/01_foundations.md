@@ -11,6 +11,24 @@
 
 ---
 
+```mermaid
+flowchart LR
+    X["Input x\n x₁ x₂ ... xₙ "] -->|"× W weights"| WX["Weighted sum\nWx + b"]
+    WX --> ACT["Activation f\nReLU · GELU · sigmoid"]
+    ACT --> Y["Output y\nf·Wx + b"]
+
+    Y -->|"stacked N layers"| DEEP["Deep Network\nN layers of f·Wₙxₙ+bₙ"]
+
+    DEEP --> LOSS["Loss L\nCE · MSE · focal..."]
+    LOSS -->|"∂L/∂W via chain rule"| BACK["Backprop\ngradients flow right→left"]
+    BACK -->|"W = W - α·∂L/∂W"| WX
+
+    style ACT fill:#f39c12,color:#fff
+    style LOSS fill:#e74c3c,color:#fff
+    style BACK fill:#2980b9,color:#fff
+```
+> Without activation f, all N layers collapse to one linear transform: W_N × ... × W_1 × x = W_combined × x.
+
 ## 1. The Neuron
 
 ```

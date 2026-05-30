@@ -70,6 +70,41 @@ M+N integrations instead of M×N. **The bottleneck moves from integration to cap
 
 A host can run multiple clients simultaneously (one per server). Each server exposes its own tools / resources / prompts. The LLM in the host sees a **unified tool surface** — it doesn't know which server provides which tool.
 
+```mermaid
+sequenceDiagram
+    participant H as 🖥️ Host (Claude Desktop)
+    participant C as MCP Client
+    participant S as MCP Server (GitHub)
+
+    rect rgb(41, 128, 185)
+        Note over C,S: Handshake
+        C->>S: initialize · protocol version · capabilities
+        S->>C: initialized · server capabilities
+    end
+
+    rect rgb(39, 174, 96)
+        Note over C,S: Discovery
+        C->>S: tools/list
+        S->>C: create_issue · search_repo · list_prs · ...
+        Note over H: LLM sees these as callable tools
+    end
+
+    rect rgb(142, 68, 173)
+        Note over H,S: Tool Call
+        H->>C: LLM decides to call create_issue
+        C->>S: tools/call · name=create_issue · args={...}
+        S->>S: Execute against GitHub API
+        S->>C: content: "Issue #42 created" · isError: false
+        C->>H: ToolMessage injected into LLM context
+    end
+
+    opt Resource read
+        C->>S: resources/read · uri=github://repo/README.md
+        S->>C: file contents as text
+    end
+```
+> M hosts × N servers = M+N integrations (not M×N). Each server is written once, works with any MCP-compatible host.
+
 ---
 
 ## 3. Capabilities (What a Server Can Expose)

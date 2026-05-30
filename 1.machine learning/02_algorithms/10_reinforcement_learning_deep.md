@@ -24,6 +24,28 @@ Where the basic RL file leaves off (MDPs, value iteration, Q-learning), this pic
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant E as Environment
+    participant A as Actor  policy π 
+    participant C as Critic  value V 
+
+    loop PPO training step
+        A->>E: action aₜ ~ π_θ·sₜ
+        E->>A: next state sₜ₊₁ + reward rₜ
+        E->>C: state sₜ
+
+        C->>C: V·sₜ → baseline estimate
+        A->>A: advantage = rₜ + γV·sₜ₊₁ - V·sₜ
+
+        A->>A: PPO clip loss:\nL = E[min·r·A, clip·r,1-ε,1+ε·A]
+        Note over A: clip prevents large policy updates\nε=0.2 is standard
+        C->>C: Value loss: MSE·V·sₜ, return
+    end
+
+    Note over A,C: GRPO variant: group K responses\nno critic needed · relative rewards
+```
+
 ## 2. The policy gradient theorem
 
 The policy is π_θ(a | s) — probability of action a given state s, parameterized by θ.

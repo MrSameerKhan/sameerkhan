@@ -26,6 +26,42 @@ return next_tok
 
 The grammar or schema defines which token sequences are valid. At each position, only the subset of tokens that can legally follow the current partial output is allowed.
 
+```mermaid
+stateDiagram-v2
+    [*] --> expect_open : start JSON generation
+
+    expect_open --> expect_key : emit  {
+    expect_key --> in_key : emit  "
+    in_key --> in_key : any char except "
+    in_key --> expect_colon : emit  "   end key
+    expect_colon --> expect_value : emit  :
+
+    expect_value --> in_str_val : emit  "   string
+    expect_value --> in_number : emit  0-9   number
+    expect_value --> in_bool : emit  t/f   boolean
+    expect_value --> expect_open : emit  {   nested
+
+    in_str_val --> in_str_val : any char except "
+    in_str_val --> after_value : emit  "   end value
+
+    in_number --> in_number : 0-9
+    in_number --> after_value : next non-digit
+
+    in_bool --> after_value : complete true/false
+
+    after_value --> expect_key : emit  ,   more keys
+    after_value --> [*] : emit  }   done
+
+    note right of expect_value
+        At each state: only valid
+        next tokens are ALLOWED
+        All others masked to -inf
+        before softmax
+        Guarantees valid schema
+        by construction — not prompt
+    end note
+```
+
 ---
 
 ## Approaches

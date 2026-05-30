@@ -2,7 +2,30 @@
 
 Scope: transformer architecture + model families (BERT/GPT/T5) + efficient transformers + serving optimizations. Tier 2 (Theory).
 
-> Note: `00_readmap.md` is the legacy navigation file. This README supersedes it. `00_readmap.md` will be archived in Phase 6.
+> Note: `00_roadmap.md` is the legacy navigation file. This README supersedes it. `00_roadmap.md` will be archived in Phase 6.
+
+```mermaid
+mindmap
+  root((5. Transformers))
+    01_fundamentals
+      Attention · QKV · shapes
+      Encoder + Decoder architecture
+      Tokenization · BPE · SentencePiece
+      Pretraining · MLM · CLM · span
+      Vision Transformers · ViT · Swin
+    02_models
+      BERT family 2018-2021 timeline
+      GPT family 2018-2025 timeline
+      Efficient · FlashAttention · GQA · PagedAttn
+      BERT · GPT · T5 end-to-end
+      Modern LLM · RMSNorm · RoPE · SwiGLU
+      PEFT · LoRA · QLoRA · DoRA
+      MoE · token routing · Mistral
+      Long context · YARN · ALiBi
+      Constrained decoding
+      Speculative decoding · draft+verify
+      Reasoning models · o1 · DeepSeek-R1
+```
 
 ---
 
@@ -17,7 +40,7 @@ Scope: transformer architecture + model families (BERT/GPT/T5) + efficient trans
 | **Worked examples** | `02_models/05_bert_end_to_end` → `06_gpt_end_to_end` → `07_t5_end_to_end` |
 | **Modern LLM architecture (LLaMA vs GPT-2)** | `02_models/08_modern_llm_architecture` |
 | **PEFT** | `02_models/09_parameter_efficient_tuning` |
-| **Frontier topics** | `10_mixture_of_experts` → `11_long_context_scaling` → `12_constrained_decoding` → `13_speculative_decoding` → `14_reasoning_models` |
+| **Frontier topics** | `02_models/10_mixture_of_experts` → `02_models/11_long_context_scaling` → `02_models/12_constrained_decoding` → `02_models/13_speculative_decoding` → `02_models/14_reasoning_models` |
 
 ---
 
@@ -52,7 +75,7 @@ Scope: transformer architecture + model families (BERT/GPT/T5) + efficient trans
 | `13_speculative_decoding.md` | SSOT: Medusa / EAGLE / Lookahead Decoding |
 | `14_reasoning_models.md` | SSOT: o1 / DeepSeek-R1 / RLVR / test-time compute |
 
-> **Note on file locations:** `05_bert_end_to_end.md` through `07_t5_end_to_end.md` live in `end_to_end/` subfolder. Files `08_modern_llm_architecture.md` through `10_mixture_of_experts.md` were also placed in `end_to_end/` during initial creation; conceptually they belong in `models/` per this README.
+> **Note on file locations:** All end-to-end and model files (`05_bert_end_to_end.md` through `14_reasoning_models.md`) live in `02_models/`.
 
 ---
 

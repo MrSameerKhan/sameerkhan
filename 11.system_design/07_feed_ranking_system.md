@@ -30,6 +30,40 @@ Design a feed ranking system for a social platform. Scale: 10M posts/day, +500ms
 
 ---
 
+```mermaid
+flowchart TD
+    subgraph offline["📦 OFFLINE — hours/daily batch"]
+        direction LR
+        UL["User logs\nengagement signals"] --> FE["Feature engineering\nuser + post embeddings"]
+        FE --> RANK_M["Ranking model\nLightGBM / DNN\ntrain on engagement labels"]
+        FE --> ANN["ANN Index\nuser embedding → similar posts"]
+    end
+
+    subgraph online["⚡ ONLINE — real-time feed request"]
+        direction TB
+        REQ["👤 User request"] --> CG
+
+        subgraph CG["1️⃣ Candidate Generation  ~1000 posts "]
+            direction LR
+            SG["Social graph\nfollows/friends\n~300 posts"]
+            INT["Interest-based\nANN on user embed\n~400 posts"]
+            TREND["Trending\nglobal signals\n~200 posts"]
+            ADS["Ads\npaid insertion\n~100 slots"]
+        end
+
+        CG --> SCORE["2️⃣ Ranking\n224-feature scoring\nLightGBM → score all 1000"]
+        SCORE --> RERANK["3️⃣ Reranking + Policy\ndiversity caps\nfreshness boost\nads injection"]
+        RERANK --> SERVE["✅ Top-25 posts served"]
+    end
+
+    ANN --> INT
+    RANK_M --> SCORE
+
+    style SCORE fill:#8e44ad,color:#fff
+    style RERANK fill:#f39c12,color:#fff
+    style SERVE fill:#27ae60,color:#fff
+```
+
 ## Stage 1 — Candidate Generation
 
 Multiple candidate sources (union all):

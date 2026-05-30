@@ -1,6 +1,26 @@
 # 11. System Design
 
-Scope: end-to-end ML system design — recommendation, search/RAG, agents, document processing, multi-tenant, eval systems. Implementation depth lives in other tier-2 folders; this is the system-level lens. **Tier: 2 (Theory).**
+Scope: end-to-end ML system design — recommendation, search/RAG, agents, document processing, multi-tenant, eval systems.
+
+```mermaid
+mindmap
+  root((11. System Design))
+    Framework
+      8-step interview framework
+      requirements → metrics → arch → data → model → serving → monitor → trade-offs
+    Systems
+      Recommendation · two-tower · ANN funnel
+      Search + RAG · hybrid retrieval stack
+      Document processing pipeline
+      LLM agent system
+      QA system · streaming · citations
+      Feed ranking · candidate gen → LTR → rerank
+      Content moderation
+    Advanced patterns
+      Tool authorization · capability isolation
+      Multi-tenant RAG · namespace isolation
+      LLM evaluation systems · golden sets
+``` Implementation depth lives in other tier-2 folders; this is the system-level lens. **Tier: 2 (Theory).**
 
 ---
 
@@ -49,7 +69,7 @@ Scope: end-to-end ML system design — recommendation, search/RAG, agents, docum
 - **Indirect prompt injection** (the threat tool-auth defends against): `../7.rag/03_indirect_prompt_injection.md`
 - **Agent reliability patterns** (the implementation side of `09_tool_authorization`): `../8.agents/02_agent_reliability_patterns.md`
 - **Production RAG ops** (the MLOps side of `10_multi_tenant_rag`): `../10.mlops/13_production_rag_ops.md`
-- **Eval frameworks** (MTEB / RAGAS / lm-eval-harness — referenced from `11_llm_evaluation_systems`): `../4.nlp/09_applications/08_evaluation_metrics.md`
+- **Eval frameworks** (MTEB / RAGAS / lm-eval-harness — referenced from `11_llm_evaluation_systems`): `../4.nlp/04_applications/04_evaluation_metrics.md`
 - **Model evaluation theory** (conformal prediction): `../1.fundamentals/04_model_evaluation/`
 - **LLM observability**: `../10.mlops/11_llm_observability.md`
 - **Recommendation algorithms**: `../1.machine_learning/`

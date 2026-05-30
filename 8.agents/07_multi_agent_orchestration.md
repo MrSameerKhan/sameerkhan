@@ -37,6 +37,27 @@
 
 ## 2. Coordination Patterns
 
+```mermaid
+graph TD
+    subgraph hier["1️⃣ Supervisor / Worker — most common in production"]
+        S["🎯 Supervisor\ndecomposes · delegates · aggregates"]
+        S --> WA["Worker A\nResearch"]
+        S --> WB["Worker B\nWrite"]
+        S --> WC["Worker C\nReview"]
+        WA & WB & WC -->|results| S
+    end
+
+    subgraph pipe["3️⃣ Pipeline — deterministic, sequential"]
+        PA["Agent A\nResearch"] --> PB["Agent B\nDraft"] --> PC["Agent C\nQA"] --> PD["📤 Output"]
+    end
+
+    subgraph debate["5️⃣ Debate / Critique — highest accuracy, highest cost"]
+        DA["Agent A\nProponent"] <-->|argue| DB["Agent B\nCritic"]
+        DA & DB --> DJ["⚖️ Judge\nAgent"]
+    end
+```
+> **Start with pipeline.** Upgrade to supervisor when you need dynamic delegation. Add debate only for high-stakes accuracy where 2-5× cost is justified.
+
 ```
 1. SUPERVISOR / WORKER (hierarchical)
    Supervisor receives task → delegates sub-tasks → aggregates results

@@ -12,6 +12,30 @@ Two distinct purposes:
 - **Inference quantization** — serve a quantized model (GPTQ, AWQ, GGUF, NF4)
 - **Quantization-aware training** — train with quantized weights (QLoRA uses NF4 + LoRA)
 
+```mermaid
+graph LR
+    subgraph formats["Weight Formats — Memory per param"]
+        direction TB
+        F1["FP32  4 bytes  — full precision · training"]
+        F2["FP16/BF16  2 bytes  — mixed precision · inference"]
+        F3["INT8  1 byte  — 4× smaller · ~1% quality drop"]
+        F4["NF4  0.5 bytes  — 8× smaller · optimized for LLM dist"]
+    end
+
+    subgraph methods["Quantization Methods"]
+        direction TB
+        M1["GPTQ  post-training \nlayer-by-layer weight compression\ngood quality · slow to quantize"]
+        M2["AWQ  activation-aware \nprotect important weights\nbetter quality than GPTQ"]
+        M3["GGUF  CPU/edge \nllama.cpp format\n4-bit on Apple Silicon"]
+        M4["NF4 + LoRA  QLoRA \ntrain on quantized base\nconsumer GPU fine-tuning"]
+    end
+
+    F4 --> M4
+    style F4 fill:#27ae60,color:#fff
+    style M2 fill:#2980b9,color:#fff
+    style M4 fill:#8e44ad,color:#fff
+```
+
 **Senior interview Q:** "Walk me through why NF4 beats naive INT4 for LLM weights."
 
 ---

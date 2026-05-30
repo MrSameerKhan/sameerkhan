@@ -6,7 +6,7 @@ Same setup throughout:
 - **Response y_w (chosen):** "Gradient descent minimizes a loss function by iteratively moving in the direction of steepest descent. At each step, parameters update as θ = θ - αΔL(θ)."
 - **Response y_l (rejected):** "Gradient descent is an optimization thing that makes models learn somehow by adjusting weights."
 
-> SFT is covered in `07_finetuning_end_to_end.md`. This file covers Stages 2 and 3 with numbers.
+> SFT is covered in `02b_finetuning_end_to_end.md`. This file covers Stages 2 and 3 with numbers.
 
 ---
 
@@ -401,6 +401,19 @@ Bad signs:
 
 ### 4.1 The Key Insight
 
+```mermaid
+flowchart TD
+    A["RLHF reward model\nr = R·prompt·response → scalar"] -->|"Closed-form solution shows\nr implicitly defined by policy ratio"| B
+    B["Optimal policy π*\nr·x·y = β·log·π*·y·x / π_ref·y·x + β·log·Z·x"] -->|"Rearrange: express r in terms of π*"| C
+    C["Plug into Bradley-Terry\nP·y_w > y_l = σ·r_w - r_l"] -->|"Substitute reward expression"| D
+    D["DPO Loss\nL = -log σ·β·log·π_θ·y_w/π_ref·y_w - β·log·π_θ·y_l/π_ref·y_l"] -->|"Result"| E
+    E["✅ No reward model needed\nOptimize policy directly from preference pairs"]
+    style A fill:#e74c3c,color:#fff
+    style E fill:#27ae60,color:#fff
+    style D fill:#8e44ad,color:#fff
+```
+> The derivation chain: RLHF → closed-form r → BT model → DPO loss. Skip RM + PPO entirely.
+
 RLHF requires training a separate reward model, then running complex PPO. Can we skip both?
 
 Yes. The key insight is that the optimal RLHF policy π* has a closed-form relationship with the reward:
@@ -745,5 +758,5 @@ Target KL in PPO (nats):
 
 - `02b_finetuning_end_to_end.md` — SFT (Stage 1) covered there with dry-run
 - `03_alignment.md` — reference: RLHF/DPO/ORPO/CAI quick-reference with code
-- `5.transformers/models/14_reasoning_models.md` — RLVR/GRPO for reasoning model alignment
+- `5.transformers/02_models/14_reasoning_models.md` — RLVR/GRPO for reasoning model alignment
 - `6.llms/06_evaluation.md` — measuring alignment quality (safety benchmarks, helpfulness)

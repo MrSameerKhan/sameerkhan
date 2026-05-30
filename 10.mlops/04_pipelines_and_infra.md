@@ -20,6 +20,29 @@
 
 ## Core Concepts
 
+```mermaid
+flowchart LR
+    data["📊 Data\nS3 · DB · stream"] --> feat["Feature Store\nFeast · point-in-time\ntrain-serve consistency"]
+    feat --> train["Train\nSageMaker · K8s Job\nGPU · distributed"]
+    train --> eval["Evaluate\noffline metrics\nvalidation gate"]
+    eval -->|"pass"| reg["Model Registry\nMLflow · SageMaker\nversion + metadata"]
+    eval -->|"fail"| data
+    reg --> deploy["Deploy\nDocker + K8s\nblue-green · canary"]
+    deploy --> monitor["Monitor\ndrift · latency · cost\nretraining trigger"]
+    monitor -->|"degrade"| data
+
+    subgraph cicd["CI/CD  GitHub Actions · Jenkins "]
+        direction LR
+        PR["PR merged"] --> test["Run tests\nunit · integration"]
+        test --> build["Build Docker image\npush to registry"]
+        build --> dep["Deploy to staging\nthen production"]
+    end
+
+    style feat fill:#2980b9,color:#fff
+    style deploy fill:#27ae60,color:#fff
+    style monitor fill:#f39c12,color:#fff
+```
+
 ### ML Pipeline Components
 
 ```

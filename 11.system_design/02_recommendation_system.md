@@ -30,6 +30,32 @@ All items (10M) → Retrieval (1000) → Ranking (100) → Reranking (10-20)
 Each stage: fewer items, more compute per item
 ```
 
+```mermaid
+flowchart TD
+    subgraph offline["📦 OFFLINE — hours/daily batch"]
+        direction LR
+        UL["User logs\nclicks · watches · purchases"] --> FE["Feature engineering\nuser embeddings · item embeddings"]
+        FE --> TT["Two-Tower Model\nuser_enc + item_enc → cosine sim"]
+        TT --> ANN["ANN Index\nFAISS / ScaNN\npre-computed item embeddings"]
+    end
+
+    subgraph online["⚡ ONLINE — real-time per request"]
+        direction TB
+        REQ["User request"] --> RET["Retrieval\nANN search on user embedding\n10M → 1K candidates"]
+        RET --> RANK["Ranking\nfeature-rich scoring model\n1K → 100"]
+        RANK --> RERANK["Reranking\nbusiness rules · diversity · freshness\n100 → 10-20"]
+        RERANK --> SERVE["✅ Serve recommendations"]
+    end
+
+    ANN --> RET
+
+    style TT fill:#2980b9,color:#fff
+    style RANK fill:#8e44ad,color:#fff
+    style RERANK fill:#f39c12,color:#fff
+    style SERVE fill:#27ae60,color:#fff
+```
+> Key insight: each stage trades off breadth (recall) for precision. Retrieval optimizes recall; ranking optimizes precision; reranking handles business constraints.
+
 ---
 
 ## Retrieval Stage
@@ -460,7 +486,7 @@ A: The feedback loop: recommend popular items → model trained on these clicks 
 - Unsupervised ML (ML/algorithms/03): Matrix Factorization is a form of embedding/decomposition
 - Tree Models (ML/algorithms/02): Gradient boosting is often used in the ranking stage
 - RAG (6.llms/04): ANN retrieval (FAISS, ScaNN) — same techniques used in both
-- System Design Framework (10.system_design/01): Apply the framework here
+- System Design Framework (11.system_design/01): Apply the framework here
 
 ---
 

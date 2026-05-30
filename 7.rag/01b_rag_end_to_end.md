@@ -50,6 +50,33 @@ RETRIEVAL + GENERATION (online)
 Query → Embed → Search → Rerank → Build Prompt → LLM → Answer
 ```
 
+```mermaid
+flowchart LR
+    subgraph offline["📦 OFFLINE — Indexing  run once "]
+        direction TB
+        A["📄 Raw Docs\nPDF · HTML · DOCX"] --> B["✂️ Chunk\n512 tok · 50 overlap"]
+        B --> C["🔢 Embed\nBGE-large → 1024d"]
+        C --> D["🗄️ Vector DB\nFAISS · pgvector"]
+        C --> E["📊 BM25 Index\nElasticsearch"]
+    end
+
+    subgraph online["⚡ ONLINE — Per Query"]
+        direction TB
+        F["❓ Query"] --> G["🔢 Embed Query\nsame model"]
+        G --> H["ANN Search\ntop-50 dense"]
+        G --> I["BM25 Search\ntop-50 sparse"]
+        H & I --> J["⚖️ RRF Fusion\ncombine rankings"]
+        J --> K["🎯 Cross-Encoder\nrerank → top-5"]
+        K --> L["💬 LLM\ngrounded answer"]
+    end
+
+    D --> H
+    E --> I
+
+    style offline fill:#2c3e5022
+    style online fill:#1a5e3622
+```
+
 ---
 
 ## 2. Phase 1: Indexing
@@ -213,7 +240,7 @@ BM25(t, d) = IDF(t) × tf × (k1+1) / (tf + k1×(1 − b + b×|d|/avgdl))
 
 **BM25 for D1 ("cat sat on mat", |D1|=4):**
 ```
-length_norm = 1 − 0.75 + 0.75×(4/4.25) = 1 − 0.75 + 0.75×0.956 = 0.706
+length_norm = 1 − 0.75 + 0.75×(4/4.25) = 0.25 + 0.706 = 0.956
 denominator = tf + 1.5×0.956 = tf + 1.434
 
 BM25(cat, D1): tf=1
@@ -231,11 +258,11 @@ length_norm = 1 − 0.75 + 0.75×(5/4.25) = 0.25 + 0.882 = 1.132
 denominator = tf + 1.5×1.132 = tf + 1.698
 
 BM25(sat, D2): tf=3
-  = 0.470 × 2.5 / (3 + 1.698) = 0.470 × 2.5/4.698 = 0.470 × 0.532 = 0.250
+  = 0.470 × (3 × 2.5) / (3 + 1.698) = 0.470 × 7.5/4.698 = 0.470 × 1.597 = 0.750
 
 BM25(cat, D2): tf=0  → 0.000
 
-BM25(D2) = 0.000 + 0.250 = 0.250
+BM25(D2) = 0.000 + 0.750 = 0.750
 ```
 
 **BM25 for D3 ("cat rested on mat", |D3|=4):**
@@ -730,7 +757,7 @@ def bm25_retrieve(corpus, query, top_k=4, k1=1.5, b=0.75):
     ranked = sorted(scores.items(), key=lambda x: -x[1])
     return ranked[:top_k]
 
-bm25_results = bm25_retrieve(corpus, "cat sat", corpus)
+bm25_results = bm25_retrieve(corpus, "cat sat")
 print("\nBM25 retrieval:")
 for rank, (doc_id, score) in enumerate(bm25_results, 1):
     print(f"  Rank {rank}: {doc_id} ({corpus[doc_id]}) — BM25={score:.3f}")
@@ -750,7 +777,7 @@ for rank, (doc_id, score) in enumerate(hybrid_results, 1):
 
 # — SIMULATED RERANKING ———————————————————————————————————————
 # In production: use actual cross-encoder scores
-cross_encoder_scores = {"D1": 0.95, "D2": 0.88, "D3": 0.42, "D4": 0.18}
+cross_encoder_scores = {"D1": 0.95, "D2": 0.42, "D3": 0.88, "D4": 0.18}
 top_k_for_reranking = [doc_id for doc_id, _ in hybrid_results[:3]]
 reranked = sorted(top_k_for_reranking, key=lambda x: -cross_encoder_scores.get(x, 0))
 print("\nAfter reranking:")
@@ -914,8 +941,8 @@ In practice: system prompt for permanent instructions ("answer only from context
 
 ## 14. Connections
 
-- `../4.nlp/02_text_representations_end_to_end.md` — BM25 sparse retrieval is an extension of TF-IDF; computed the same way. Cosine similarity between TF-IDF vectors is the classical retrieval baseline before dense embeddings
+- `../4.nlp/01_fundamentals/02b_text_representations_end_to_end.md` — BM25 sparse retrieval is an extension of TF-IDF; computed the same way. Cosine similarity between TF-IDF vectors is the classical retrieval baseline before dense embeddings
 - `../4.nlp/02_embeddings/02_word2vec_end_to_end.md` — Dense retrieval uses the same cosine similarity concept as Word2Vec nearest neighbors. The embedding model is the modern equivalent of Word2Vec — but sentence-level instead of word-level
-- `../5.transformers/end_to_end/05_bert_end_to_end.md` — The embedding model in dense retrieval is typically a bi-encoder based on BERT. Cross-encoder reranker is literally BERT with a regression head on the [CLS] token
-- `../5.transformers/end_to_end/06_gpt_end_to_end.md` — The generation step is GPT doing a forward pass on (context + question) as the input — KV cache is critical here — the retrieved context tokens are computed once, reused during generation
+- `../5.transformers/02_models/05_bert_end_to_end.md` — The embedding model in dense retrieval is typically a bi-encoder based on BERT. Cross-encoder reranker is literally BERT with a regression head on the [CLS] token
+- `../5.transformers/02_models/06_gpt_end_to_end.md` — The generation step is GPT doing a forward pass on (context + question) as the input — KV cache is critical here — the retrieved context tokens are computed once, reused during generation
 - `../6.llms/02b_finetuning_end_to_end.md` — RAG vs fine-tuning decision: RAG for knowledge, fine-tuning for behavior. Domain-specific embedding models are fine-tuned versions of BERT/e5 on (query, document) pairs

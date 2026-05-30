@@ -17,6 +17,26 @@
 
 ---
 
+```mermaid
+flowchart TD
+    A(["Raw text\n'lower lowest newest'"])
+
+    A --> B["Word-level tokenization\n'lower' 'lowest' 'newest'\n❌ OOV for unseen words"]
+
+    A --> C["BPE Training\nstart: single characters\nmerge most frequent pairs\nrepeat until vocab_size"]
+    C --> D["Learned vocab\n'low' 'est' 'new' 'er' '#']"]
+    D --> E["BPE Encoding\n'lower' → 'low' + 'er'\n'newest' → 'new' + 'est'\n✅ Never OOV  byte fallback "]
+
+    A --> F["WordPiece  BERT \nsimilar to BPE but\nmaximize corpus likelihood\n'playing' → 'play' + '##ing'"]
+
+    E & F --> ids["Integer IDs\n[1024, 892, 3011, ...]"]
+    ids --> model["Model input\nattention mask + token type IDs"]
+
+    style C fill:#2980b9,color:#fff
+    style E fill:#27ae60,color:#fff
+    style F fill:#8e44ad,color:#fff
+```
+
 ## Byte-Pair Encoding (BPE)
 
 ### Training Algorithm

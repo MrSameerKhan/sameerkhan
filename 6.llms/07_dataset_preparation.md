@@ -15,6 +15,25 @@
 | Templating | Tokenizer-ready text | HF `chat_template` |
 | Special-purpose formats | DPO pairs, KTO unary, function-call traces | TRL data utilities |
 
+```mermaid
+flowchart TD
+    A["📥 Raw Data\nhuman · distilled · web · synthetic"] --> B["📐 Format\nChatML / Alpaca / ShareGPT"]
+    B --> C["🔍 Quality Filter\ndeduplicate · perplexity filter · toxicity"]
+    C --> D["📋 chat_template\napply_chat_template · add special tokens"]
+    D --> E{Task type?}
+    E -->|SFT| F["🎭 Mask user tokens → -100\ntrain on assistant turns only"]
+    E -->|DPO / IPO / ORPO| G["⚖️ Preference pairs\nchosen vs rejected per prompt"]
+    E -->|KTO| H["👍👎 Unary labels\nthumb up · thumb down per response"]
+    E -->|Function calling| I["🔧 Tool traces\nassistant → tool → tool_result → assistant"]
+    F & G & H & I --> J["🗂️ DataCollator\npad · batch · attention_mask"]
+    J --> K["🚀 Train"]
+    style A fill:#2980b9,color:#fff
+    style K fill:#27ae60,color:#fff
+    style G fill:#8e44ad,color:#fff
+    style H fill:#f39c12,color:#fff
+```
+> Rule: mask user tokens to `-100` so loss is computed only on what the model should learn to generate.
+
 ---
 
 ## 1. Instruction Formats — The Big Three
@@ -271,7 +290,7 @@ Per-turn masking variants in TRL >= 0.10 — refer to `trl/trainer/sft_trainer.p
 | Only thumbs-up/down feedback | KTO unary — same scale |
 | Teach tool use | Function-call traces ~1K-10K well-structured |
 | Domain knowledge injection | CPT plain text — ~1M-10M tokens |
-| Reasoning ability | Long-CoT traces + verifier rewards (RLVR) — see `../5.transformers/models/14_reasoning_models.md` |
+| Reasoning ability | Long-CoT traces + verifier rewards (RLVR) — see `../5.transformers/02_models/14_reasoning_models.md` |
 
 ---
 
@@ -320,10 +339,10 @@ CPT (continued pretraining) trains on raw text with no instruction format, using
 | This file | Links to |
 |-----------|----------|
 | Fine-tuning workflow | `02_finetuning.md` |
-| PEFT methods (LoRA / QLoRA / DoRA) | `../5.transformers/models/09_parameter_efficient_tuning.md` |
+| PEFT methods (LoRA / QLoRA / DoRA) | `../5.transformers/02_models/09_parameter_efficient_tuning.md` |
 | Alignment (DPO / KTO / ORPO / GRPO) | `06_alignment_follow_ups.md` |
-| Constrained / function-calling decoding | `../5.transformers/models/12_constrained_decoding.md` |
-| Reasoning model data (R1-style) | `../5.transformers/models/14_reasoning_models.md` |
+| Constrained / function-calling decoding | `../5.transformers/02_models/12_constrained_decoding.md` |
+| Reasoning model data (R1-style) | `../5.transformers/02_models/14_reasoning_models.md` |
 
 ---
 

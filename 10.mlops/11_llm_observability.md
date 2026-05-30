@@ -4,6 +4,27 @@
 
 ---
 
+```mermaid
+flowchart LR
+    req["LLM request\nprompt + context"] --> trace["Trace collector\nLangSmith · LangFuse\nPhoenix · Helicone"]
+
+    trace --> spans["Spans captured\n- prompt tokens + cost\n- chain steps · tool calls\n- latency per step\n- model output"]
+
+    spans --> check["Quality checks\nfaithfulness · relevancy\nPII detector · toxicity\noff-topic drift"]
+
+    check --> dash["Observability dashboard\ncost per request\nfailure rate · latency P95\nhallucination rate"]
+
+    dash --> alert{Alert?}
+    alert -->|"cost spike"| budget["Token budget trigger\nroute to cheaper model"]
+    alert -->|"quality drop"| eng["Engineer paged\ncause investigation"]
+    alert -->|"PII detected"| mask["PII masked in logs\nGDPR compliance"]
+
+    style trace fill:#2980b9,color:#fff
+    style dash fill:#8e44ad,color:#fff
+    style budget fill:#f39c12,color:#fff
+```
+> Key difference from traditional observability: HTTP 200 ≠ success. The *content* must be evaluated.
+
 ## Why LLM Observability is Different
 
 Traditional software observability: latency, error rate, CPU utilization. An HTTP 200 means success.

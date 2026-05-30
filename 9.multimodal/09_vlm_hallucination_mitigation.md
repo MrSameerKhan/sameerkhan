@@ -73,6 +73,34 @@ At temperature > 0, the model can confidently produce wrong outputs. Setting tem
 
 ---
 
+## Hallucination Type → Mitigation Decision Tree
+
+```mermaid
+flowchart TD
+    A([VLM output suspected hallucination]) --> B{What type?}
+
+    B -->|Object hallucination\nsays object is present that isn't| C["Constrained decoding\nOnly allow values from schema\nPOPE benchmark to measure"]
+
+    B -->|Attribute hallucination\nwrong number · date · color| D{How critical?}
+    D -->|High stakes\nfinancial · legal · medical| E["Verifier model\nVLM extractor → second VLM verifies\n+ confidence scoring"]
+    D -->|Medium stakes| F["Regex validation\ndate pattern · number range checks\nreject non-conforming outputs"]
+
+    B -->|Relation hallucination\nwrong association between entities| G["Higher resolution input\nCrop + re-query suspicious regions\nMultiple passes"]
+
+    E --> H["Ensemble + voting\n3 VLMs · majority answer\nflag disagreements"]
+    F --> H
+    G --> H
+    C --> H
+
+    H --> I{Confidence\nthreshold met?}
+    I -->|Yes| J["✅ Accept output\nlog confidence score"]
+    I -->|No| K["🚨 Escalate to human\nor request higher-res image"]
+
+    style E fill:#e74c3c,color:#fff
+    style J fill:#27ae60,color:#fff
+    style K fill:#f39c12,color:#fff
+```
+
 ## 4. Mitigation Patterns
 
 ### Pattern A — Constrained Decoding for Structured Output

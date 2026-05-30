@@ -935,6 +935,27 @@ with torch.no_grad():
 
 ---
 
+```mermaid
+graph LR
+    subgraph rnn_path["❌ RNN — Multiplicative path degrades"]
+        direction LR
+        R1["'cat' in h₁\n100%"] -->|"× Wh × tanh'\n≈ 0.4"| R2["40%"]
+        R2 -->|"× 0.4"| R3["16%"]
+        R3 -->|"× 0.4 ×..."| R4["≈ 0%\nvanished"]
+    end
+
+    subgraph lstm_path["✅ LSTM — Additive highway preserves signal"]
+        direction LR
+        C1["'cat' in C₁\n100%"] -->|"× forget ≈ 0.9\nadditive +"| C2["90%"]
+        C2 -->|"× 0.9"| C3["81%"]
+        C3 -->|"× 0.9 ×..."| C4["~35% after 10 steps\nstill usable"]
+    end
+
+    style R4 fill:#e74c3c,color:#fff
+    style C4 fill:#27ae60,color:#fff
+```
+> Key: LSTM cell state uses **addition** (Cₜ = f⊙Cₜ₋₁ + i⊙g̃). Gradient of addition is 1 — no multiplication decay.
+
 ## 14. Connections
 
 | This file | Links to | Why |
@@ -942,4 +963,4 @@ with torch.no_grad():
 | RNN end-to-end (template) | `02_rnn_end_to_end.md` | Same sentence, compare directly |
 | LSTM overview + gates intuition | `01_rnn_to_attention.md §3` | Architecture diagram |
 | GRU (next) | `04_gru_end_to_end.md` | Simpler gates, same preservation idea |
-| Vanishing gradient math | `../../1.deep learning/fundamentals/03_training_stability.md` | Formal proof |
+| Vanishing gradient math | `../../2.deep learning/01_fundamentals/03_training_stability.md` | Formal proof |

@@ -27,6 +27,38 @@ Senior interview Q: "Design a RAG for a multi-tenant SaaS where each customer ha
 
 ---
 
+```mermaid
+graph LR
+    subgraph soft["1️⃣ Metadata Filter  cheapest "]
+        direction TB
+        MF1["Single vector DB\nAll tenants share index"]
+        MF2["Filter: WHERE tenant_id = X\nbefore every ANN search"]
+        MF3["⚠️ Risk: app bug → data leak\nno hard boundary"]
+    end
+
+    subgraph ns["2️⃣ Namespace Isolation  recommended "]
+        direction TB
+        NS1["One DB · separate namespace\nper tenant  Pinecone · Qdrant "]
+        NS2["DB enforces namespace boundary\nApp bug can't cross tenants"]
+        NS3["✅ Good compliance · medium cost"]
+    end
+
+    subgraph phys["3️⃣ Physical Isolation  high-stakes "]
+        direction TB
+        PH1["Separate cluster or region\nper tenant  or per tier "]
+        PH2["True data segregation\nindependent scaling"]
+        PH3["💰 Most expensive\nFor regulated industries"]
+    end
+
+    req(["Tenant requirement?"]) -->|"startup · low risk"| soft
+    req -->|"B2B SaaS default"| ns
+    req -->|"healthcare · finance"| phys
+
+    style ns fill:#27ae60,color:#fff
+    style phys fill:#e74c3c,color:#fff
+```
+> Cache key MUST include tenant_id — the silent leak: `cache[query_hash]` without tenant scope lets Tenant A read Tenant B's cached answer.
+
 ## 2. The Three Isolation Models
 
 Pick based on (a) compliance needs, (b) cost tolerance, (c) scale.

@@ -17,6 +17,24 @@ Optimization path:
                               For ONNX-only deploy, 11ms often sufficient
 ```
 
+```mermaid
+flowchart LR
+    pt["PyTorch model\n89ms · baseline"] -->|"ONNX export\nfuse ops · remove Python overhead"| onnx["ONNX Runtime\n42ms · 2×"]
+    onnx -->|"INT8 quantization\nFP32→INT8 weights"| int8["INT8 ORT\n11ms · 8×\n~1% quality drop"]
+    int8 -->|"TensorRT compile\nGPU kernel fusion"| trt["TensorRT\n6ms · 15×\nGPU only"]
+
+    onnx -->|"LLM serving"| vllm["vLLM\nPagedAttention\ncontinuous batching\n10-30× throughput"]
+    int8 -->|"LLM quantization"| awq["AWQ / GPTQ\n4-bit weights\n2-4× smaller\n~1% quality drop"]
+```
+
+| Technique | Latency gain | Quality loss | When to use |
+|-----------|-------------|-------------|-------------|
+| ONNX export | 2× | None | First step always |
+| INT8 quantization | 4-8× | ~1% | CPU/edge serving |
+| TensorRT | 10-15× | Minimal | GPU production |
+| vLLM + PagedAttention | 10-30× throughput | None | LLM serving |
+| AWQ/GPTQ 4-bit | 2-4× size | ~1% | LLM on limited GPU |
+
 ---
 
 ## Step 1: Baseline — Measure Before Optimizing

@@ -11,6 +11,25 @@
 
 **Rule:** Start with feature extraction. Unfreeze progressively if performance plateaus.
 
+```mermaid
+flowchart TD
+    A([Transfer learning strategy]) --> B{Dataset size?}
+
+    B -->|"< 1K images"| C{Domain similarity?}
+    C -->|"Similar  e.g. ImageNet→medical "| D["Feature extraction\nFreeze all backbone\nTrain head only\nFast · no overfit risk"]
+    C -->|"Very different domain"| E["Linear probing\nthen evaluate\nif poor → collect more data"]
+
+    B -->|"1K-10K images"| F["Partial fine-tuning\nFreeze early layers\nUnfreeze last 2-3 blocks + head\nDiscriminative LR"]
+
+    B -->|"> 10K images"| G{Domain?}
+    G -->|"Similar"| H["Full fine-tune\nAll layers · lower LR for backbone\n10× lower LR than head"]
+    G -->|"Very different"| I["Full fine-tune\nfrom ImageNet init\nor train from scratch"]
+
+    style D fill:#27ae60,color:#fff
+    style F fill:#2980b9,color:#fff
+    style H fill:#8e44ad,color:#fff
+```
+
 ---
 
 ## 1. Why Transfer Learning

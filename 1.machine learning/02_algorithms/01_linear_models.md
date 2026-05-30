@@ -13,6 +13,30 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph reg["Regression Regularization"]
+        direction TB
+        R1["Ridge  L2 \npenalty: λ||W||²\nShrinks ALL weights\nkeeps all features"]
+        R2["Lasso  L1 \npenalty: λ||W||₁\nZeroes out irrelevant\nfeature selection"]
+        R3["ElasticNet  L1+L2 \nbest of both\nwhen many correlated features"]
+    end
+
+    subgraph svm["SVM — max margin"]
+        direction TB
+        S1["Linear SVM\nfind hyperplane max margin\nC: controls margin vs misclassification"]
+        S2["Kernel SVM\nRBF kernel: project to higher-dim\nfits non-linear boundaries"]
+    end
+
+    subgraph when["When to use each"]
+        direction TB
+        W1["All features relevant → Ridge"]
+        W2["Sparse features  many irrelevant  → Lasso"]
+        W3["High-dim + correlated → ElasticNet"]
+        W4["Non-linear with moderate data → SVM+RBF"]
+    end
+```
+
 ## 1. Linear Regression
 
 ### Model

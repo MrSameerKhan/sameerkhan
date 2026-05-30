@@ -48,6 +48,36 @@ Forward pass for one transformer block (GPT-2 post-norm):
 | Attention | MHA | **GQA** (LLaMA-2+); **MLA** in DeepSeek | KV-cache memory savings (GQA: 4-8×, MLA: 5-10× more) |
 | KV cache layout | Contiguous | **Paged** (vLLM/serving) | Memory fragmentation → 2-4× throughput |
 | Tokenizer | BPE (50K vocab) | SentencePiece BPE (32K-128K vocab) | Better multilingual + code coverage |
+
+```mermaid
+graph LR
+    subgraph gpt2["GPT-2 2019"]
+        direction TB
+        G1["Post-LayerNorm\nafter residual — unstable"]
+        G2["GELU activation"]
+        G3["Absolute PE\nlearned · fixed 1024"]
+        G4["MHA\nevery head has own K,V"]
+        G5["1024 token context"]
+    end
+
+    subgraph llama["Modern LLM LLaMA-3 2024"]
+        direction TB
+        L1["Pre-RMSNorm\nbefore sublayer — stable"]
+        L2["SwiGLU activation\n+∼1% downstream quality"]
+        L3["RoPE + YARN\nrelative · 128K context"]
+        L4["GQA · MLA\n4–10× smaller KV cache"]
+        L5["128K token context"]
+    end
+
+    G1 -->|"stability ↑"| L1
+    G2 -->|"quality ↑"| L2
+    G3 -->|"generalize ↑"| L3
+    G4 -->|"memory ↓"| L4
+    G5 -->|"128×"| L5
+
+    style gpt2 fill:#e74c3c22
+    style llama fill:#27ae6022
+```
 | Bias terms | Present | **Removed** | Simplify, match performance |
 | FFN width | dense 4× | dense = 2.67× (SwiGLU) or **sparse MoE** (Mistral/DeepSeek) | Same params, more capacity via experts |
 

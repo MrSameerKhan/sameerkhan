@@ -26,6 +26,27 @@
 
 ---
 
+## Which Strategy to Use
+
+```mermaid
+flowchart TD
+    A([Choose decoding strategy]) --> B{Need deterministic\nreproducible output?}
+    B -->|Yes| C{Best single answer?}
+    C -->|Yes · short output| D["Greedy\nAlways pick highest-prob token\nFast · no diversity"]
+    C -->|Yes · long / complex| E["Beam Search\nKeep top-K beams\nBetter quality · slower"]
+    B -->|No · need diversity| F{Output type?}
+    F -->|Structured output\nJSON · code · extraction| G["Constrained decoding\noutlines / Instructor\nGuarantees schema validity"]
+    F -->|Creative · chat · generation| H{Temperature?}
+    H -->|High creativity\nbrainstorming| I["temp=0.8-1.2 + Top-P=0.95\nNucleus sampling\nDiverse · coherent"]
+    H -->|Balanced| J["temp=0.7 + Top-P=0.9\nProduction default\nQuality + diversity"]
+    H -->|Focused · factual| K["temp=0.1-0.3\nLow randomness\nFactual QA · extraction"]
+    G --> L["✅ Chosen"]
+    D & E & I & J & K --> L
+    style G fill:#8e44ad,color:#fff
+    style J fill:#27ae60,color:#fff
+    style L fill:#2980b9,color:#fff
+```
+
 ## 1. The Core Problem
 
 At each step t, the LLM outputs a probability distribution over the vocabulary:

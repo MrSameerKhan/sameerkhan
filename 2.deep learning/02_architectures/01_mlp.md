@@ -11,6 +11,18 @@
 
 ---
 
+```mermaid
+flowchart LR
+    inp["Input\n784-dim\nflat pixels"] --> h1["Hidden 1\n256 neurons\nReLU"]
+    h1 --> h2["Hidden 2\n128 neurons\nReLU"]
+    h2 --> out["Output\n10-dim\nsoftmax"]
+
+    note["Each layer: a = ReLU·Wx + b\nAll neurons fully connected\nLearns abstract features\nProblems: no spatial awareness\nDoesn't scale to images"]
+    style inp fill:#2980b9,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> MLP today: used as the classification head on top of CNN/Transformer, not as a standalone vision model.
+
 ## What Is an MLP
 
 A stack of fully connected (dense) layers where every input neuron connects to every output neuron.

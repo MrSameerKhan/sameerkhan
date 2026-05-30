@@ -6,6 +6,33 @@ Design an end-to-end document processing pipeline for a company that receives 10
 
 ---
 
+```mermaid
+flowchart TD
+    in["📥 Ingestion\nemail · S3 · API upload\nSQS / Kafka queue"] --> pre["🔧 Preprocessing\nPDF → image\ndeskew · denoise\nquality check"]
+    pre --> clf["🏷️ Classification\ndocument type\ninvoice · contract · receipt\n95%+ accuracy"]
+    clf --> ext
+
+    subgraph ext["📊 Extraction  by type "]
+        direction LR
+        OCR["OCR\nPaddleOCR · Textract\ntext + bounding boxes"]
+        LAYOUT["Layout analysis\ntable · header · section\nLayoutLMv3 / Donut"]
+        FIELD["Field extraction\nNER · slot filling\nPydantic schema validation"]
+        OCR --> LAYOUT --> FIELD
+    end
+
+    ext --> post["✅ Post-processing\nschema validate · business rules\nconfidence scoring"]
+    post --> conf{Confidence?}
+    conf -->|"> 0.95"| auto["Auto-process\ndownstream systems"]
+    conf -->|"< 0.95"| human["👤 Human review queue\nlow confidence fields\nfeedback loop"]
+    human --> auto
+
+    style clf fill:#2980b9,color:#fff
+    style FIELD fill:#8e44ad,color:#fff
+    style auto fill:#27ae60,color:#fff
+    style human fill:#f39c12,color:#fff
+```
+> This is Sameer's production domain — Document AI pipeline at ICE Data Services processes hundreds of thousands of financial documents daily.
+
 ## Architecture
 
 ```
@@ -387,7 +414,7 @@ A: Ground truth collection: sample 1% of documents for human annotation (stratif
 ## Connections
 
 - Document AI (`6.multimodal/02`): The models used in this pipeline (LayoutLM, Donut, OCR)
-- RAG System (`10.system_design/03`): Extracted structured data can be stored and retrieved via RAG
+- RAG System (`11.system_design/03`): Extracted structured data can be stored and retrieved via RAG
 - MLOps (`7.mlops/`): CI/CD, monitoring, and retraining apply directly to this pipeline
 - NLP Applications (`3.nlp/applications/`): NER and IE are the core extraction techniques
 

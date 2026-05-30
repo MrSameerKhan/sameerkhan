@@ -18,6 +18,22 @@
 
 ## Core Concepts
 
+```mermaid
+flowchart LR
+    train["🏋️ Train\nhyperparams · data hash\ngit commit"] --> log["mlflow.log_params\nmlflow.log_metrics\nmlflow.log_model\nartifact stored"]
+    log --> compare["Compare experiments\nmetrics · parameters\nparent run grouping"]
+    compare --> reg["Register best model\nNone → Staging"]
+    reg --> gate["Validation gate\noffline metrics · latency\nshadow traffic"]
+    gate -->|"pass"| prod["Production\nserving endpoint"]
+    gate -->|"fail"| train
+    prod --> monitor["Monitor · drift detect\nretraining trigger"]
+    monitor -->|"degrade"| rollback["Rollback to\nprevious version"]
+
+    style log fill:#2980b9,color:#fff
+    style prod fill:#27ae60,color:#fff
+    style rollback fill:#e74c3c,color:#fff
+```
+
 ### What to Track
 
 Every experiment should log:

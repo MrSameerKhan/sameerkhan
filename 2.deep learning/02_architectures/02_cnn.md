@@ -11,6 +11,23 @@
 
 ---
 
+```mermaid
+flowchart LR
+    img["🖼️ Input\n224×224×3"] --> conv1["Conv + BN + ReLU\n3×3 filters × 64\n→ 224×224×64\nlearn edges"]
+    conv1 --> pool1["MaxPool 2×2\n→ 112×112×64"]
+    pool1 --> conv2["Conv + BN + ReLU\n3×3 × 128\n→ 112×112×128\nlearn textures"]
+    conv2 --> pool2["MaxPool 2×2\n→ 56×56×128"]
+    pool2 --> conv3["Conv × 256\n→ learn parts/objects"]
+    conv3 --> gap["Global Avg Pool\n→ 256-dim"]
+    gap --> head["FC + softmax\n→ class label"]
+
+    style conv1 fill:#2980b9,color:#fff
+    style conv2 fill:#8e44ad,color:#fff
+    style conv3 fill:#e74c3c,color:#fff
+    style head fill:#27ae60,color:#fff
+```
+> Each conv layer doubles channels, halves spatial dims via pooling. Early layers = edges/corners; deeper layers = textures/objects.
+
 ## Why CNN Over MLP for Images
 
 MLP on 224×224 RGB image:

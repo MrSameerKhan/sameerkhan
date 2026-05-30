@@ -17,6 +17,20 @@ Three properties that make CNN work:
 
 ---
 
+```mermaid
+flowchart LR
+    input["Input\nH×W×C_in"] --> conv["Convolution\nK×K×C_in filter\n× C_out filters\nshared weights"]
+    conv --> bn["BatchNorm\nnormalize across batch\nstabilize training"]
+    bn --> relu["ReLU\nmax·0,x"]
+    relu --> pool["MaxPool 2×2\nhalve spatial dims\nstride=2"]
+    pool --> next["Next layer\nH/2 × W/2 × C_out"]
+
+    formula["Output size:\nW_out = ·W_in - K + 2P· / S + 1\nSame pad: P=·K-1·/2"]
+    style conv fill:#2980b9,color:#fff
+    style pool fill:#8e44ad,color:#fff
+```
+> Key insight: same 3×3 filter applied everywhere = parameter sharing. 64 filters × 27 params = 1,728 params vs 154M for FC on same image.
+
 ## 2. Convolution Operation
 
 A filter W of shape (K, K, C_in) slides over the input with stride S, computing a dot product at each position:

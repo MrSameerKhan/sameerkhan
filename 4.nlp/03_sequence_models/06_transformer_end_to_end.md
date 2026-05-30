@@ -40,6 +40,25 @@
 | Attention    | none (direct) | —          | direct (A[4,1]=0.275) | YES         |
 | Transformer  | none (stacked)| —          | direct + FFN      | YES             |
 
+```mermaid
+flowchart TD
+    inp["Input tokens + Positional Encoding\n4 × d_model  e.g. 4 × 512 "]
+
+    inp --> mha["Multi-Head Self-Attention\nH parallel attention heads\neach head d_k = d_model/H\nall positions attend to all positions"]
+    mha --> add1["Add & LayerNorm\nx = LN·x + MHA·x\nresidual prevents vanishing"]
+
+    add1 --> ffn["Feed-Forward Network\nLinear·d_model,4d → GELU → Linear·4d,d_model\nper-position, shared weights"]
+    ffn --> add2["Add & LayerNorm\nx = LN·x + FFN·x"]
+
+    add2 -->|"× N layers"| out["Output hidden states\n4 × d_model\ncontextualised representations"]
+    out --> head["Task head\nclassification · generation · tagging"]
+
+    style mha fill:#2980b9,color:#fff
+    style ffn fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> MHA: rich context from all positions. FFN: non-linear transformation per position. Residuals: gradient highway across N layers. Together → why transformers scale.
+
 **Attention's remaining limits:**
 
 ```

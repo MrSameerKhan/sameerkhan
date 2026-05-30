@@ -36,6 +36,28 @@ The result: a cleaner formulation, fewer hyperparameters, and the foundation of 
 
 ---
 
+```mermaid
+flowchart LR
+    img["🖼️ Image"] --> backbone["CNN Backbone\nResNet-50\nextract features\nH/32 × W/32 × 2048"]
+    backbone --> proj["Linear projection\n→ d_model=256"]
+    proj --> pe["+ 2D positional encoding\nspatial position of each feature"]
+    pe --> enc["Transformer Encoder\n6 layers · self-attention\nfeature context enrichment"]
+
+    queries["N=100 learned\nobject queries\n100 × 256"] --> dec["Transformer Decoder\n6 layers\nQueries attend to encoder\nvia cross-attention"]
+    enc --> dec
+
+    dec --> heads{"Prediction heads\nper query"}
+    heads --> bbox["Bounding box\n4-dim  cx,cy,w,h "]
+    heads --> cls["Class logits\n+ no-object class"]
+
+    bbox & cls --> match["Bipartite matching\nHungarian algorithm\nalign N predictions to M GT boxes\nno NMS needed"]
+
+    style enc fill:#2980b9,color:#fff
+    style dec fill:#8e44ad,color:#fff
+    style match fill:#27ae60,color:#fff
+```
+> No anchors. No NMS. N queries produce N predictions; Hungarian matching assigns each query to at most one GT box (or no-object).
+
 ## 2. Core Concept — Set Prediction with a Transformer
 
 Detection = predict a **SET** of `(class, bounding_box)` tuples for each image.

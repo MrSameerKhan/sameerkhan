@@ -36,6 +36,34 @@ Prompt = [System] + [Retrieved chunks] + [Query]
 LLM → Answer (with citations)
 ```
 
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant EM as Embedder
+    participant VDB as Vector DB · ANN
+    participant BM as BM25 Index
+    participant RR as Cross-Encoder Reranker
+    participant LM as LLM
+
+    rect rgb(52, 73, 94)
+        Note over EM,BM: OFFLINE — done once at index time
+        Note over VDB: Docs → Chunk → Embed → Store
+    end
+
+    rect rgb(39, 174, 96)
+        Note over U,LM: ONLINE — every query
+        U->>EM: raw query text
+        EM->>VDB: query vector → ANN search
+        VDB->>RR: top-50 dense candidates
+        EM->>BM: query tokens → BM25 search
+        BM->>RR: top-50 sparse candidates
+        RR->>RR: RRF fusion → cross-encoder score each pair
+        RR->>LM: top-5 reranked chunks
+        LM->>U: ✅ grounded answer + citations
+    end
+```
+> Bottleneck is always retrieval recall — if the right chunk isn't in top-50, generation can't recover it.
+
 ---
 
 ## Chunking Strategies
@@ -217,7 +245,7 @@ results = vectorstore.similarity_search_with_score(query, k=10)
 ```python
 from rank_bm25 import BM25Okapi
 
-# BM25: term Frequency + inverse document frequency scoring
+# BM25: Term Frequency + inverse document frequency scoring
 corpus = [chunk.split() for chunk in all_chunks]
 bm25 = BM25Okapi(corpus)
 
@@ -480,7 +508,7 @@ RAGAS framework uses four metrics: Faithfulness — is the generated answer supp
 - **RAG pipeline + evaluation depth:** `../7.rag/02_rag_pipeline.md`
 - **Word Embeddings background:** `../4.nlp/02_embeddings/01_word_embeddings.md`
 - **Multi-tenant RAG system design:** `../11.system_design/10_multi_tenant_rag.md`
-- **LLM observability** for RAG (LangFuse, Phoenix, Helicone): `../10.mlops/11_llm_observability_tools.md`
+- **LLM observability** for RAG (LangFuse, Phoenix, Helicone): `../10.mlops/11_llm_observability.md`
 - **Document AI:** RAG over document images (OCR → chunk → retrieve): `../3.computerVision/02_applications/` and `../9.multimodal/`
 
 ---

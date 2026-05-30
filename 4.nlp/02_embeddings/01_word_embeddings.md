@@ -16,6 +16,26 @@
 
 ---
 
+```mermaid
+flowchart LR
+    subgraph sg["Skip-gram — predict context from center"]
+        direction TB
+        W["center word\n'cat' → embed → 300d"]
+        W -->|"predict"| C1["'sat'\ncontext word"]
+        W -->|"predict"| C2["'on'\ncontext word"]
+        W -->|"predict"| C3["'mat'\ncontext word"]
+    end
+
+    subgraph cbow["CBOW — predict center from context"]
+        direction TB
+        X1["'sat'"] & X2["'on'"] & X3["'mat'"] -->|"average embed"| center["predict\n'cat'"]
+    end
+
+    sg -->|"better for rare words"| use_sg["Skip-gram\nuse when rare words matter"]
+    cbow -->|"faster training"| use_cbow["CBOW\nuse for large corpus speed"]
+```
+> Negative sampling: instead of softmax over 50K vocab, sample ~5-20 negative words. Makes training 100× faster.
+
 ## 1. Why Dense Embeddings?
 
 ```
@@ -712,9 +732,9 @@ A: Three limitations of static embeddings: (1) Polysemy — one vector per word 
 
 | This file | Links to | Why |
 |---|---|---|
-| Tokenization prerequisite | `../fundamentals/01_text_preprocessing.md` | Tokenize → embed |
-| Sparse vs dense comparison | `../fundamentals/02_text_representations.md` | Evolution from TF-IDF |
-| Embeddings in RNN/LSTM | `../sequence_models/01_rnn_to_attention.md` | Embedding layer feeds into RNN |
+| Tokenization prerequisite | `../01_fundamentals/01_text_preprocessing.md` | Tokenize → embed |
+| Sparse vs dense comparison | `../01_fundamentals/02_text_representations.md` | Evolution from TF-IDF |
+| Embeddings in RNN/LSTM | `../03_sequence_models/01_rnn_to_attention.md` | Embedding layer feeds into RNN |
 | Contextual embeddings (BERT) | `../../.4_transformers/` | BERT = contextual word embeddings |
 | Embedding layer math in DL | `../../2.deep learning/01_fundamentals/05_modern_components.md` | Embedding math |
 

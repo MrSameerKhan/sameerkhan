@@ -14,6 +14,22 @@ MoE breaks this: have N "expert" FFN layers, but a small router picks K << N of 
 
 ---
 
+```mermaid
+flowchart LR
+    tok["Token x\n d_model "] --> router["Router\nLinear·d,N + softmax\nN expert scores"]
+    router --> top2["Top-2 selection\nE₁ w=0.6 · E₃ w=0.4\nExperts 2,4,5,6,7,8 skipped"]
+    top2 --> e1["Expert 1\nFFN d→4d→d\nspecializes"]
+    top2 --> e3["Expert 3\nFFN d→4d→d\nspecializes"]
+    e1 -->|"× 0.6"| combine["0.6·E₁·x + 0.4·E₃·x"]
+    e3 -->|"× 0.4"| combine
+    combine --> out["Output"]
+
+    note["Mistral 8×7B\n47B total params\n13B active per token\n= 47B quality · 13B cost"]
+
+    style router fill:#e74c3c,color:#fff
+    style combine fill:#27ae60,color:#fff
+```
+
 ## 2. Core Concept — Sparse Activation
 
 ### Standard FFN

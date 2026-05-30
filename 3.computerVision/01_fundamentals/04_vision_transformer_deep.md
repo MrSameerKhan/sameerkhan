@@ -41,6 +41,32 @@ ViT throws all of these away. The recipe:
 
 **That's the entire architecture. No convolutions anywhere.**
 
+```mermaid
+graph LR
+    subgraph cnn_path["CNN — inductive biases"]
+        direction TB
+        C1["Locality\nnear pixels matter more"]
+        C2["Translation invariance\nfeature = same anywhere"]
+        C3["Hierarchy\nedges→textures→objects"]
+        C4["Needs less data\nCNNs win <10M images"]
+    end
+
+    subgraph vit_path["ViT — no inductive bias"]
+        direction TB
+        V1["Global attention\nfrom layer 1\nevery patch → every patch"]
+        V2["No convolution\nlinear projection only"]
+        V3["Learns spatial structure\nfrom positional embeddings"]
+        V4["Needs more data\nViT wins >100M images"]
+    end
+
+    cnn_path -->|"at web scale"| vit_path
+
+    note["ViT-B/16 numbers:\n196 patches · 768-dim\n12 layers · 12 heads\n86M params"]
+    style V1 fill:#2980b9,color:#fff
+    style C4 fill:#27ae60,color:#fff
+    style V4 fill:#8e44ad,color:#fff
+```
+
 ### Numerical Example
 
 ```

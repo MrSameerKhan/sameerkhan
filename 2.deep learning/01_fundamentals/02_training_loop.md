@@ -24,6 +24,29 @@ for each Batch:
 
 That's it. Every deep learning framework runs this loop.
 
+```mermaid
+sequenceDiagram
+    participant D as DataLoader
+    participant M as Model
+    participant L as Loss fn
+    participant B as Backward pass
+    participant O as Optimizer
+
+    loop Each epoch
+        loop Each batch
+            D->>M: x_batch · y_batch
+            M->>L: ŷ = forward·x
+            L->>B: L = loss·ŷ,y
+            B->>B: L.backward·\ncompute ∂L/∂W for all W
+            B->>O: gradients ready
+            O->>M: W = W - α·∂L/∂W\nAdamW: momentum + weight decay
+            M->>M: optimizer.zero_grad·
+        end
+        M->>M: validate on val set\ncheck for overfitting
+        O->>O: LR scheduler step\ncosine decay or plateau
+    end
+```
+
 ---
 
 ## 2. Backpropagation

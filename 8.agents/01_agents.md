@@ -63,6 +63,30 @@ Key components:
 
 ### ReAct Pattern (Reason + Act)
 
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant L as 🧠 LLM Agent
+    participant T as 🔧 Tool / API
+
+    U->>L: "What is Apple stock vs last month?"
+
+    loop ReAct Loop — repeats until answer ready
+        L->>L: 💭 Thought: need current AAPL price
+        L->>T: Action: stock_price·symbol=AAPL
+        T->>L: Observation: $182.50 @ 2026-03-14
+
+        L->>L: 💭 Thought: need last month's price
+        L->>T: Action: stock_price·symbol=AAPL·date=2026-02-14
+        T->>L: Observation: $168.30
+
+        L->>L: 💭 Thought: have enough data, calculate change
+    end
+
+    L->>U: ✅ Answer: AAPL at $182.50, up 8.45% from $168.30
+```
+> Key insight: each Observation feeds back into the next Thought — the agent is never reasoning blindly.
+
 ```
 User: "What is the current price of Apple stock and how does it compare to last month?"
 

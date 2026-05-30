@@ -14,6 +14,25 @@
 
 **Core difference from text classification:** Token-level output, not document-level. Each token gets a label.
 
+```mermaid
+sequenceDiagram
+    participant I as Input tokens
+    participant B as BERT Encoder
+    participant H as Token Classification Head
+    participant C as CRF Layer  optional 
+    participant O as IOB Labels
+
+    I->>B: [CLS] Apple was founded in Cupertino [SEP]
+    B->>B: 12 layers bidirectional attention
+    B->>H: hidden states h₁...hₙ  each 768-dim
+    H->>H: Linear·768,num_labels per token
+    H->>C: logits for each token
+    C->>C: Viterbi decode\nenforce valid tag transitions\nB-ORG cannot follow I-PER
+    C->>O: O B-ORG O O O B-LOC
+
+    Note over O: Apple=B-ORG, Cupertino=B-LOC
+```
+
 ---
 
 ## Core Concepts

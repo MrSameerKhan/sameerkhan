@@ -19,6 +19,19 @@
 
 ## Core Concepts
 
+```mermaid
+flowchart LR
+    model["🏋️ Trained model\nPyTorch / HuggingFace"] --> export["ONNX export\nfuse ops · remove Python\n2× latency gain"]
+    export --> quant["INT8 quantization\n4-8× smaller\n~1% quality drop"]
+    quant --> serve{"Serving stack"}
+    serve -->|"Custom model"| fastapi["FastAPI + ONNX Runtime\nHTTP endpoint\nhigh throughput"]
+    serve -->|"LLM"| vllm["vLLM\nPagedAttention\ncontinuous batching\n10-30× throughput"]
+    serve -->|"Multi-framework"| triton["Triton Inference Server\nGPU batching\nhighest throughput"]
+    fastapi & vllm & triton --> client["Client\nREST / gRPC"]
+    style vllm fill:#8e44ad,color:#fff
+    style fastapi fill:#2980b9,color:#fff
+```
+
 ### Inference Optimization Stack
 
 ```
@@ -421,7 +434,7 @@ Standard LLM serving pre-allocates a contiguous KV cache block for each request 
 
 ## Connections
 
-- Efficient Transformers (`transformers/models/04`): Quantization, Flash Attention covered architecturally
+- Efficient Transformers (`5.transformers/02_models/04`): Quantization, Flash Attention covered architecturally
 - MLOps Pipelines (`7.mlops/03`): Monitor latency/throughput metrics post-deployment
 - MLOps Pipelines (`7.mlops/04`): CI/CD deploys the serving infrastructure
 - System Design (`8.system_design`): Serving is a key component of ML system design

@@ -18,6 +18,38 @@
 | ConvNeXt V2-B | 2023 | 89M | 87.7% | FCMAE pretraining + GRN normalization |
 | Vision Mamba (Vim-B) | 2024 | 98M | 81.9% | SSM backbone — O(n) compute on patch sequences |
 | MambaVision-L (NVIDIA) | 2024 | 228M | 87.3% | Hybrid Mamba + Self-Attention — best accuracy/throughput |
+
+```mermaid
+timeline
+    title CNN Architecture Evolution
+    1998 : LeNet-5
+         : 60K params · MNIST
+         : First successful CNN
+    2012 : AlexNet
+         : 60M params · 63% ImageNet
+         : GPU + ReLU + Dropout
+         : Deep learning era begins
+    2014 : VGG-16 + GoogLeNet
+         : Stacked 3×3 convs  VGG
+         : Inception module  GoogLeNet
+    2015 : ResNet-50/152
+         : Skip connections
+         : 152 layers trainable
+         : Solved depth problem
+    2019 : EfficientNet
+         : Compound scaling
+         : depth + width + resolution
+    2020 : ViT
+         : Attention replaces convolution
+         : Needs large data
+    2021 : Swin Transformer
+         : Hierarchical ViT
+         : Window attention O·n
+         : Dense prediction default
+    2022+ : ConvNeXt · MambaVision
+          : CNN with ViT training recipe
+          : Hybrid SSM + attention
+```
 | DINOv2 ViT-L | 2023 | 304M | 86.7% | Self-supervised (no labels); SOTA off-the-shelf features |
 
 ---

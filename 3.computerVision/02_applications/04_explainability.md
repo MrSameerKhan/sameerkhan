@@ -11,6 +11,26 @@
 | SHAP (DeepSHAP) | PyTorch/TF | Pixel-level | High | Consistent, theoretically grounded |
 | Integrated Gradients | Differentiable models | Pixel-level | Medium | Fine-grained pixel attribution |
 
+```mermaid
+graph LR
+    subgraph gradient["Gradient-based  CNN "]
+        direction TB
+        G1["Grad-CAM\nany CNN · coarse heatmap\ndefault choice"]
+        G2["Grad-CAM++\nbetter multi-instance\nfiner maps"]
+        G3["Integrated Gradients\nfine-grained pixel attribution\ndifferentiable models only"]
+    end
+
+    subgraph perturbation["Perturbation-based  model-agnostic "]
+        direction TB
+        P1["LIME\nsuperpixel importance\nblack-box · medium cost"]
+        P2["SHAP\nShapley values\ntheoretically grounded · high cost"]
+    end
+
+    need(["Need explanation?"]) -->|"CNN model + quick"| gradient
+    need -->|"Any model + rigorous"| perturbation
+```
+> Grad-CAM is the default for CNN debugging: fast, architecture-aware, and visually intuitive.
+
 **When to use:** Any time you need to justify a model's decision to a business stakeholder, debug unexpected predictions, detect bias, or validate that the model reasons correctly.
 
 ---

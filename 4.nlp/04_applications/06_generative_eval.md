@@ -26,6 +26,34 @@ The field of metrics: 30+ years of effort to approximate human judgment. Senior 
 
 ---
 
+```mermaid
+graph LR
+    subgraph ngram["N-gram Overlap  fast · no LLM needed "]
+        direction TB
+        N1["BLEU\nprecision of n-grams\ntranslation default\n⚠️ misses paraphrase"]
+        N2["ROUGE-1/2/L\nrecall of n-grams\nsummarization default\n⚠️ same weakness"]
+        N3["METEOR\nsynonym-aware BLEU\nbetter but slow"]
+    end
+
+    subgraph semantic["Semantic  LLM or BERT needed "]
+        direction TB
+        S1["BERTScore\ntoken-level cosine with BERT\n✅ captures paraphrase\n⚠️ needs reference"]
+        S2["LLM-as-Judge\nGPT-4 rates quality 1-10\n✅ no reference needed\n⚠️ position · length bias"]
+    end
+
+    subgraph rag["RAG-Specific  RAGAS "]
+        direction TB
+        R1["Faithfulness\nanswer grounded in context?"]
+        R2["Answer Relevancy\ndoes it answer the question?"]
+        R3["Context Precision/Recall\nwere right chunks retrieved?"]
+    end
+
+    task(["Choose metric"]) -->|"translation · summarization baseline"| ngram
+    task -->|"open-ended generation"| semantic
+    task -->|"RAG pipeline"| rag
+```
+> Hierarchy of trust: human eval > Arena Elo > LLM-as-Judge > BERTScore > BLEU/ROUGE.
+
 ## 2. N-gram Overlap Metrics
 
 ### BLEU (Papineni et al. 2002)

@@ -27,6 +27,25 @@ With LoRA (r=16):
 
 ---
 
+## Which PEFT to Use
+
+```mermaid
+flowchart TD
+    A([Fine-tune an LLM]) --> B{GPU memory?}
+    B -->|"Single consumer GPU\nRTX 3090/4090 · 24GB"| C["QLoRA\n4-bit base + LoRA\nfits on consumer hardware"]
+    B -->|"Single A100 40–80GB"| D{Accuracy\npriority?}
+    B -->|"Multi-GPU or full budget"| E["Full fine-tune\nor LoRA large rank r=128+"]
+    D -->|Best accuracy| F["DoRA\nweight decomposition + LoRA\n~1% better than vanilla LoRA"]
+    D -->|Standard| G["LoRA r=16–64\nbest accuracy/cost ratio\ndefault choice 2024-25"]
+    C & F & G & E --> H{Alignment\nneeded after SFT?}
+    H -->|Yes| I["DPO / ORPO / KTO\nsee 06_alignment_follow_ups.md"]
+    H -->|No| J["Merge LoRA → base\nserve as single model ✓"]
+    style C fill:#27ae60,color:#fff
+    style F fill:#8e44ad,color:#fff
+    style G fill:#27ae60,color:#fff
+    style J fill:#2980b9,color:#fff
+```
+
 ## LoRA — Low-Rank Adaptation
 
 **Paper:** "LoRA: Low-Rank Adaptation of Large Language Models" (Hu et al., 2021)

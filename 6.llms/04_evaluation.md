@@ -34,6 +34,37 @@ Full coverage of MTEB, RAGAS, lm-eval-harness, Arena-Hard, RULER, and LLM-as-jud
 
 ---
 
+```mermaid
+graph LR
+    subgraph auto["Automatic Metrics"]
+        direction TB
+        A1["BLEU · ROUGE\nn-gram overlap\ntranslation · summarization"]
+        A2["BERTScore\nsemantic via BERT\nbetter than n-gram"]
+        A3["pass@k\ncode correctness\nexecution-based"]
+    end
+
+    subgraph bench["Benchmarks"]
+        direction TB
+        B1["MMLU-Pro · GPQA\nknowledge · reasoning\ncontamination risk"]
+        B2["SWE-bench · HumanEval\ncode · repo-level\nlow contamination"]
+        B3["Arena-Hard · Chatbot Arena\npairwise · Elo\nuncontaminatable"]
+    end
+
+    subgraph llmj["LLM-as-Judge"]
+        direction TB
+        J1["MT-Bench · AlpacaEval\nGPT-4 rates quality\nbias: position · verbosity"]
+        J2["Control for bias:\nswap positions · n=3 seeds"]
+    end
+
+    subgraph prod["Production Eval"]
+        direction TB
+        P1["RAGAS\nfaithfulness · relevancy\ncontext precision/recall"]
+        P2["Held-out proprietary set\nno contamination\ngold standard"]
+        P3["Human eval\n≥100 examples\nbefore major model decision"]
+    end
+```
+> Hierarchy: held-out proprietary > Arena Elo > GPQA-Diamond > MMLU (most contaminated).
+
 ## Core Concepts
 
 ### Why LLM Evaluation Is Hard

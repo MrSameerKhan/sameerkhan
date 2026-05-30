@@ -14,6 +14,26 @@
 
 ---
 
+```mermaid
+flowchart TD
+    A([Choose loss function]) --> B{Task type?}
+
+    B -->|"Classification\nbalanced data"| C["Cross-Entropy\ndefault choice"]
+    B -->|"Classification\nclass imbalance"| D["Focal Loss\nγ down-weights easy examples\nRetinaNet / object detection"]
+    B -->|"Regression"| E["MSE\nor Huber for outlier robustness"]
+    B -->|"Sequence without alignment\nOCR · ASR"| F["CTC Loss\naligns variable-length output\nto variable-length input"]
+    B -->|"Embeddings / metric learning"| G{Label type?}
+    G -->|"Pairs  similar/dissimilar "| H["Contrastive Loss\nor NT-Xent  SimCLR "]
+    G -->|"Triplets  anchor+pos+neg "| I["Triplet Loss\nface verification · retrieval"]
+    B -->|"Segmentation with imbalance"| J["Dice Loss\nF1-like overlap measure"]
+    B -->|"Noisy labels"| K["Label Smoothing CE\nprevents overconfidence"]
+
+    style C fill:#27ae60,color:#fff
+    style D fill:#e74c3c,color:#fff
+    style F fill:#8e44ad,color:#fff
+    style H fill:#2980b9,color:#fff
+```
+
 ## 1. Focal Loss
 
 **Problem it solves:** Object detection datasets have extreme class imbalance — for every foreground object, there are thousands of background patches. Standard cross-entropy: easy negatives (background, predicted with 0.99 confidence) still contribute large cumulative loss → model optimizes these rather than learning hard cases.

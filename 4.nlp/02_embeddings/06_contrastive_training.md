@@ -26,6 +26,26 @@ Senior interview Q: "How would you train a custom embedding model for legal docu
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant A as Anchor  query 
+    participant P as Positive  correct doc 
+    participant N as Negatives  wrong docs 
+    participant E as Bi-Encoder
+    participant L as InfoNCE Loss
+
+    A->>E: embed anchor → zₐ
+    P->>E: embed positive → z₊
+    N->>E: embed N negatives → z₁..zₙ
+
+    E->>L: similarity scores\nsim·zₐ,z₊ · sim·zₐ,z₁ ... sim·zₐ,zₙ
+    L->>L: InfoNCE: -log exp·sim·a,p·/τ / Σ exp·sim·a,zᵢ·/τ
+    Note over L: Maximize similarity to positive\nMinimize similarity to all negatives
+    L->>E: gradients → update encoder weights
+
+    Note over N: Hard negatives  mined  beat random negatives\nHard = retrieved by current model but wrong answer\nForces model to learn fine distinctions
+```
+
 ## 2. The Contrastive Setup
 
 The goal: produce a vector for each text such that:

@@ -10,6 +10,31 @@
 
 **One-line summary:** VAE = encode to distribution → sample → decode. GAN = fool a discriminator. Diffusion = learn to denoise from pure noise step by step.
 
+```mermaid
+graph TD
+    subgraph vae["VAE — stable · smooth"]
+        direction LR
+        V1["x"] --> V2["Encoder → μ,σ"]
+        V2 --> V3["Sample z ~ N·μ,σ"]
+        V3 --> V4["Decoder → x̂"]
+        V4 --> V5["ELBO loss\nReconstruction + KL·N·μ,σ||N·0,1"]
+    end
+
+    subgraph gan["GAN — sharp · unstable"]
+        direction LR
+        G1["z ~ N·0,1\nnoise"] --> G2["Generator G\n→ fake image"]
+        G2 & REAL["Real images"] --> G3["Discriminator D\nreal or fake?"]
+        G3 --> G4["D: maximize\nG: minimize\nMinimax game"]
+    end
+
+    subgraph diff["Diffusion — best quality · slow"]
+        direction LR
+        D1["x₀ clean"] -->|"add noise T steps"| D2["xₜ ~ N·0,I"]
+        D2 -->|"learn to denoise\nUNet or Transformer"| D3["x₀ reconstructed"]
+        D3 --> D4["MSE noise prediction\nat each step"]
+    end
+```
+
 ---
 
 ## 1. Variational Autoencoder (VAE)

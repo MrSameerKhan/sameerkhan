@@ -25,6 +25,37 @@ EM is the alternating algorithm that handles this — it provably increases the 
 
 ---
 
+```mermaid
+stateDiagram-v2
+    [*] --> initialize : random θ⁰ · random cluster assignments
+
+    initialize --> E_step : start iteration
+
+    E_step : E-step — Expectation
+    E_step : Given θ · compute soft assignments
+    E_step : P·zᵢ=k | xᵢ · θ  for each point
+    E_step : "Which cluster does each point belong to?"
+
+    E_step --> M_step
+
+    M_step : M-step — Maximization
+    M_step : Given soft assignments · update θ
+    M_step : Recompute μ · σ · π using weighted MLE
+    M_step : "What parameters best explain the data?"
+
+    M_step --> check
+
+    check --> E_step : log-likelihood still increasing
+    check --> [*] : converged  Δlog-L < ε
+
+    note right of E_step
+        GMM example:
+        E: P·cluster k | xᵢ using current μ,σ,π
+        M: update μₖ = weighted mean of xᵢ
+        Guarantees: log-likelihood never decreases
+    end note
+```
+
 ## 2. Core concept — chicken-and-egg via iteration
 
 ```

@@ -6,6 +6,26 @@ Design an automated content moderation system for a social platform. Scale: 10M 
 
 ---
 
+```mermaid
+flowchart TD
+    post["📝 Content submitted\ntext · image · video"] --> kafka["Kafka queue\nasync processing\ndecouple ingestion from pipeline"]
+
+    kafka --> pre["Fast pre-filter  < 10ms \nblocklist · known hash match\nblocked if exact known bad"]
+    pre -->|"pass"| ml["ML classifiers  < 100ms \ntext: toxicity · hate · spam\nimage: NSFW · violence\nHash: PhotoDNA"]
+    ml -->|"HIGH confidence bad"| auto_remove["⛔ Auto-remove\nno human review"]
+    ml -->|"borderline"| human["👤 Human review queue\ncontextual judgment\nappeal support"]
+    ml -->|"HIGH confidence safe"| pub["✅ Publish\nto user feeds"]
+    human -->|"remove"| auto_remove
+    human -->|"allow"| pub
+
+    auto_remove & pub --> audit["📋 Audit log\ndecision · model score\nhuman override if any"]
+
+    style auto_remove fill:#e74c3c,color:#fff
+    style pub fill:#27ae60,color:#fff
+    style human fill:#f39c12,color:#fff
+```
+> Key: pre-filter handles known bad (zero ML cost), ML handles unknowns, humans handle borderline cases only (minimize cost + false positives).
+
 ## Architecture
 
 ```

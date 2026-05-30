@@ -4,6 +4,28 @@
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant IMG as Image batch  N images
+    participant TXT as Text batch  N captions
+    participant IE as Image Encoder  ViT
+    participant TE as Text Encoder  Transformer
+    participant L as InfoNCE Loss
+
+    IMG->>IE: forward pass → image embeddings  N×d
+    TXT->>TE: forward pass → text embeddings  N×d
+    IE->>L: L2-normalize → zᵢ
+    TE->>L: L2-normalize → zₜ
+
+    L->>L: similarity matrix S = zᵢ · zₜᵀ  N×N
+    L->>L: InfoNCE: maximize diagonal  matched pairs \nminimize off-diagonal  mismatches 
+    Note over L: Temperature τ scales similarities\nLoss symmetric: image→text + text→image
+
+    L->>IE: gradients → update image encoder
+    L->>TE: gradients → update text encoder
+```
+> N=32K pairs per batch in original CLIP. Larger batch = more negatives = harder training = better representations.
+
 ## What CLIP Actually Does
 
 ```

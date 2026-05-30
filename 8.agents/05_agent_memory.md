@@ -32,6 +32,35 @@ Long-term Memory (cross-session)
 └── Procedural — "how to do things" - patterns / skills
 ```
 
+```mermaid
+mindmap
+  root((Agent Memory))
+    Working Memory
+      Current context window
+      8K–128K tokens
+      Resets every LLM call
+      Cheapest · always used
+    Short-term
+      Per-session history
+      LangGraph state.messages
+      Sliding window or summary
+      Resets when session ends
+    Long-term
+      Episodic
+        Time-stamped events
+        What happened on date X
+        Backend: vector DB with timestamps
+      Semantic
+        Facts about user or world
+        Preferences · relationships
+        Backend: KV store or KG
+      Procedural
+        How to do things
+        Tool usage patterns
+        Backend: skill store · tool registry
+```
+> A production agent uses all three — working memory every call, short-term per session, long-term across sessions.
+
 A production agent typically uses **all three** with different backends and write/read rules.
 
 ---

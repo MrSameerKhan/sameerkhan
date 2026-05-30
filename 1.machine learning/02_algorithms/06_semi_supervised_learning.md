@@ -2,6 +2,20 @@
 
 > **When:** You have a small labeled set + large unlabeled set. Common in real-world ML — labeling is expensive.
 
+```mermaid
+flowchart LR
+    labeled["🏷️ Labeled data L\n500 examples\nexpensive to annotate"] --> sup["Supervised loss\nCross-entropy on L"]
+    unlabeled["🗃️ Unlabeled data U\n50K examples\nfree from production"] --> pseudo["Generate pseudo-labels\nmodel predictions on U"]
+    pseudo --> filter["Filter high-confidence\nthreshold > 0.95"]
+    filter --> consist["Consistency loss\naugment·x ≈ augment·x\nΠ model / MixMatch"]
+    sup & consist --> total["Total loss\nL_sup + λ·L_unsup"]
+    total --> model["Stronger model\nbetter than L alone"]
+
+    style labeled fill:#2980b9,color:#fff
+    style unlabeled fill:#7f8c8d,color:#fff
+    style model fill:#27ae60,color:#fff
+```
+
 ## The Setup
 
 ```

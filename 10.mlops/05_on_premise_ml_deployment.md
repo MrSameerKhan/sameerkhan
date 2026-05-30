@@ -4,6 +4,25 @@
 
 ---
 
+```mermaid
+flowchart LR
+    client["📱 Client\nmobile · laptop · server\nPOST /predict"] -->|"HTTPS 443"| lb["Load Balancer\nNginx\nTLS termination\nrate limiting\nhealth checks"]
+    lb -->|"HTTP internal"| api["FastAPI server\nworker processes\nrequest validation"]
+    api --> model["ML Model\nONNX / TorchServe\nGPU inference"]
+    model --> cache["Response cache\nRedis\nidentical requests"]
+    cache --> api
+    api --> client
+
+    subgraph ha["High Availability"]
+        direction LR
+        PRIMARY["Primary server"] <-->|"heartbeat"| REPLICA["Replica server"]
+        lb -->|"if primary down"| REPLICA
+    end
+
+    style lb fill:#2980b9,color:#fff
+    style model fill:#8e44ad,color:#fff
+```
+
 ## 0. The Full Picture
 
 ```

@@ -15,6 +15,34 @@
 | ALBERT | Cross-layer param sharing, SOP | Low memory, still decent |
 | ELECTRA | Replaced Token Detection | Efficient pretraining |
 
+```mermaid
+timeline
+    title BERT Family — Encoder Models
+    2018 : BERT
+         : MLM + NSP · 110M/340M
+         : Bidirectional encoder baseline
+    2019 : RoBERTa
+         : Remove NSP · more data
+         : Dynamic masking
+         : Default BERT replacement
+    2019 : ALBERT
+         : Cross-layer param sharing
+         : SOP replaces NSP
+         : Low memory footprint
+    2019 : DistilBERT
+         : Knowledge distillation
+         : 40% smaller · 97% quality
+         : Production inference
+    2020 : ELECTRA
+         : Replaced Token Detection
+         : All tokens contribute to loss
+         : Better sample efficiency
+    2021 : DeBERTa v3
+         : Disentangled attention
+         : SOTA GLUE/SuperGLUE
+         : Best accuracy encoder
+```
+
 **When to use encoder models:** BERT-family encoders are still the **most cost-effective** option for high-throughput classification / NER / embedding tasks where labeled data exists. Decoder-only LLMs (Llama-3, Qwen2.5) with structured output via Pydantic + Instructor have become the default when (a) labeled data is small or absent, (b) the entity/label schema evolves frequently, or (c) the task needs reasoning over the extraction.
 
 ---

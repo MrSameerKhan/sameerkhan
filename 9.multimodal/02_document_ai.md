@@ -36,6 +36,39 @@ Raw Document (PDF / image scan)
 Structured Output (JSON)
 ```
 
+```mermaid
+flowchart TD
+    doc["📄 Raw Document\nPDF · scan · photo"]
+
+    doc --> ocr_path
+    doc --> e2e_path
+
+    subgraph ocr_path["🔄 Traditional Pipeline  high volume · known schema "]
+        direction TB
+        O1["OCR\nPaddleOCR · Tesseract · Textract\ntext + bounding boxes"]
+        O2["Layout Analysis\ntable/header/section detection"]
+        O3["LayoutLM v3\ntext + layout + image fusion\nNER / classification"]
+        O4["Post-processing\nvalidate · normalize · Pydantic"]
+        O1 --> O2 --> O3 --> O4
+    end
+
+    subgraph e2e_path["⚡ End-to-End VLM  flexible · low volume "]
+        direction TB
+        E1["Donut / Nougat\nimage → JSON directly\nno OCR step"]
+        E2["GPT-4V / Claude Vision\nzero-shot extraction\nPydantic output schema"]
+        E3["ColPali / ColQwen\nmultimodal RAG\nretrieve document pages as images"]
+        E1 & E2 & E3 --> E4["Structured JSON output"]
+    end
+
+    ocr_path --> out["✅ Structured Output\nJSON · validated fields"]
+    e2e_path --> out
+
+    style O3 fill:#2980b9,color:#fff
+    style E1 fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> Use traditional pipeline for high-volume, fixed-schema docs. Use VLM for complex/varied layouts or when OCR accuracy is a bottleneck.
+
 Two paradigms:
 ```
 Paradigm 1: OCR + NLP pipeline

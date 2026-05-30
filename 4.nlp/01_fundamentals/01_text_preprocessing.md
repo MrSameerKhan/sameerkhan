@@ -14,6 +14,30 @@
 
 **Rule:** For transformer-based models, do minimal preprocessing — tokenizer handles it. For classical ML (TF-IDF + Logistic Regression), full preprocessing pipeline.
 
+```mermaid
+flowchart LR
+    raw["📝 Raw text\n'Hello World! Visit http://...'"]
+
+    raw --> clean["🧹 Clean\nremove HTML · URLs · special chars"]
+    clean --> lower["🔡 Lowercase\n'hello world'"]
+    lower --> tok["✂️ Tokenize\nword-level or subword BPE"]
+
+    tok --> classical["Classical ML path\nTF-IDF + LogReg"]
+    tok --> transformer["Transformer path\nBERT · GPT · T5"]
+
+    classical --> sw["Stop word removal\n'hello' kept · 'the/is/a' dropped"]
+    sw --> stem["Stem / Lemmatize\n'running' → 'run'"]
+    stem --> vec["Vectorize\nTF-IDF or BoW"]
+
+    transformer --> subword["Subword tokenization\nBPE · WordPiece\nhandles OOV natively"]
+    subword --> ids["Token IDs\n[101, 7592, 2088, 102]"]
+
+    style classical fill:#f39c12,color:#fff
+    style transformer fill:#2980b9,color:#fff
+    style ids fill:#27ae60,color:#fff
+```
+> Never apply stemming or stop word removal for transformers — it destroys the context the attention mechanism relies on.
+
 ---
 
 ## 1. Text Cleaning
@@ -419,7 +443,7 @@ A: Several strategies: (1) Truncation — simplest, loses information from the e
 | BERT tokenizer details | `../../.4_transformers/` | Transformer-specific preprocessing |
 | TF-IDF as next step | `02_text_representations.md` | After preprocessing → vectorization |
 | Document text normalization | `../applications/03_information_extraction.md` | OCR text normalization |
-| Padding + attention_mask | `../sequence_models/01_rnn_to_attention.md` | Masking padded positions |
+| Padding + attention_mask | `../03_sequence_models/01_rnn_to_attention.md` | Masking padded positions |
 
 ---
 

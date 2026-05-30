@@ -16,6 +16,25 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph bi["Bi-encoder  retrieval "]
+        direction TB
+        Q2["Query\n'what is RAG?'"] --> QE["Embed\n→ 1024d"]
+        D2["Document\n'RAG uses...'"] --> DE["Embed\n→ 1024d  offline "]
+        QE & DE --> COS["Cosine similarity\nscalar score"]
+    end
+
+    subgraph cross["Cross-encoder  reranking "]
+        direction TB
+        QD["Query + Document\nconcatenated"] --> BERT["BERT joint attention\nfull interaction"]
+        BERT --> SCORE["Relevance score\nscalar"]
+    end
+
+    bi -->|"Fast O·1 per query\npre-encode docs offline\n✅ ANN retrieval"| use_bi["Use for: first-stage retrieval\nRAG · semantic search"]
+    cross -->|"Slow O·n per query\nmust run at query time\n✅ Higher accuracy"| use_cross["Use for: reranking top-50\n→ top-5 final selection"]
+```
+
 ## 2024-2025 SOTA Open Embedders (MTEB Leaderboard)
 
 These have largely replaced legacy SBERT models as the production default for retrieval:

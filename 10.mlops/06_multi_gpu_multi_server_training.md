@@ -33,6 +33,38 @@ Why it matters: iteration speed. Getting feedback in 7h vs 4.3 days = 15× faste
 
 ## 1. Parallelism Strategies
 
+```mermaid
+graph TD
+    subgraph ddp["DDP — Data Parallel  simplest "]
+        direction LR
+        D1["GPU 0\nFull model copy\nBatch A"]
+        D2["GPU 1\nFull model copy\nBatch B"]
+        D3["GPU 2\nFull model copy\nBatch C"]
+        D1 & D2 & D3 -->|"AllReduce\ngradient sync"| D4["Synchronized update\nall GPUs identical"]
+    end
+
+    subgraph fsdp["FSDP — Fully Sharded  medium "]
+        direction LR
+        F1["GPU 0\nShard of weights\n+ Shard of optimizer"]
+        F2["GPU 1\nShard of weights\n+ Shard of optimizer"]
+        F1 <-->|"All-Gather before fwd\nReduce-Scatter after bwd"| F2
+    end
+
+    subgraph zero["DeepSpeed ZeRO  largest models "]
+        direction LR
+        Z1["ZeRO-1\nShard optimizer states only"]
+        Z2["ZeRO-2\nShard optimizer + gradients"]
+        Z3["ZeRO-3\nShard optimizer + grads + params"]
+        Z1 --> Z2 --> Z3
+    end
+```
+
+| Strategy | Model fits | Memory per GPU | Communication | Use when |
+|----------|-----------|----------------|---------------|----------|
+| DDP | Yes (full copy) | Full model × each GPU | AllReduce once | Model fits on 1 GPU · fast data parallelism |
+| FSDP | Sharded | ~1/N of model | All-Gather + Reduce-Scatter | Model barely fits · PyTorch native |
+| ZeRO-3 | Sharded | ~1/N of model+optim | More comm overhead | Very large models · DeepSpeed ecosystem |
+
 ### 1.1 Data Parallel (DP) — Old Way, Don't Use
 
 ```

@@ -45,6 +45,23 @@ Transformer Decoder (audio features + text tokens, with cross-attention)
 Transcript text
 ```
 
+```mermaid
+flowchart LR
+    wav["🎙️ Audio waveform\n16kHz raw signal"] --> stft["STFT + Mel filterbank\nwindowing → 80 mel bins\n× N time frames"]
+    stft --> spec["Mel spectrogram\n80 × T  visual repr \ntreated like an image"]
+    spec --> enc["Transformer Encoder\n↔ bidirectional attention\naudio features"]
+    enc --> enc_kv["Encoder K, V\npassed to decoder\nvia cross-attention"]
+
+    prev["[SOT] + prev tokens\nlanguage tag"] --> dec["Transformer Decoder\ncausal + cross-attention\ntoken-by-token output"]
+    enc_kv --> dec
+    dec --> out["📝 Transcript\nor translation to English\nor language ID"]
+
+    style spec fill:#2980b9,color:#fff
+    style enc fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> Whisper treats audio as an image-to-text problem. The mel spectrogram is the "image"; rest is standard encoder-decoder transformer.
+
 ### Sizes
 
 - tiny (39M), base (74M), small (244M), medium (769M), large (1.5B), large-v3 (1.5B improved)

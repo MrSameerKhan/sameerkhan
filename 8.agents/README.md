@@ -1,6 +1,30 @@
 # 8. Agents
 
-Scope: LLM agents — ReAct, tool use, frameworks (LangGraph / CrewAI / AutoGen / Swarm), memory, multi-agent, MCP, evaluation, reliability. **Tier: 2 (Theory).** The most comprehensive part of the LLM stack — 10 files cover the full agent lifecycle.
+Scope: LLM agents — ReAct, tool use, frameworks (LangGraph / CrewAI / AutoGen / Swarm), memory, multi-agent, MCP, evaluation, reliability.
+
+```mermaid
+mindmap
+  root((8. Agents))
+    Core concepts
+      ReAct loop · Thought→Action→Observation
+      LangChain · LCEL · pipe composition
+      LangGraph · state machine · checkpointing
+    Memory
+      Working · short-term · long-term
+      Episodic · semantic · procedural
+    Multi-agent
+      Supervisor/Worker · Pipeline · Debate
+      CrewAI · AutoGen · Swarm · smolagents
+    Protocols
+      MCP · tools · resources · prompts
+      Tool authorization patterns
+    Reliability
+      5 failure modes + fixes
+      HITL · max iterations · deduplication
+    Evaluation
+      Outcome eval vs process eval
+      Trajectory · cost · safety metrics
+``` **Tier: 2 (Theory).** The most comprehensive part of the LLM stack — 10 files cover the full agent lifecycle.
 
 ---
 
@@ -53,9 +77,9 @@ Scope: LLM agents — ReAct, tool use, frameworks (LangGraph / CrewAI / AutoGen 
 - **RAG** (often the retrieval tool used by agents): `../7.rag/`
 - **Tool authorization patterns** (security depth): `../11.system_design/09_tool_authorization_patterns.md`
 - **LLM evaluation systems** (incl. agent eval at system level): `../11.system_design/11_llm_evaluation_systems.md`
-- **LLM observability** (LangFuse / LangSmith / Phoenix): `../10.mlops/11_llm_observability_tools.md`
+- **LLM observability** (LangFuse / LangSmith / Phoenix): `../10.mlops/11_llm_observability.md`
 - **Structured outputs** (Pydantic + Instructor): `../4.nlp/04_applications/03_information_extraction.md`
-- **Constrained decoding**: `../5.transformers/models/12_constrained_decoding.md`
+- **Constrained decoding**: `../5.transformers/02_models/12_constrained_decoding.md`
 - **Indirect prompt injection** (the #1 agent threat): `../7.rag/03_indirect_prompt_injection.md`
 - **Agent system design** (capacity, multi-tenant, scaling): `../11.system_design/05_llm_agent_system_design.md`
 

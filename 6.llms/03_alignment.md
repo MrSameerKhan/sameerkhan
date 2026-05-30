@@ -27,7 +27,7 @@
 
 **Goal of alignment:** Make LLMs helpful, harmless, and honest (HHH).
 
-**Reasoning model alignment (o1, o3, DeepSeek-R1):** RLVR on verifiable rewards + GRPO — covered in `../5.transformers/models/14_reasoning_models.md`.
+**Reasoning model alignment (o1, o3, DeepSeek-R1):** RLVR on verifiable rewards + GRPO — covered in `../5.transformers/02_models/14_reasoning_models.md`.
 
 ---
 
@@ -55,6 +55,38 @@ Gap: Pretraining maximizes token prediction. Alignment bridges pretraining + ass
 ## RLHF (Reinforcement Learning from Human Feedback)
 
 ### Three Stages
+
+```mermaid
+sequenceDiagram
+    participant H as 👤 Human Labelers
+    participant SFT as Stage 1: SFT Model
+    participant RM as Stage 2: Reward Model
+    participant PPO as Stage 3: PPO Policy
+    participant Ref as π_ref frozen SFT
+
+    rect rgb(39, 174, 96)
+        Note over H,SFT: Stage 1 — Supervised Fine-Tuning
+        H->>SFT: (prompt, ideal_response) pairs
+        SFT->>SFT: Cross-entropy loss on responses only
+    end
+
+    rect rgb(41, 128, 185)
+        Note over SFT,RM: Stage 2 — Reward Model Training
+        SFT->>RM: Generate k responses per prompt
+        H->>RM: Rank responses best → worst
+        RM->>RM: Bradley-Terry loss: -log σ(r_w - r_l)
+    end
+
+    rect rgb(142, 68, 173)
+        Note over PPO,Ref: Stage 3 — RL Fine-Tuning (PPO)
+        loop Each training step
+            PPO->>RM: response → scalar reward r
+            PPO->>Ref: response → KL(π_θ || π_SFT)
+            PPO->>PPO: Maximize: E[r] - β·KL
+        end
+    end
+```
+> KL penalty (β) is critical — prevents reward hacking by keeping policy close to SFT model.
 
 ```
 Stage 1: Supervised Fine-Tuning (SFT)
@@ -412,7 +444,7 @@ Reward hacking occurs when the model finds responses that score high on the rewa
 - **LLM Fine-Tuning (6.llms/02):** SFT is stage 1 of RLHF; DPO builds on SFT checkpoint
 - **LLM Prompting (6.llms/01):** Aligned models respond better to prompts — RLHF is why Claude/GPT follow instructions
 - **LLM Evaluation (6.llms/06):** Alignment quality measured by safety/helpfulness benchmarks, LLM-as-judge
-- **Reasoning models (5.transformers/models/14):** RLVR / GRPO for verifiable-reward alignment
+- **Reasoning models (5.transformers/02_models/14):** RLVR / GRPO for verifiable-reward alignment
 
 ---
 

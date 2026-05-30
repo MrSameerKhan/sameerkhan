@@ -6,6 +6,30 @@ Design a QA system that answers user questions over a large document corpus. Sca
 
 ---
 
+```mermaid
+flowchart TD
+    subgraph offline["📦 OFFLINE — Indexing"]
+        direction LR
+        D["Docs 10M"] --> C["Chunk 512 tok"] --> E["Embed BGE-large"] --> F["FAISS index"]
+        D --> META["Metadata\nPostgres\ntitle · source · date"]
+    end
+
+    subgraph online["⚡ ONLINE — Per query"]
+        direction TB
+        Q["User query\nmulti-turn"] --> SESSION["Session manager\nconversation history\ncontext window"]
+        SESSION --> RETRIEVE["Hybrid retrieval\ndense + BM25 + RRF\ntop-50"]
+        RETRIEVE --> RERANK["Cross-encoder\ntop-5"]
+        RERANK --> LLM["LLM\nStreaming response\n+ citations"]
+        LLM --> CACHE["Cache result\nper session"]
+    end
+
+    F --> RETRIEVE
+    META --> RERANK
+
+    style LLM fill:#8e44ad,color:#fff
+    style RERANK fill:#2980b9,color:#fff
+```
+
 ## Architecture
 
 ```
@@ -372,7 +396,7 @@ A: Latency budget: retrieval ~20ms, reranking ~20ms (100 pairs × 2ms), LLM gene
 - RAG pipeline details: `11.system_design/03_search_and_rag_system.md`
 - LLM agents (multi-step QA): `11.system_design/05_llm_agent_system_design.md`
 - Semantic similarity / retrieval: `4.nlp/02_embeddings/05_semantic_similarity.md`
-- Decoding / streaming: `4.nlp/sequence_models/07_decoding_strategies.md`
+- Decoding / streaming: `../4.nlp/03_sequence_models/07_decoding_strategies.md`
 
 ---
 

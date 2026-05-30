@@ -25,6 +25,31 @@
 
 For attention-kernel depth (FlashAttention 1→3 internals, RoPE / YARN / ALiBi): see `../../2.deep_learning/01_fundamentals/05_modern_components.md`. For long-context engineering depth see `13_long_context_scaling.md`. For speculative decoding variants see `12_speculative_decoding.md`.
 
+```mermaid
+graph TD
+    subgraph train["💻 Training — reduce GPU cost"]
+        T1["LoRA · QLoRA · DoRA\nTrain 0.1–1% of params\nFits on consumer GPU"]
+        T2["FlashAttention 1/2/3\nO·n memory vs O·n²\nTiling avoids HBM roundtrip"]
+        T3["Gradient checkpointing\nRecompute activations\nvs storing them"]
+    end
+
+    subgraph inf["⚡ Inference — faster generation"]
+        I1["Speculative Decoding\n2–3× speedup · zero quality loss\nDraft model proposes · target verifies"]
+        I2["Quantization INT8/4-bit\n2–4× smaller model\n~1% quality drop"]
+    end
+
+    subgraph serve["🔧 Serving — more concurrency"]
+        S1["PagedAttention · vLLM\n10–30× throughput\nNon-contiguous KV blocks"]
+        S2["GQA / MQA / MLA\n4–10× smaller KV cache\nQuery heads share K,V"]
+        S3["Continuous batching\nGPU always saturated\nRequests join mid-batch"]
+    end
+
+    subgraph scale["📈 Scale — bigger at same compute"]
+        SC1["MoE\nCapacity without proportional FLOPs\nOnly top-k experts active"]
+        SC2["Distillation\nSmall student learns from large teacher\n40% smaller · 97% quality"]
+    end
+```
+
 ---
 
 ## 1. Flash Attention (Dao et al., 2022)

@@ -13,6 +13,36 @@
 
 ---
 
+```mermaid
+timeline
+    title Text Representation Evolution
+    1950s : Bag of Words
+          : Count word occurrences
+          : No semantics · sparse vector
+    1972 : TF-IDF
+          : Weight by document frequency
+          : Reduces common word noise
+          : Still no semantics
+    1994 : BM25
+          : TF saturation + doc length norm
+          : Best sparse retrieval baseline
+    2013 : Word2Vec
+          : Dense 300-dim vectors
+          : cat ≈ feline via cosine
+          : Static · no context
+    2014 : GloVe
+          : Global co-occurrence matrix
+          : Linear analogies: king-man+woman=queen
+    2018 : BERT
+          : Contextual dense embeddings
+          : bank river ≠ bank account
+          : Full bidirectional context
+    2022+ : BGE · E5 · Nomic
+          : Sentence-level contrastive
+          : MTEB-optimised retrieval
+          : Production RAG default
+```
+
 ## 1. Bag of Words (BoW)
 
 ### How It Works

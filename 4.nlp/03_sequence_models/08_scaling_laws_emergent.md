@@ -30,6 +30,32 @@ Senior interview Q: "What is the Chinchilla scaling law and why did it change LL
 
 ---
 
+## Scaling Discoveries Timeline
+
+```mermaid
+timeline
+    title Key Scaling Discoveries
+    2020 : Kaplan Scaling Laws
+         : Loss ∝ N^α + D^β + C^γ
+         : Bigger model = predictably better
+         : Early models under-trained on data
+    2022 : Chinchilla  Hoffmann et al. 
+         : Optimal: N tokens ≈ 20 × N params
+         : GPT-3 needed 6× more training data
+         : LLaMA-1 proved: smaller model + more data wins
+    2022 : GPT-3 Inflection
+         : >7B params → in-context learning emerges
+         : Few-shot without any gradient update
+         : Emergent abilities appear at scale thresholds
+    2022 : ChatGPT / InstructGPT
+         : RLHF turns raw capability → useful assistant
+         : Alignment multiplies usability by 10×
+    2024 : Test-time compute scaling
+         : More inference tokens = better answers
+         : o1 / DeepSeek-R1: think longer on hard problems
+         : New scaling axis beyond pretraining
+```
+
 ## 2. Kaplan Scaling Laws → Chinchilla
 
 ### Kaplan et al. 2020 — "Scaling Laws for Neural Language Models"

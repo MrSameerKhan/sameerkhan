@@ -19,6 +19,41 @@
 
 The full transformer = stack of [Attention → FFN] blocks with residuals + Norm, repeated N times. Modern LLM recipe: RMSNorm + pre-LN + RoPE + GQA + SwiGLU FFN + no biases.
 
+```mermaid
+flowchart TD
+    inp["Input tokens + Positional Encoding\n seq × d_model "]
+    inp --> enc
+
+    subgraph enc["ENCODER × N  BERT · T5 encoder "]
+        direction TB
+        E1["Multi-Head Self-Attention\n↔ bidirectional · sees all tokens"]
+        E2["Add & Norm\nx = LN·x + Attn·x"]
+        E3["Feed-Forward Network\nLinear → SwiGLU → Linear"]
+        E4["Add & Norm\nx = LN·x + FFN·x"]
+        E1 --> E2 --> E3 --> E4
+    end
+
+    enc -->|"encoder K, V passed to decoder"| dec
+
+    subgraph dec["DECODER × N  GPT · T5 decoder "]
+        direction TB
+        D1["Masked Self-Attention\n→ causal · no future tokens"]
+        D2["Add & Norm"]
+        D3["Cross-Attention  T5 only \nQ from decoder · K,V from encoder"]
+        D4["Add & Norm"]
+        D5["Feed-Forward Network"]
+        D6["Add & Norm"]
+        D1 --> D2 --> D3 --> D4 --> D5 --> D6
+    end
+
+    dec --> out["Linear + Softmax\n seq × vocab_size \nnext-token logits"]
+
+    style enc fill:#2980b922
+    style dec fill:#8e44ad22
+    style out fill:#27ae60,color:#fff
+```
+> GPT drops the encoder entirely (decoder-only). BERT drops the decoder (encoder-only). T5 uses both with cross-attention.
+
 ---
 
 ## 1. Core Concepts

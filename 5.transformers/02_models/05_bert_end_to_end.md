@@ -35,6 +35,26 @@ BERT adds three things:
 | T5          | Enc bidirect| Span denois| SeqSeq        |
 ```
 
+```mermaid
+flowchart LR
+    A["Input\n'cat sat on mat'"] --> B["Tokenize + special\n[CLS] cat sat on mat [SEP]\n6 tokens"]
+    B --> C["Embeddings\ntoken + segment + pos\n6 × 768"]
+    C --> D["12× Transformer Block\n↔ Bidirectional attention\nno causal mask\n6 × 768"]
+    D --> E["Final hidden states\n6 × 768"]
+    E --> F["[CLS] token h₀\n768-dim\nglobal sentence repr"]
+    E --> G["Token hᵢ\n768-dim each\nper-token repr"]
+    F --> H{"Fine-tune head"}
+    G --> H
+    H -->|"Classification"| I["Linear 768→C\nsoftmax → label"]
+    H -->|"NER"| J["Linear 768→L\nper-token IOB tag"]
+    H -->|"Span QA"| K["Linear 768→2\nstart / end logits"]
+    style D fill:#2980b9,color:#fff
+    style F fill:#8e44ad,color:#fff
+    style I fill:#27ae60,color:#fff
+    style J fill:#27ae60,color:#fff
+    style K fill:#27ae60,color:#fff
+```
+
 ---
 
 ## 1. Problem Statement

@@ -2,6 +2,29 @@
 
 Scope: pure LLM core — prompting, fine-tuning, alignment, evaluation, serving. RAG lives in `../7.rag/`; agents in `../8.agents/`. Tier 2 (Theory).
 
+```mermaid
+mindmap
+  root((6. LLMs))
+    Prompting
+      Zero-shot · few-shot · CoT
+      Self-consistency · ReAct
+      Decision tree: which technique
+    Fine-tuning
+      When to fine-tune vs prompt vs RAG
+      SFT pipeline · QLoRA · LoRA
+      Dataset prep · ChatML · DPO format
+    Alignment
+      RLHF · 3-stage sequence diagram
+      DPO derivation chain
+      ORPO · KTO · IPO · GRPO comparison
+    Evaluation
+      BLEU · ROUGE · BERTScore
+      MMLU · Arena-Hard · RAGAS
+    Serving
+      vLLM · PagedAttention
+      Continuous batching
+```
+
 > Note: `00_roadmap.md` is the legacy navigation file. This README supersedes it; `00_roadmap.md` will be archived in Phase 8.
 
 ---
@@ -11,7 +34,7 @@ Scope: pure LLM core — prompting, fine-tuning, alignment, evaluation, serving.
 | If you're learning... | Read in order |
 |-----------------------|---------------|
 | **Prompting** | `01_prompting` (covers CoT / few-shot / Self-Consistency / Reflexion / CoVe / reasoning-model prompting) |
-| **Fine-tuning** | `02_finetuning` → `02b_finetuning_end_to_end` + cross-ref `../5.transformers/models/09_parameter_efficient_tuning.md` |
+| **Fine-tuning** | `02_finetuning` → `02b_finetuning_end_to_end` + cross-ref `../5.transformers/02_models/09_parameter_efficient_tuning.md` |
 | **Dataset preparation** | `07_dataset_preparation` (ChatML, instruction formats, synthetic data, DPO/KTO formats) |
 | **Alignment** | `03_alignment` → `03b_alignment_end_to_end` → `06_alignment_follow_ups` (DPO/KTO/ORPO/GRPO depth) |
 | **Evaluation** | `04_evaluation` |
@@ -45,16 +68,16 @@ Scope: pure LLM core — prompting, fine-tuning, alignment, evaluation, serving.
 
 ## Connections
 
-- **PEFT methods (DoRA / LoftQ / PiSSA / GaLore):** `../5.transformers/models/09_parameter_efficient_tuning.md`
+- **PEFT methods (DoRA / LoftQ / PiSSA / GaLore):** `../5.transformers/02_models/09_parameter_efficient_tuning.md`
 - **DPO/GRPO algorithm depth (RL framing):** `../1.machine_learning/02_algorithms/10_reinforcement_learning_deep.md`
-- **Reasoning models (o1, DeepSeek-R1, RLVR):** `../5.transformers/models/14_reasoning_models.md`
+- **Reasoning models (o1, DeepSeek-R1, RLVR):** `../5.transformers/02_models/14_reasoning_models.md`
 - **Modern decoding (speculative, constrained, min-p):**
-  - `../4.nlp/04_applications/07_decoding_strategies.md`
-  - `../5.transformers/models/12_constrained_decoding.md`
-  - `../5.transformers/models/13_speculative_decoding.md`
+  - `../4.nlp/03_sequence_models/07_decoding_strategies.md`
+  - `../5.transformers/02_models/12_constrained_decoding.md`
+  - `../5.transformers/02_models/13_speculative_decoding.md`
 - **RAG patterns:** `../7.rag/`
 - **Agents:** `../8.agents/`
-- **LLM observability + cost:** `../10.mlops/11_llm_observability_tools.md`, `../10.mlops/12_llm_cost_tracking_routing.md`
+- **LLM observability + cost:** `../10.mlops/11_llm_observability.md`, `../10.mlops/12_llm_cost_tracking.md`
 - **Eval frameworks (RAGAS / lm-eval-harness / Arena-Hard):** `../4.nlp/04_applications/04_evaluation_metrics.md`
 
 ---

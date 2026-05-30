@@ -15,6 +15,34 @@
 
 ---
 
+```mermaid
+flowchart TD
+    A([Statistical test needed]) --> B{Data type?}
+
+    B -->|Numeric continuous| C{Normal distribution?}
+    C -->|Yes · Shapiro-Wilk p>0.05| D{Paired or independent?}
+    D -->|Paired\nbefore/after same subjects| E["Paired t-test"]
+    D -->|Independent\ntwo groups| F["Independent t-test"]
+    D -->|"> 2 groups"| G["One-way ANOVA\n+ Tukey post-hoc"]
+
+    C -->|No · skewed| H{Paired?}
+    H -->|Paired| I["Wilcoxon signed-rank"]
+    H -->|Independent| J["Mann-Whitney U"]
+    H -->|"> 2 groups"| K["Kruskal-Wallis"]
+
+    B -->|Categorical| L{Expected counts > 5?}
+    L -->|Yes| M["Chi-squared test\nassociation between categories"]
+    L -->|No| N["Fisher's exact test\nsmall samples"]
+
+    B -->|Correlation\ntwo numeric variables| O{Normal?}
+    O -->|Yes| P["Pearson r\nlinear correlation"]
+    O -->|No| Q["Spearman ρ\nrank correlation"]
+
+    style E fill:#2980b9,color:#fff
+    style M fill:#8e44ad,color:#fff
+    style P fill:#27ae60,color:#fff
+```
+
 ## 1. Descriptive Statistics
 
 ### Measures of Central Tendency

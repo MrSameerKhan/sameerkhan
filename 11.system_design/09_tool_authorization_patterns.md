@@ -16,6 +16,36 @@
 
 ---
 
+```mermaid
+stateDiagram-v2
+    [*] --> validate_input : tool call received
+
+    validate_input --> check_authz : input schema valid
+    validate_input --> reject : invalid schema · bad args
+
+    check_authz --> check_rate_limit : user has permission for this tool
+    check_authz --> reject : unauthorized · wrong tenant
+
+    check_rate_limit --> check_idempotency : under rate limit
+    check_rate_limit --> reject : rate limit exceeded
+
+    check_idempotency --> execute : new request
+    check_idempotency --> return_cached : duplicate idempotency key
+
+    execute --> audit_log : tool executed
+    audit_log --> [*] : return result
+
+    reject --> audit_log_denied : log rejection
+    audit_log_denied --> [*] : return error
+
+    note right of check_authz
+        Authorization in CODE not prompt
+        LLM cannot be trusted to enforce
+        permissions — code enforces
+    end note
+```
+> The LLM cannot be trusted to enforce permissions. Authorization belongs in the tool wrapper, not in the system prompt.
+
 ## 1. Objective
 
 Phase 3/6 coding showed: agents can call tools. Senior interview now expects: **how do you make sure those tool calls are SAFE?**

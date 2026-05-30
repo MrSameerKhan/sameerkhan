@@ -11,6 +11,28 @@
 
 ---
 
+```mermaid
+flowchart TD
+    A([Model behavior]) --> B{Train loss vs\nVal loss?}
+
+    B -->|"Both high"| C["Underfitting  high bias \nModel too simple\nor not enough epochs"]
+    C --> C1["More model capacity\nmore layers · wider\ntrain longer"]
+
+    B -->|"Train low · val high"| D["Overfitting  high variance \nModel memorized noise"]
+    D --> D1{How to fix?}
+    D1 --> D2["More data  best fix "]
+    D1 --> D3["Dropout  p=0.1-0.3 \nrandomly disable neurons"]
+    D1 --> D4["L2 weight decay\nwd=0.01 in AdamW"]
+    D1 --> D5["Early stopping\nmonitor val loss patience=5"]
+    D1 --> D6["Data augmentation\nnoise · rotation · crop"]
+
+    B -->|"Both low"| E["Good fit ✓\nmonitor for drift in production"]
+
+    style C fill:#f39c12,color:#fff
+    style D fill:#e74c3c,color:#fff
+    style E fill:#27ae60,color:#fff
+```
+
 ## 1. Overfitting & Underfitting
 
 | | Train Loss | Val Loss | Cause | Fix |

@@ -28,6 +28,34 @@ Senior interview Q: "How does your RAG handle a million new documents per day?" 
 
 ---
 
+```mermaid
+flowchart LR
+    subgraph indexing["📦 Incremental Indexing  no full rebuild "]
+        direction TB
+        DOC["New/updated doc"] --> HASH["Hash doc content\ncheck if changed"]
+        HASH -->|"changed"| EMBED["Re-embed changed chunks only\ndelete old vectors · insert new"]
+        HASH -->|"unchanged"| SKIP["Skip  already indexed"]
+        EMBED --> VDB["Vector DB\nupsert by doc_id"]
+    end
+
+    subgraph cache["⚡ Semantic Cache"]
+        direction TB
+        Q["Query"] --> CSIM["Cosine similarity\nagainst cached queries\nthreshold > 0.95"]
+        CSIM -->|"cache hit"| RETURN["Return cached answer\n$0.00 · <5ms"]
+        CSIM -->|"miss"| RETRIEVE["Full RAG pipeline\ncache result after"]
+    end
+
+    subgraph version["🔄 Embedding Versioning"]
+        direction TB
+        V1["Old embedder v1\nserving current index"] --> SHADOW["New embedder v2\nshadow index built in parallel"]
+        SHADOW -->|"A/B test\nrecall@10 measured"| PROMOTE["Promote v2\nswap traffic · delete v1 index"]
+    end
+
+    style RETURN fill:#27ae60,color:#fff
+    style PROMOTE fill:#2980b9,color:#fff
+```
+> Never rebuild entire index for doc updates. Semantic cache cuts 40-60% of LLM calls on repeated queries. Version embedder via shadow index before promoting.
+
 ## 2. Incremental Indexing — Without Rebuilding
 
 Naive RAG: when docs change, re-embed everything and rebuild the index. **At 1M docs, that's days of compute and downtime.**

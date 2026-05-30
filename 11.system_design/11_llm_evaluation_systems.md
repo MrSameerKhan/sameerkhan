@@ -26,6 +26,21 @@ Senior interview Q: "How would you design the evaluation infrastructure for an L
 
 ---
 
+```mermaid
+flowchart LR
+    change["🔧 Model or prompt change"] --> offline["1️⃣ Offline golden set\ncurated 200-500 examples\nautomated metrics + LLM judge\npre-deploy gate"]
+    offline -->|"pass"| shadow["2️⃣ Shadow traffic\nnew model runs alongside old\nno user impact · log both outputs"]
+    shadow -->|"quality ≥ baseline"| ab["3️⃣ A/B test\n5-10% traffic to new model\nmeasure: CTR · thumbs · session"]
+    ab -->|"statistically significant win"| full["4️⃣ Full rollout\n+ continuous trace sampling\nLLM judge on 1% of prod traffic"]
+    full --> alert["🚨 Alert on regression\nauto-rollback if quality drops"]
+
+    style offline fill:#2980b9,color:#fff
+    style ab fill:#f39c12,color:#fff
+    style full fill:#27ae60,color:#fff
+    style alert fill:#e74c3c,color:#fff
+```
+> Never skip shadow traffic — A/B without shadow misses distribution shifts that only appear at scale.
+
 ## 2. The 4 Evaluation Surfaces
 
 A production LLM system has FOUR distinct evaluation contexts:

@@ -74,6 +74,28 @@ Per-request page table:
                (logical 0-31 mapped to 2 blocks)
 ```
 
+```mermaid
+graph TD
+    subgraph naive["❌ Naive KV Cache — wasteful"]
+        direction LR
+        n1["Req A  ████████████░░░░░░░░  4096 allocated, 200 used"]
+        n2["Req B  ████░░░░░░░░░░░░░░░░  4096 allocated, 80 used"]
+        n3["Req C  ██████████████░░░░░░  4096 allocated, 350 used"]
+    end
+
+    subgraph paged["✅ PagedAttention — efficient"]
+        direction LR
+        p1["Req A  [Blk2][Blk5][Blk9]  — allocated on demand"]
+        p2["Req B  [Blk0][Blk3]        — freed when done"]
+        p3["Req C  [Blk1][Blk4][Blk6][Blk7] — shared prefix possible"]
+    end
+
+    naive -->|"PagedAttention"| paged
+    style naive fill:#e74c3c22
+    style paged fill:#27ae6022
+```
+> Naive: ~99% memory waste. PagedAttention: >96% utilization → more concurrent requests → 10-30× throughput.
+
 When `request_42` attends to position 50, the engine looks up Block 3 (logical 32-47) and the offset within. The attention kernel is rewritten to handle non-contiguous blocks.
 
 ### The custom attention kernel
@@ -117,6 +139,25 @@ loop forever:
      allocate KV blocks, add to active batch
   5. Go to step 1.
 ```
+
+```mermaid
+sequenceDiagram
+    participant Q as Request Queue
+    participant S as Scheduler
+    participant G as GPU Batch
+    participant C as Completed
+
+    loop Every decode step
+        G->>G: Run 1 decode step for ALL active requests
+        G->>S: Request A finished (EOS)
+        S->>C: Return result to client
+        S->>G: Free Request A's KV blocks
+        Q->>S: New Request D waiting
+        S->>G: Prefill Request D → join active batch
+        G->>G: Next decode step (B, C, D now active)
+    end
+```
+> No step-locking — finished requests leave immediately, new ones fill their slot. GPU stays saturated.
 
 Result:
 - **No step locking** — finished requests leave immediately, new ones replace them

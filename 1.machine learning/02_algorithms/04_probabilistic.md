@@ -13,6 +13,25 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph nb["Naive Bayes variants"]
+        direction TB
+        NB1["Gaussian NB\ncontinuous features\nassumes normal distribution\nfast baseline"]
+        NB2["Multinomial NB\nword counts/TF\ntext classification"]
+        NB3["Bernoulli NB\nbinary word presence\nshort text · presence/absence"]
+    end
+
+    subgraph gmm["GMM — soft clustering"]
+        direction LR
+        G1["Initialize K Gaussians\nrandom means + covariances"]
+        G1 -->|"E-step"| G2["Assign soft probabilities\nP·cluster k | xᵢ"]
+        G2 -->|"M-step"| G3["Update μ,σ,π\nto maximize likelihood"]
+        G3 --> G2
+    end
+```
+> Naive Bayes beats logistic regression on very small datasets because the independence assumption acts as a strong regularizer.
+
 ## 1. Naive Bayes
 
 ### Bayes' Theorem for Classification

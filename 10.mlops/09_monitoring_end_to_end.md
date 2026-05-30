@@ -4,6 +4,29 @@
 
 ---
 
+```mermaid
+flowchart LR
+    preds["📊 Production predictions\nlogs · model outputs · latency"] --> collect["Collect + aggregate\nhourly · daily windows"]
+    collect --> detect["Drift detection\nPSI  Population Stability Index \nKS test · KL divergence"]
+    detect --> threshold{PSI > 0.2\nor accuracy drop?}
+
+    threshold -->|"No"| ok["✅ Model healthy\ncontinue monitoring"]
+    threshold -->|"Minor 0.1-0.2"| warn["⚠️ Monitor closely\nschedule retrain soon"]
+    threshold -->|"Severe > 0.2"| diagnose["Diagnose\nwhich features drifted?\ndata quality issue?"]
+
+    diagnose --> action{Root cause?}
+    action -->|"Data drift"| retrain["Retrain on recent window\nupdate feature distributions"]
+    action -->|"Concept drift"| rebuild["Collect new labels\nretrain from scratch"]
+    action -->|"Infrastructure bug"| fix["Fix pipeline\nno retrain needed"]
+
+    retrain & rebuild --> validate["Validate offline\nA/B test in shadow"]
+    validate --> promote["Promote to production\nrollback ready"]
+
+    style detect fill:#2980b9,color:#fff
+    style retrain fill:#f39c12,color:#fff
+    style fix fill:#27ae60,color:#fff
+```
+
 ## Why Models Degrade
 
 ```

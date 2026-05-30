@@ -16,6 +16,30 @@ Requirements:
 
 ---
 
+```mermaid
+flowchart TD
+    client["👤 Client\nweb · mobile · API"] --> gw["API Gateway\nauth · rate limit · logging"]
+    gw --> agent["🧠 Agent Orchestrator\nLangGraph state machine\nmax_iterations · timeout"]
+
+    agent --> tools
+
+    subgraph tools["🔧 Tool Registry  authorized + audited "]
+        direction LR
+        T1["DB Query tool\nread-only SQL\nper-user filter"]
+        T2["Doc retrieval\nRAG pipeline\ntenant-namespaced"]
+        T3["Calculator\ndeterministic\nno side effects"]
+        T4["External API\nallowlisted domains\nrate limited"]
+    end
+
+    tools --> audit["📋 Audit log\nevery tool call + result\nregulatory requirement"]
+    agent --> cache["Semantic cache\nidentical queries\nskip re-run"]
+    agent --> response["✅ Response\n< 30s · < $0.50\nwith citations"]
+
+    style agent fill:#8e44ad,color:#fff
+    style audit fill:#e74c3c,color:#fff
+    style response fill:#27ae60,color:#fff
+```
+
 ## 1. Architecture Overview
 
 ```

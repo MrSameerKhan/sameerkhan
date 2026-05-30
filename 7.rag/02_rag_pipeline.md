@@ -71,6 +71,26 @@ Chunking quality determines retrieval ceiling. Bad chunks = irrelevant context e
 | Semantic (sliding window) | Embed each sentence; split when cosine drops sharply | Best coherence; slow; expensive |
 | Hierarchical (parent-child) | Store large parent + small child chunks; retrieve small, return parent | Long-form documents with context needed around retrieved passage |
 
+```mermaid
+flowchart TD
+    A([What content type?]) --> B{Structured / tabular?}
+    B -->|Yes| C["One chunk per table\nSerialize as Markdown\npreserve column headers"]
+    B -->|No| D{Source code?}
+    D -->|Yes| E["One function or class\nper chunk\npreserve indentation"]
+    D -->|No| F{Long-form prose\nwith clear topic shifts?}
+    F -->|Yes · speed OK| G["Semantic chunking\nEmbed sentences · split on cosine drop\nbest coherence · slow"]
+    F -->|Yes · need speed| H["Hierarchical parent-child\nsmall child → retrieve\nlarge parent → send to LLM"]
+    F -->|No| I{Sentence integrity\ncritical?}
+    I -->|Yes| J["Sentence-based\n256–512 tokens\nno mid-sentence splits"]
+    I -->|No · baseline| K["Fixed-size\n512 tokens · 50 overlap\nfastest · standard default"]
+    style C fill:#2980b9,color:#fff
+    style E fill:#2980b9,color:#fff
+    style G fill:#8e44ad,color:#fff
+    style H fill:#f39c12,color:#fff
+    style J fill:#27ae60,color:#fff
+    style K fill:#27ae60,color:#fff
+```
+
 ### Chunk Size Decisions
 
 | Size range | Effect | Best for |

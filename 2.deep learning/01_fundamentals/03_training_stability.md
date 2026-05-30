@@ -11,6 +11,29 @@
 
 ---
 
+```mermaid
+flowchart TD
+    prob([Training problem?]) --> B{What symptom?}
+
+    B -->|Loss NaN or exploding| C["Exploding gradients\ngradient norm → ∞"]
+    C --> C1["clip_grad_norm_ max=1.0\nreduce LR\ncheck batch norm"]
+
+    B -->|Early layers not learning\nval loss stuck| D["Vanishing gradients\ngradient → 0 in deep layers"]
+    D --> D1{Architecture?}
+    D1 -->|RNN| D2["Switch to LSTM/GRU\nor Transformer"]
+    D1 -->|Deep feedforward| D3["Add residual connections\nuse ReLU not sigmoid/tanh\nHe initialization"]
+
+    B -->|Training fast but val loss high| E["Overfitting / instability"]
+    E --> E1["Add Dropout · L2 weight decay\nearly stopping · more data"]
+
+    B -->|Loss oscillates · unstable| F["LR too high or bad init"]
+    F --> F1["Lower LR 10×\nadd warmup steps\ncheck weight init"]
+
+    style C fill:#e74c3c,color:#fff
+    style D fill:#f39c12,color:#fff
+    style E fill:#8e44ad,color:#fff
+```
+
 ## 1. Vanishing & Exploding Gradients
 
 During backprop, gradients travel through every layer via the chain rule:

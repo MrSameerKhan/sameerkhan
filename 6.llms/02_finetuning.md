@@ -14,7 +14,7 @@
 | Prompt tuning | <0.01% | Same as inference | Soft prompts, rarely used today |
 | Adapter layers | 1-5% | 2-4×A100 for 7B | Alternative to LoRA |
 
-**Modern PEFT family** (DoRA · LoftQ · PiSSA · GaLore · rsLoRA · VeRA · AdaLoRA): full table + when-to-use guide at `../5.transformers/models/09_parameter_efficient_tuning.md`.
+**Modern PEFT family** (DoRA · LoftQ · PiSSA · GaLore · rsLoRA · VeRA · AdaLoRA): full table + when-to-use guide at `../5.transformers/02_models/09_parameter_efficient_tuning.md`.
 
 **Decision rule (2025):** Try prompting + constrained decoding first. If prompting fails (consistent format, domain vocab, behavior), use QLoRA on a strong open base. For an extra ~1% with the same compute, switch to DoRA. After SFT, layer DPO / ORPO / KTO for preference alignment (`06_alignment_follow_ups.md`).
 
@@ -25,6 +25,30 @@
 ## Core Concepts
 
 ### When to Fine-Tune vs Prompt
+
+```mermaid
+flowchart TD
+    A([New ML problem]) --> B{Does prompting\nalready work?}
+    B -->|Yes| C([Use prompting ✓])
+    B -->|No / unreliable| D{What kind\nof problem?}
+    D -->|Knowledge: facts · docs · private data| E{Knowledge changes\nfrequently?}
+    D -->|Behavior: format · style · domain vocab| F{How much\nlabeled data?}
+    E -->|Yes| G([RAG only])
+    E -->|No| H([RAG + Fine-tune])
+    F -->|< 100 examples| I([Few-shot prompting\nfine-tune risk: overfit])
+    F -->|100 – 10K| J([QLoRA / LoRA\nSFT then DPO/ORPO])
+    F -->|> 10K| K([Full fine-tune\nor large-rank LoRA])
+    J --> L{Need alignment\non top?}
+    K --> L
+    L -->|Yes| M([SFT → DPO / ORPO / KTO])
+    L -->|No| N([SFT only ✓])
+    style C fill:#27ae60,color:#fff
+    style G fill:#2980b9,color:#fff
+    style H fill:#8e44ad,color:#fff
+    style I fill:#f39c12,color:#fff
+    style M fill:#e74c3c,color:#fff
+    style N fill:#27ae60,color:#fff
+```
 
 ```
 Fine-tuning is warranted when:
@@ -348,7 +372,7 @@ Fine-tuning a 7B model with LoRA still requires ~14GB GPU (7B params × 2 bytes 
 
 ## Connections
 
-- **Efficient Transformers (5.transformers/models/04):** LoRA, QLoRA, quantization are covered there architecturally
+- **Efficient Transformers (5.transformers/02_models/04):** LoRA, QLoRA, quantization are covered there architecturally
 - **LLM Alignment (6.llms/03):** SFT is the first stage of RLHF pipeline
 - **LLM Prompting (6.llms/01):** Fine-tuning trains the model to follow prompts more reliably
 - **MLOps (7.mlops):** Experiment tracking, model registry, serving fine-tuned models

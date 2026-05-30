@@ -19,6 +19,37 @@
 
 ---
 
+## Which Technique to Use
+
+```mermaid
+flowchart TD
+    A([Task]) --> B{Output format\nstrictly defined?}
+    B -->|Yes| C[Constrained decoding\nJSON mode / Instructor]
+    B -->|No| D{Model handles\nit zero-shot?}
+    D -->|Yes| E([Zero-shot ✓])
+    D -->|No| F{Reasoning task?\nmath · logic · multi-step}
+    F -->|No| G[Few-shot\n3-8 examples]
+    F -->|Yes| H{High-stakes\naccuracy needed?}
+    H -->|No| I[Chain-of-Thought\n'Let's think step by step']
+    H -->|Yes| J[Self-Consistency\nSample N paths · majority vote]
+    G --> K{Still failing?}
+    I --> K
+    J --> K
+    K -->|Yes| L{Problem type?}
+    K -->|No| M([Done ✓])
+    L -->|Knowledge gap| N[RAG]
+    L -->|Behavior / format| O[Fine-tune]
+    L -->|Tool use needed| P[ReAct / Agents]
+    style C fill:#8e44ad,color:#fff
+    style E fill:#27ae60,color:#fff
+    style M fill:#27ae60,color:#fff
+    style N fill:#2980b9,color:#fff
+    style O fill:#e74c3c,color:#fff
+    style P fill:#f39c12,color:#fff
+```
+
+---
+
 ## Core Concepts
 
 ### Prompt Anatomy
@@ -221,7 +252,7 @@ response = client.chat.completions.create(
 result = json.loads(response.choices[0].message.content)
 ```
 
-**For production:** use constrained decoding (outlines / lm-format-enforcer / Instructor / Anthropic tool-use) instead of prompt-only JSON. See `../5.transformers/models/12_constrained_decoding.md`.
+**For production:** use constrained decoding (outlines / lm-format-enforcer / Instructor / Anthropic tool-use) instead of prompt-only JSON. See `../5.transformers/02_models/12_constrained_decoding.md`.
 
 ---
 
@@ -322,7 +353,7 @@ For **reasoning-tuned models**, the prompting style flips:
 - **Do** state the problem clearly and let the model think: use `reasoning_effort` / `max_thinking_tokens` parameters where the API exposes them
 - **Do** specify the desired final-answer format separately (so the reasoning trace is not constrained)
 
-Deep dive on reasoning models (o1, DeepSeek-R1, RLVR training): `../5.transformers/models/14_reasoning_models.md`
+Deep dive on reasoning models (o1, DeepSeek-R1, RLVR training): `../5.transformers/02_models/14_reasoning_models.md`
 
 ---
 
@@ -416,7 +447,7 @@ Self-consistency generates k reasoning chains at temperature > 0 and takes the m
 
 ## Connections
 
-- **GPT Family (5.transformers/models/02):** Prompting works because of in-context learning from GPT-3 scale
+- **GPT Family (5.transformers/02_models/02):** Prompting works because of in-context learning from GPT-3 scale
 - **LLM Alignment (6.llms/03):** RLHF makes models better at following instructions — underlying reason prompting is so effective
 - **LLM Agents (6.llms/05):** ReAct pattern extends CoT with action steps (tool calls)
 - **LLM Evaluation (6.llms/06):** LLM-as-judge uses structured prompts to evaluate other LLMs

@@ -11,6 +11,27 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph rnn_arch["RNN  vanishing gradient "]
+        direction TB
+        R1["hₜ = tanh·Wh·hₜ₋₁ + Wx·xₜ\nsingle hidden state\ngradient decays × Wh each step"]
+    end
+    subgraph lstm_arch["LSTM  gradient highway "]
+        direction TB
+        L1["Forget gate f = σ·...\nInput gate i = σ·...\nCell Cₜ = f⊙Cₜ₋₁ + i⊙g̃\nOutput gate o = σ·...\nhₜ = o⊙tanh·Cₜ"]
+    end
+    subgraph gru_arch["GRU  simplified "]
+        direction TB
+        G1["Update gate z = σ·...\nReset gate r = σ·...\nhₜ = 1-z⊙hₜ₋₁ + z⊙h̃ₜ\n2 gates vs 4 · no cell state"]
+    end
+
+    rnn_arch -->|"vanishes after ~10 steps"| FAIL["Long-range fails"]
+    lstm_arch -->|"additive cell state\ngradient ≈ 76% at step 3"| PASS["Long-range works"]
+    gru_arch -->|"same idea · fewer params"| PASS
+    PASS -->|"still sequential → slow"| TRANS["→ Transformer\nparallelizes completely"]
+```
+
 ## Why Sequences Need Special Architecture
 
 MLP and CNN have no memory — each input is processed independently.

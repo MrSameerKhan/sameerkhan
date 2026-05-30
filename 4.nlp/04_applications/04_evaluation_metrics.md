@@ -17,6 +17,38 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph clf["Classification"]
+        direction TB
+        C1["Accuracy  balanced only "]
+        C2["Precision  FP costly "]
+        C3["Recall  FN costly "]
+        C4["F1  imbalanced "]
+        C5["ROC-AUC  ranking "]
+    end
+    subgraph ner["NER / Tagging"]
+        direction TB
+        N1["Entity-level F1\nexact span + type\nseqeval"]
+        N2["Per-type F1\nPER · ORG · LOC"]
+    end
+    subgraph gen["Generation / LLM"]
+        direction TB
+        G1["BLEU  translation "]
+        G2["ROUGE-L  summarization "]
+        G3["BERTScore  semantic "]
+        G4["LLM-as-Judge  open-ended "]
+    end
+    subgraph ret["Retrieval / RAG"]
+        direction TB
+        R1["Recall@K"]
+        R2["MRR"]
+        R3["NDCG"]
+        R4["RAGAS\nfaithfulness · relevancy"]
+    end
+```
+> Always evaluate retrieval and generation **separately** in RAG — so you know which layer is failing.
+
 ## Classification Metrics (Recap)
 
 Covered in depth in `ML/fundamentals/04_model_evaluation.md`. NLP-specific additions:
@@ -567,7 +599,7 @@ A: Automated: BERTScore for response relevance, intent classification accuracy (
 - **Conformal prediction (calibrated uncertainty):** `../../1.machine learning/01_fundamentals/04865-conformal-prediction-distribution-free-uncertainty`
 - **Transformers:** `../../2_deep_learning/02_architectures/04_transformer.md` — BERTScore uses contextual embeddings
 - **ML Model Evaluation:** `../../1.machine learning/01_fundamentals/04_model_evaluation.md` — Core metric concepts (precision/recall/F1/ROC) defined there
-- **Production LLM observability tooling:** `../../10.mlops/11_llm_observability_tools.md`
+- **Production LLM observability tooling:** `../../10.mlops/11_llm_observability.md`
 
 ---
 

@@ -24,6 +24,28 @@ Text  = [Text Transformer] → text_embedding ∈ R^d
 Both embeddings L2-normalized → dot product = cosine similarity
 ```
 
+```mermaid
+flowchart LR
+    subgraph clip["CLIP Dual Encoder"]
+        direction TB
+        img["🖼️ Image\n224×224×3"] --> venc["ViT / ResNet\nimage encoder"]
+        venc --> iemb["Image embedding\n d_embed  L2-norm"]
+
+        txt["📝 Text\n'a photo of a cat'"] --> tenc["Text Transformer\ntext encoder"]
+        tenc --> temb["Text embedding\n d_embed  L2-norm"]
+    end
+
+    iemb & temb --> sim["Cosine similarity\nS = image · textᵀ\n N×N matrix for batch N "]
+    sim --> loss["InfoNCE Loss\nMaximize diagonal  matched pairs \nMinimize off-diagonal  mismatches "]
+    loss --> zs["Zero-shot inference\nembed query text → find nearest image\nno task-specific training needed"]
+
+    style venc fill:#2980b9,color:#fff
+    style tenc fill:#e74c3c,color:#fff
+    style sim fill:#8e44ad,color:#fff
+    style zs fill:#27ae60,color:#fff
+```
+> 400M (image, text) pairs trained CLIP. At inference: embed any text → find nearest image by cosine similarity → zero-shot classification.
+
 Contrastive Pretraining:
 ```
 Training data: 400M (image, text) pairs scraped from the web

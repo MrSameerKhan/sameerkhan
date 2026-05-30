@@ -16,6 +16,34 @@
 
 **When to use encoder-decoder:** Conditional generation tasks — where input and output are different sequences: summarization, translation, data-to-text, structured extraction, abstractive QA.
 
+```mermaid
+graph LR
+    subgraph bert["Encoder-only  BERT "]
+        direction TB
+        E1["Bidirectional attention\n↔ sees full input"]
+        E2["MLM pretraining"]
+        E3["Best for: classify · NER · extract"]
+    end
+
+    subgraph gpt["Decoder-only  GPT "]
+        direction TB
+        G1["Causal attention\n→ sees past only"]
+        G2["CLM pretraining"]
+        G3["Best for: generation · chat · LLM"]
+    end
+
+    subgraph t5["Encoder-Decoder  T5 · BART "]
+        direction TB
+        T1["Encoder: bidirectional\nDecoder: causal + cross-attn"]
+        T2["Span corruption pretraining"]
+        T3["Best for: translation · summarization\nseq2seq tasks"]
+    end
+
+    bert -->|"add generation"| t5
+    gpt -->|"add understanding"| t5
+```
+> T5: "text-to-text" — frames everything as seq2seq. Summarize: → summary. Classify: → label. Translate: → text.
+
 ---
 
 ## 1. Core Concepts

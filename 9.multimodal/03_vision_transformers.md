@@ -38,6 +38,22 @@ Model variants:
   ViT-H/14: Huge, patch 14×14, 32 layers, 16 heads, d=1280, 632M params
 
 We trace ViT-B/16 on a 224×224 image.
+
+```mermaid
+flowchart LR
+    img["🖼️ Image\n224 × 224 × 3"] --> split["Split into patches\n P=16 patch size \n 14×14 = 196 patches\neach: 16×16×3 = 768 values"]
+    split --> proj["Linear projection\n768 → 768d embedding\n196 × 768"]
+    proj --> cls["Prepend [CLS] token\n1 × 768\n→ 197 × 768"]
+    cls --> pe["+ Positional embedding\n197 × 768  learned \norder matters"]
+    pe --> blocks["12 × Transformer Block\n↔ bidirectional self-attention\n197 × 768 through all blocks"]
+    blocks --> cls_tok["[CLS] final state\n768-dim\nglobal image representation"]
+    blocks --> patch_tok["196 patch states\n768-dim each\nper-patch features"]
+    cls_tok --> clf["Linear + softmax\nImageNet-1K classification"]
+    patch_tok --> dense["Dense prediction\nSegmentation · Detection\nDINOv2 probing"]
+    style blocks fill:#2980b9,color:#fff
+    style cls_tok fill:#8e44ad,color:#fff
+```
+> CNN vs ViT: CNNs win at <10M images (inductive bias). ViTs win at >100M images (scales better with data/compute).
 ```
 
 ### Step 1: Patch Extraction and Embedding

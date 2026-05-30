@@ -1,6 +1,30 @@
 # 3. Computer Vision
 
 > Scope: vision-specific applications + ViT depth. Vision-language models live in `../9.multimodal/`.
+
+```mermaid
+mindmap
+  root((3. Computer Vision))
+    01_fundamentals
+      CNN mechanics
+        conv · pool · feature maps
+      CNN architectures
+        LeNet → ResNet → ViT timeline
+      CNN end-to-end dry run
+      Vision Transformer deep
+        ViT · Swin · DINO
+    02_applications
+      Transfer learning
+        frozen vs fine-tune DT
+      Object detection
+        two-stage · one-stage · DETR
+      Segmentation
+        semantic · instance · panoptic · SAM
+      Explainability
+        Grad-CAM · SHAP · LIME
+      Self-supervised
+        SimCLR · DINO · MAE
+```
 > Tier 2 (Theory).
 
 ---

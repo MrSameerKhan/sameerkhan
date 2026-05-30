@@ -17,6 +17,28 @@
 
 ---
 
+```mermaid
+stateDiagram-v2
+    [*] --> observe : start episode
+
+    observe --> think : agent receives state sₜ
+    think --> act : policy π·sₜ → action aₜ
+    act --> env : execute in environment
+    env --> reward_state : rₜ₊₁ + sₜ₊₁
+
+    reward_state --> update : store experience\nin replay buffer
+    update --> observe : not terminal · continue
+    update --> [*] : terminal · episode done
+
+    note right of think
+        Policy π choices:
+        Q-learning: argmax Q·s,a
+        Policy gradient: sample π·s
+        Actor-Critic: combine both
+        Discount γ controls future value
+    end note
+```
+
 ## Core Concepts
 
 ### The RL Loop

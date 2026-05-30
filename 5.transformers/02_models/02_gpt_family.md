@@ -16,6 +16,32 @@
 
 Other modern open decoders (Mistral / Mistral / Qwen2.5 / Gemma 2 / Phi-3.5 / DeepSeek-V3): full comparison table with layer counts, GQA/MLA config, and FFN/MoE details lives in `../../2.deep_learning/02_architectures/08_architecture_comparison.md`. For reasoning-tuned models (o1, DeepSeek-R1, RLVR), see `14_reasoning_models.md`.
 
+```mermaid
+timeline
+    title GPT Family — Decoder Models
+    2018 : GPT-1  117M
+         : First large pretrained LM
+         : 512 context · supervised transfer
+    2019 : GPT-2  1.5B
+         : Zero-shot task transfer
+         : 1024 context
+    2020 : GPT-3  175B
+         : In-context learning emerges
+         : Few-shot without fine-tuning
+    2022 : InstructGPT
+         : RLHF alignment
+         : Follows instructions reliably
+    2023 : GPT-4 · LLaMA-1/2
+         : Multimodal GPT-4 · open weights
+         : GQA · long context
+    2024 : LLaMA-3.1 · DeepSeek-V3
+         : 128K context · MoE · MLA
+         : Open-weight frontier models
+    2025 : DeepSeek-R1 · o3
+         : Reasoning with RLVR
+         : Test-time compute scaling
+```
+
 **Core principle:** Predict next token. Train on massive text. Emergent capabilities at scale.
 
 ---

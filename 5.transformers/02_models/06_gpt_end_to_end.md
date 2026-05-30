@@ -37,6 +37,29 @@ WHY THIS ENABLES GENERATION:
     (No mismatch between training and inference, unlike masked models)
 ```
 
+```mermaid
+sequenceDiagram
+    participant C as Context Buffer
+    participant M as GPT Model
+    participant K as KV Cache
+    participant S as Sampler
+
+    Note over C: Start: [BOS] cat sat on
+
+    loop Autoregressive generation — one token at a time
+        C->>M: current context tokens
+        M->>K: store K,V for new tokens
+        K->>M: retrieve cached K,V for all past tokens
+        M->>M: causal attention\ntoken i sees only 0..i
+        M->>S: logits over vocab\n[1 × vocab_size]
+        S->>S: temperature · top-p / top-k filter
+        S->>C: sample → append next token
+    end
+
+    Note over C: End: [BOS] cat sat on mat [EOS]
+```
+> KV cache is critical — without it, each step re-encodes the full context (O(n²) per step). With KV cache: O(n) per step.
+
 ---
 
 ## 1. Problem Statement

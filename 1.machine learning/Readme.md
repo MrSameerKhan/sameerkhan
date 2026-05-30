@@ -2,6 +2,26 @@
 
 **Scope:** classical ML algorithms, statistics, evaluation, and feature engineering. **Tier:** 2 (Theory). All technical explanations for classical ML live here.
 
+```mermaid
+mindmap
+  root((1. Machine Learning))
+    01_fundamentals
+      Statistics · Hypothesis tests
+      EDA pipeline
+      Feature Engineering
+      Model Evaluation · metrics
+    02_algorithms
+      Linear · Ridge · Lasso · SVM
+      Tree Models · RF · XGBoost · LightGBM
+      Unsupervised · K-Means · DBSCAN · UMAP
+      Probabilistic · Naive Bayes · GMM
+      Time Series · ARIMA · Prophet
+      Semi-supervised · FixMatch
+      Reinforcement Learning · Q-learning
+      Deep RL · PPO · GRPO
+      EM · Gaussian Processes
+```
+
 ## Reading Order
 
 Pick a thread based on what you need:

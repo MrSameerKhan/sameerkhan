@@ -12,6 +12,28 @@ Senior interview Q: "How do you control LLM costs at scale?" or "When would you 
 
 ---
 
+```mermaid
+flowchart TD
+    req(["LLM request"]) --> route{Route decision}
+
+    route -->|"simple query\nkeyword match · classification"| cheap["Haiku / GPT-4o-mini\n$0.0001 per req"]
+    route -->|"moderate reasoning\nchat · summarize"| mid["Sonnet / GPT-4o\n$0.001-0.01 per req"]
+    route -->|"hard reasoning\nmath · code · complex"| exp["Opus / GPT-4\n$0.01-0.50 per req"]
+
+    cheap & mid & exp --> cache{Semantic cache hit?}
+    cache -->|"Yes · cosine > 0.95"| cached["Return cached\n$0.00"]
+    cache -->|"No"| llm["Call LLM\ntrack tokens"]
+
+    llm --> track["Log: input_tokens · output_tokens\nmodel · latency · cost\nuser_id · session_id"]
+    track --> budget{Budget exceeded?}
+    budget -->|"Yes"| throttle["Throttle or\nroute to cheaper model"]
+    budget -->|"No"| ok["✅ Response served"]
+
+    style cheap fill:#27ae60,color:#fff
+    style exp fill:#e74c3c,color:#fff
+    style cached fill:#2980b9,color:#fff
+```
+
 ## 2. The Cost Components
 
 ```

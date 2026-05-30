@@ -2,6 +2,34 @@
 
 > The engineering layer between research and production. How to ship ML models that actually work at scale — reliably, cheaply, and observably.
 
+```mermaid
+mindmap
+  root((10. MLOps))
+    Experiment tracking
+      MLflow · W&B · DVC
+      Train → log → register → promote
+    Serving
+      FastAPI · ONNX · TensorRT
+      vLLM · PagedAttention · batching
+      Optimization · INT8 · AWQ
+    Monitoring
+      Data drift · concept drift
+      PSI · KS test · alerting
+      Rollback triggers
+    Pipelines
+      Prefect · GitHub Actions · K8s
+      CI/CD for ML
+    Training at scale
+      DDP vs FSDP vs DeepSpeed ZeRO
+      Multi-GPU · multi-node
+    AWS for ML
+      SageMaker · S3 · Lambda · ECS
+    LLM specific
+      Observability · LangFuse · Phoenix
+      Cost tracking · routing · caching
+      Production RAG ops · drift · freshness
+```
+
 ---
 
 ## Reading Order

@@ -25,6 +25,37 @@ Senior interview Q: "What goes wrong with agents in production and how do you fi
 
 ---
 
+```mermaid
+flowchart TD
+    FM(["Agent failure in production"]) --> B{Which failure mode?}
+
+    B -->|"Tool call in content\nnot tool_calls field"| FM1["FM1 — Tools-as-text\nModel writes JSON in prose\norchestrator can't see it"]
+    FM1 --> FIX1["Fix: use structured output\nvalidate tool_calls field exists\nretry if content has JSON"]
+
+    B -->|"Explains plan\nbut calls nothing"| FM2["FM2 — Composition collapse\n2+ tools needed · 0 called\nmodel 'thinks aloud'"]
+    FM2 --> FIX2["Fix: force one-tool-at-a-time\nexplicit CoT prompt\n'call tool now, not describe it'"]
+
+    B -->|"Got answer\nbut keeps going"| FM3["FM3 — Post-success wander\ncorrect answer at step N\nbut continues to step N+3"]
+    FM3 --> FIX3["Fix: check task completion\nbefore next action\nadd max_iterations"]
+
+    B -->|"Same call repeated"| FM4["FM4 — Infinite loop\nidentical args every step\nno termination signal"]
+    FM4 --> FIX4["Fix: deduplicate tool call history\ncircuit breaker after 3 identical\nmax_iterations hard cap"]
+
+    B -->|"Wrong tool name\nor args"| FM5["FM5 — Hallucinated tool\nlookup_acct vs lookup_account\ninvalid args schema"]
+    FM5 --> FIX5["Fix: validate tool name against registry\nPydantic schema for all args\nretry with error feedback"]
+
+    style FM1 fill:#e74c3c,color:#fff
+    style FM2 fill:#e74c3c,color:#fff
+    style FM3 fill:#e74c3c,color:#fff
+    style FM4 fill:#e74c3c,color:#fff
+    style FM5 fill:#e74c3c,color:#fff
+    style FIX1 fill:#27ae60,color:#fff
+    style FIX2 fill:#27ae60,color:#fff
+    style FIX3 fill:#27ae60,color:#fff
+    style FIX4 fill:#27ae60,color:#fff
+    style FIX5 fill:#27ae60,color:#fff
+```
+
 ## 2. The 5 Failure Modes (Observed in Real Systems)
 
 **FM1 — Tools-as-text**

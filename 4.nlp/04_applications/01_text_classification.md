@@ -15,6 +15,26 @@
 
 **Golden rule: Always start with TF-IDF + LogReg baseline before touching transformers.**
 
+```mermaid
+flowchart TD
+    A([Text classification task]) --> B{How much\nlabeled data?}
+
+    B -->|"< 50 examples"| C["Zero-shot NLI\nor GPT-4 + few-shot\nno training needed"]
+    B -->|"50-500 examples"| D["SetFit\nfew-shot sentence transformer\nfine-tune on pairs"]
+    B -->|"500-5K examples"| E{Need interpretability?}
+    B -->|"> 5K examples"| F{Accuracy priority?}
+
+    E -->|Yes| G["TF-IDF + LogReg\nfast · interpretable · strong baseline\nalways run this first"]
+    E -->|No| H["BERT fine-tune\nLR 2e-5 · 3 epochs · [CLS] head"]
+
+    F -->|High accuracy| H
+    F -->|Fast serving| I["DistilBERT or\nTF-IDF + XGBoost\n10× faster than BERT"]
+
+    style G fill:#27ae60,color:#fff
+    style H fill:#2980b9,color:#fff
+    style C fill:#8e44ad,color:#fff
+```
+
 ---
 
 ## Core Concepts

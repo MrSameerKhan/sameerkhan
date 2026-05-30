@@ -15,6 +15,37 @@
 
 ---
 
+```mermaid
+flowchart TD
+    feat([Feature type?]) --> num{Numeric}
+    feat --> cat{Categorical}
+    feat --> missing{Missing values}
+    feat --> imbal{Class imbalance}
+
+    num --> skew{Skewed?\nskewness > 1}
+    skew -->|Yes| log["Log / Box-Cox transform"]
+    skew -->|No · different scales| scale["StandardScaler\nfor linear models · SVM · KNN"]
+    skew -->|Tree models| tree_num["No scaling needed\ntrees are scale-invariant"]
+
+    cat --> card{Cardinality}
+    card -->|≤ 20 unique| ohe["One-hot encoding"]
+    card -->|> 20 unique| te["Target encoding\nor learned embeddings"]
+    card -->|Ordinal| le["Label encoding\npreserve order"]
+
+    missing --> pct{% missing}
+    pct -->|< 5%| med["Median impute\n·numeric· or mode ·categ·"]
+    pct -->|5-30%| knn_imp["KNN / MICE imputation\nmore accurate"]
+    pct -->|> 30%| drop["Drop column\nor add 'was_missing' flag"]
+
+    imbal --> ratio{Imbalance ratio}
+    ratio -->|> 4:1| smote["SMOTE oversampling\nor class_weight='balanced'"]
+    ratio -->|< 4:1| reweight["class_weight in model\nno resampling needed"]
+
+    style log fill:#f39c12,color:#fff
+    style te fill:#8e44ad,color:#fff
+    style smote fill:#e74c3c,color:#fff
+```
+
 ## 1. Numeric Feature Transformations
 
 ### Scaling

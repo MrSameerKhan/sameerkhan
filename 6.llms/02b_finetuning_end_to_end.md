@@ -18,6 +18,23 @@ Without pretraining, you'd need millions of labeled examples to learn language f
 | PEFT (e.g., LoRA) | ~0.1-1% of params | Low | Resource-constrained, multiple tasks |
 | Full fine-tuning | 100% of params | Highest | Enough data, enough GPU |
 
+```mermaid
+flowchart LR
+    A["📦 Pretrained Base\nLlama-3 / Mistral / Qwen"] --> B["📝 Dataset\nChat format · masked user tokens"]
+    B --> C["🔧 SFT Training\nCross-entropy on assistant turns only"]
+    C --> D["📊 Evaluate\nval loss · benchmark metrics"]
+    D --> E{Overfit or\ncatastrophic forgetting?}
+    E -->|Yes| F["Reduce LR\nAdd data · Early stop"]
+    E -->|No| G{Alignment\nneeded?}
+    F --> C
+    G -->|Yes| H["DPO / ORPO / KTO\npreference pairs or binary labels"]
+    G -->|No| I["✅ Merge LoRA → serve"]
+    H --> I
+    style A fill:#2980b9,color:#fff
+    style I fill:#27ae60,color:#fff
+    style H fill:#8e44ad,color:#fff
+```
+
 ---
 
 ## 1. Full Fine-Tuning

@@ -17,6 +17,25 @@ The universal 8-step framework for every ML system design interview. Use this st
 8. TRADE-OFFS & discussion       (remaining)
 ```
 
+```mermaid
+flowchart TD
+    A(["🎯 ML System Design Interview"])
+
+    A --> S1["1️⃣ Clarify Requirements  2-3 min \nScale · latency · data availability\nOnline vs batch · latency SLA"]
+    S1 --> S2["2️⃣ Define Metrics  2 min \nOffline: AUC · NDCG · F1\nOnline: CTR · revenue · latency"]
+    S2 --> S3["3️⃣ High-Level Architecture  5 min \nDraw the boxes: data → model → serving\nIdentify OFFLINE vs ONLINE paths"]
+    S3 --> S4["4️⃣ Data Pipeline  5 min \nFeature store · real-time vs batch\nLabel generation · data quality"]
+    S4 --> S5["5️⃣ Modeling  5 min \nModel choice + why · training strategy\nPEFT · embeddings · two-tower · LLM"]
+    S5 --> S6["6️⃣ Serving & Scaling  5 min \nLatency budget · caching · batching\nA/B testing · shadow deployment"]
+    S6 --> S7["7️⃣ Monitoring  3 min \nData drift · model drift · alerting\nFeedback loop · retraining triggers"]
+    S7 --> S8["8️⃣ Trade-offs  remaining \nSimplicity vs accuracy · cost vs quality\nReal-time vs batch · bias/fairness"]
+
+    style A fill:#2980b9,color:#fff
+    style S3 fill:#8e44ad,color:#fff
+    style S6 fill:#e74c3c,color:#fff
+```
+> **Interview tip:** Always say "Let me clarify requirements first" before drawing any architecture. It shows senior thinking.
+
 ---
 
 ## Step 1: Clarify Requirements

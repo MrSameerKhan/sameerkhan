@@ -1085,4 +1085,4 @@ A: No — BERT's tokenizer uses WordPiece subwords ("unbelievably" → ["un", "#
 
 **To BERT (`5.transformers/05_bert_end_to_end.md`):** BERT's token embeddings = Word2Vec embeddings the same way Word2Vec trains BERT's embeddings to have similar representations — but with full bidirectional attention instead of a single dot product.
 
-**To tokenization (`5.transformers/fundamentals/03_tokenization.md`):** Word2Vec: one vector per whole-word token — limited by vocab size. BPE/WordPiece eliminates OOV, but FastText bridges this: character n-grams handle OOV at the word level, without needing subword tokenization.
+**To tokenization (`../../5.transformers/01_fundamentals/03_tokenization.md`):** Word2Vec: one vector per whole-word token — limited by vocab size. BPE/WordPiece eliminates OOV, but FastText bridges this: character n-grams handle OOV at the word level, without needing subword tokenization.

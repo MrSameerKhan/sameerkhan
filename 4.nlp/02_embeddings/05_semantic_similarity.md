@@ -4,6 +4,26 @@
 
 ---
 
+```mermaid
+flowchart LR
+    q["❓ Query\n'invoice overdue'"] --> qe["Embed\nBGE-large → 1024d"]
+    docs["📄 Corpus chunks\npre-embedded offline"] --> vdb["Vector DB\nFAISS / pgvector"]
+
+    qe --> ann["ANN Search\ncosine similarity\ntop-50 dense"]
+    vdb --> ann
+
+    q --> bm["BM25 Search\nkeyword match\ntop-50 sparse"]
+
+    ann & bm --> rrf["RRF Fusion\n1·60+rank\ntop-50 combined"]
+    rrf --> rerank["Cross-Encoder\nReranker\nBGE-reranker-large\ntop-5 final"]
+    rerank --> out["✅ Top-5 chunks\nhighest relevance"]
+
+    style qe fill:#2980b9,color:#fff
+    style rerank fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> Hybrid always beats single-retriever: dense catches semantic matches, BM25 catches exact keywords, reranker resolves ties.
+
 ## The Task
 
 Given two texts, measure how semantically similar they are.
@@ -398,7 +418,7 @@ def hybrid_search(query, bm25_index, dense_index, encoder, k=50, rrf_k=60):
     return sorted(scores.items(), key=lambda x: -x[1])
 ```
 
-Deeper RAG pipeline coverage (chunking, RAGAS eval, citation): `../04_applications/05_rag_pipeline.md`.
+Deeper RAG pipeline coverage (chunking, RAGAS eval, citation): `../../7.rag/02_rag_pipeline.md`.
 
 ---
 
@@ -406,7 +426,7 @@ Deeper RAG pipeline coverage (chunking, RAGAS eval, citation): `../04_applicatio
 
 - Modern SOTA embedders + rerankers (BGE / E5 / Nomic / Cohere): `02_sentence_embeddings.md`
 - How dense embedders are trained (contrastive, hard negatives, in-batch): `06_contrastive_training.md`
-- RAG pipeline depth: `../04_applications/05_rag_pipeline.md` — bi-encoder + FAISS + cross-encoder in full RAG
+- RAG pipeline depth: `../../7.rag/02_rag_pipeline.md` — bi-encoder + FAISS + cross-encoder in full RAG
 - RAG evaluation (RAGAS, faithfulness): `../04_applications/04_evaluation_metrics.md`
 - CLIP (image-text similarity): `../../9.multimodal/`
 - FAISS index types + retrieval system design: `../../11.system_design/`

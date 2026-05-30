@@ -843,6 +843,21 @@ hidden_dim=256:  Wx = (256×2) h = (256,)
 
 The vanishing gradient problem gets WORSE with larger hidden_dim because Wh (256×256) has more multiplications to survive. That is why LSTM/GRU, not bigger hidden_dim, is the real fix.
 
+```mermaid
+graph LR
+    loss["∂L/∂hₙ\nfinal gradient"] -->|"× Wh × tanh'·hₙ₋₁ ≈ 0.4"| g3["∂L/∂h₃\n|δ|=0.202"]
+    g3 -->|"× 0.4"| g2["∂L/∂h₂\n|δ|=0.094"]
+    g2 -->|"× 0.4"| g1["∂L/∂h₁\n|δ|=0.018"]
+    g1 -->|"after 100 steps\n0.4¹⁰⁰ ≈ 0"| gone["∂L/∂h₁\n≈ 0\ncompletely vanished"]
+
+    style loss fill:#27ae60,color:#fff
+    style g3 fill:#f39c12,color:#fff
+    style g2 fill:#e67e22,color:#fff
+    style g1 fill:#e74c3c,color:#fff
+    style gone fill:#7f8c8d,color:#fff
+```
+> Each step multiplies by Wh × tanh'(·) ≈ 0.4. After 10 steps: 0.4¹⁰ ≈ 0.0001. Early tokens receive zero learning signal. Solution → LSTM cell state.
+
 ---
 
 ## Connections
@@ -851,4 +866,4 @@ The vanishing gradient problem gets WORSE with larger hidden_dim because Wh (256
 |---|---|---|
 | RNN overview + architecture | `01_rnn_to_attention.md §2` | Full architecture + code |
 | LSTM / GRU dry run (same sentence) | `01_rnn_to_attention.md §1.5` | See gates in action |
-| Vanishing gradient full math | `../../2.deep_learning/fundamentals/03_training_stability.md` | Formal proof |
+| Vanishing gradient full math | `../../2.deep learning/01_fundamentals/03_training_stability.md` | Formal proof |

@@ -15,6 +15,30 @@
 
 ---
 
+## Evolution at a Glance
+
+```mermaid
+timeline
+    title Sequence Model Evolution
+    1986 : Vanilla RNN
+         : hₜ = tanh(Wh·hₜ₋₁ + Wx·xₜ)
+         : ✗ Vanishing gradient
+    1997 : LSTM
+         : Cell state + 3 gates
+         : ✓ Long-range memory
+    2014 : GRU
+         : 2 gates, simpler LSTM
+         : ✓ Faster, same quality
+    2015 : Seq2Seq + Attention
+         : Decoder attends all encoder states
+         : ✓ No information bottleneck
+    2017 : Transformer
+         : Self-attention, fully parallel
+         : ✓ GPU-friendly, scales to billions
+```
+
+---
+
 ## 1. Why Sequence Models?
 
 ### The Problem with Feed-Forward Networks for Text
@@ -137,6 +161,21 @@ x₁ → [h₁] → x₂ → [h₂] → ... → [hₙ] → output
        ↑ same W      ↑ same W      ↑ same W
 ```
 
+```mermaid
+graph LR
+    x1["x₁  I"] --> h1(["h₁\n100%"])
+    x2["x₂  love"] --> h2(["h₂\n40%"])
+    x3["x₃  cats"] --> h3(["h₃\n16%"])
+    h1 -->|"Wh"| h2
+    h2 -->|"Wh"| h3
+    h3 --> y(["ŷ"])
+    style h1 fill:#27ae60,color:#fff
+    style h2 fill:#f39c12,color:#fff
+    style h3 fill:#e74c3c,color:#fff
+    style y fill:#2980b9,color:#fff
+```
+> Colors show signal from "I" surviving: green (full) → orange (40%) → red (16%). By step 3, "I" is essentially gone.
+
 ### The Vanishing Gradient Problem
 
 Backpropagation through time (BPTT):
@@ -212,6 +251,34 @@ Output Gate — what to expose as hidden state:
 
 σ = sigmoid ∈ (0,1),  ⊙ = elementwise multiply
 ```
+
+```mermaid
+flowchart LR
+    inp["xₜ + hₜ₋₁"]
+
+    inp --> fg["🔒 Forget Gate\nσ · What to erase\nfₜ ∈ 0,1"]
+    inp --> ig["✏️ Input Gate\nσ · How much to write\niₜ ∈ 0,1"]
+    inp --> cg["📝 Candidate\ntanh · What to write\ng̃ₜ ∈ -1,1"]
+    inp --> og["🔓 Output Gate\nσ · What to expose\noₜ ∈ 0,1"]
+
+    fg -->|"fₜ ⊙ Cₜ₋₁\nkeep old"| cs(["📦 Cell State Cₜ\nlong-term memory"])
+    ig --> mul((" ⊙ "))
+    cg --> mul
+    mul -->|"iₜ ⊙ g̃ₜ\nadd new"| cs
+
+    cs --> tanh["tanh(Cₜ)"]
+    og --> out((" ⊙ "))
+    tanh --> out
+    out --> ht(["hₜ\nshort-term output"])
+
+    style cs fill:#8e44ad,color:#fff
+    style ht fill:#2980b9,color:#fff
+    style fg fill:#e74c3c,color:#fff
+    style ig fill:#27ae60,color:#fff
+    style cg fill:#27ae60,color:#fff
+    style og fill:#f39c12,color:#fff
+```
+> **Key insight:** Cell state Cₜ flows through an additive path (not multiplicative like RNN) — this is the gradient highway.
 
 ### Why Cell State Solves Vanishing Gradient
 
@@ -479,6 +546,25 @@ Concatenate at EACH position:
   pos 3 "cats": [h→₃ ; h←₃] = [0.59, 0.32 | 0.51, 0.27]   shape: (4,)
 ```
 
+```mermaid
+graph TB
+    subgraph fwd["→ Forward LSTM (left to right)"]
+        direction LR
+        f1["h→₁\nsees: I"] --> f2["h→₂\nsees: I love"] --> f3["h→₃\nsees: I love cats"]
+    end
+    subgraph bwd["← Backward LSTM (right to left)"]
+        direction RL
+        b1["h←₁\nsees: all"] --> b2["h←₂\nsees: love cats"] --> b3["h←₃\nsees: cats"]
+    end
+    f1 & b1 --> c1(["pos 1 · I\nfull context"])
+    f2 & b2 --> c2(["pos 2 · love\nfull context"])
+    f3 & b3 --> c3(["pos 3 · cats\nfull context"])
+    style c1 fill:#8e44ad,color:#fff
+    style c2 fill:#8e44ad,color:#fff
+    style c3 fill:#8e44ad,color:#fff
+```
+> Each token gets BOTH left context and right context — essential for "bank" disambiguation.
+
 Why this matters for NER — labeling "love" as a VERB:
 ```
 Unidirectional LSTM at pos 2: only knows "I love" → uncertain if verb or noun
@@ -627,6 +713,27 @@ Generating "chats"(cats): α = [0.05, 0.15, 0.80]   → attends to "cats"
 
 This is the attention heatmap — each row sums to 1.
 
+```mermaid
+flowchart TD
+    enc["Encoder hidden states\nh₁=I · h₂=love · h₃=cats"]
+    dec["Decoder state sₜ"]
+
+    enc --> score["① Alignment scores\neₜᵢ = sₜ · hᵢ\ne.g. e₁=0.12  e₂=0.46  e₃=0.33"]
+    dec --> score
+
+    score --> sm["② Softmax → weights αₜᵢ\nα₁=0.27  α₂=0.39  α₃=0.34\n sums to 1 "]
+
+    sm --> ctx["③ Context vector cₜ\ncₜ = Σ αᵢ · hᵢ\n= weighted sum of ALL encoder states"]
+    enc --> ctx
+
+    ctx --> out["④ Decoder step\nsₜ = LSTM · cₜ · yₜ₋₁\n→ generate next word"]
+
+    style enc fill:#2980b9,color:#fff
+    style ctx fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> No information bottleneck — decoder has direct access to every encoder state at every step.
+
 ### Scaled Dot-Product Attention (Transformer)
 
 Self-attention (no separate encoder/decoder):
@@ -735,9 +842,55 @@ Resource-constrained devices (LSTM is lighter than Transformer)
 Structured state space models (S4, Mamba) are replacing even these cases
 ```
 
+```mermaid
+quadrantChart
+    title Parallelism vs Long-Range Dependency
+    x-axis Low Parallelism --> High Parallelism
+    y-axis Short Range --> Long Range
+    quadrant-1 Best choice for production
+    quadrant-2 Powerful but slow to train
+    quadrant-3 Simple, limited tasks
+    quadrant-4 Fast but shallow
+    Vanilla RNN: [0.05, 0.12]
+    LSTM: [0.10, 0.62]
+    GRU: [0.12, 0.55]
+    BiLSTM: [0.13, 0.68]
+    Transformer: [0.92, 0.95]
+    Mamba/S4: [0.75, 0.88]
+```
+
 ---
 
 ## 10. When to Use What
+
+```mermaid
+mindmap
+  root((Which Model?))
+    Production NLP
+      BERT / Transformer
+        Classification
+        NER production
+        Best accuracy
+    Streaming / Real-time
+      LSTM
+        O-1 per step
+        Resource constrained
+        IoT / edge devices
+    Sequence Labeling
+      BiLSTM + CRF
+        NER pre-BERT standard
+        POS tagging
+    Small Dataset under 1K
+      BiLSTM + GloVe
+        BERT overfits
+    Long Docs over 4K tokens
+      Mamba or Longformer
+        Transformer O-n2 too costly
+    Speed over Accuracy
+      GRU
+        Fewer params than LSTM
+        Similar quality
+```
 
 | Task | Model | Why |
 |---|---|---|

@@ -38,6 +38,29 @@ Standard attention layers are SHARED (not multiplied)
 Only the FFN layers are replaced by MoE
 ```
 
+```mermaid
+flowchart LR
+    tok["Token x\n d_model "]
+
+    tok --> router["Router\nLinear·d,N + softmax\nN=8 scores — one per expert"]
+    router --> topk["Top-2 selection\nE₁ weight=0.6\nE₃ weight=0.4\nothers ignored"]
+
+    topk --> e1["Expert 1\nFFN: d→4d→d\nspecializes in code/math"]
+    topk --> e3["Expert 3\nFFN: d→4d→d\nspecializes in reasoning"]
+
+    e1 -->|"× 0.6"| combine["Weighted sum\n0.6·E₁·x + 0.4·E₃·x"]
+    e3 -->|"× 0.4"| combine
+    combine --> out["Output\n d_model "]
+
+    skipped["Experts 2,4,5,6,7,8\nnot computed\n→ FLOPs saved"]
+
+    style router fill:#e74c3c,color:#fff
+    style topk fill:#f39c12,color:#fff
+    style combine fill:#27ae60,color:#fff
+    style skipped fill:#7f8c8d,color:#fff
+```
+> Mistral 8×7B: 46.7B total params, only ~12.9B active per token. Near-13B quality at ~7B compute cost.
+
 ### Router in Detail
 
 ```python

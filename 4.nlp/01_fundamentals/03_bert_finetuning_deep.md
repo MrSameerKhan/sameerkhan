@@ -18,6 +18,26 @@
 
 ---
 
+## Which Fine-tuning Head to Use
+
+```mermaid
+flowchart TD
+    A([BERT fine-tuning task]) --> B{Output type?}
+
+    B -->|"Single label per document"| C["Classification head\n[CLS] → Linear·768,C → softmax\nBinary or multi-class"]
+    B -->|"Label per token"| D["Token classification head\nAll tokens → Linear·768,L → softmax\nNER · POS · chunking"]
+    B -->|"Extract answer span"| E["Span extraction head\nAll tokens → Linear·768,2\nStart logit + end logit\nQA · reading comprehension"]
+    B -->|"Multiple labels per doc"| F["Multi-label head\n[CLS] → Linear·768,C → sigmoid\nMulti-label classification"]
+    B -->|"Sentence pair similarity"| G["Siamese / BI-encoder\nMean pool both sentences\nCosine similarity + margin loss\nSemantic search · STS"]
+
+    C & D & E & F & G --> H["Fine-tune recipe\nLR: 2e-5 · batch: 16-32\nepochs: 3-5 · linear warmup 6%\nclip gradients · weight decay 0.01"]
+
+    style C fill:#2980b9,color:#fff
+    style D fill:#8e44ad,color:#fff
+    style E fill:#e74c3c,color:#fff
+    style G fill:#27ae60,color:#fff
+```
+
 ## 1. Objective
 
 You used BERT in production at ICE (94% accuracy boost). Senior interviewer will ask:

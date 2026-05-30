@@ -32,6 +32,35 @@ Senior interview Q: "Explain speculative decoding and why it doesn't change the 
 4. Append accepted tokens (+ correction if rejected); loop
 ```
 
+```mermaid
+sequenceDiagram
+    participant D as 🚀 Draft Model  small · fast 
+    participant T as 🎯 Target Model  large · accurate 
+
+    loop Each speculative round
+        D->>D: Generate K=4 tokens cheaply
+        Note over D: proposes: x₁ x₂ x₃ x₄
+
+        D->>T: K draft tokens + current prefix
+        T->>T: ONE forward pass · evaluate all K positions in parallel
+
+        loop Verify each token t = 1..K
+            T->>T: accept prob = min·1 · p_target/p_draft
+            alt ✅ Token ACCEPTED
+                Note over T: keep x_t · continue to next
+            else ❌ Token REJECTED
+                T->>T: sample correction from  p - q +
+                Note over T: stop batch here
+            end
+        end
+
+        T->>D: accepted tokens + updated prefix
+    end
+
+    Note over D,T: Output distribution = mathematically identical to target-only decoding
+```
+> Speedup comes from batch-verifying K tokens in one target pass. Typical acceptance rate α≈0.8 → ~3-4 tokens accepted per round → 2-3× throughput.
+
 ### Why the output distribution is unchanged
 
 This is **rejection sampling with proposal distribution q (draft)**. For any target token y:

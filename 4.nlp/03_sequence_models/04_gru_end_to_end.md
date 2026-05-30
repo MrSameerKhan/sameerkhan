@@ -44,6 +44,35 @@ LSTM is 2× heavier than RNN. For long sequences or limited compute, this matter
 
 **Answer: yes** — by merging forget + input into ONE gate.
 
+```mermaid
+graph LR
+    subgraph lstm_g["LSTM — 4 gates, 2 states"]
+        direction TB
+        LF["🔒 Forget gate σ\nf ∈ 0,1 — erase cell"]
+        LI["✏️ Input gate σ\ni ∈ 0,1 — write strength"]
+        LG["📝 Candidate tanh\ng̃ ∈ -1,1 — content"]
+        LO["🔓 Output gate σ\no ∈ 0,1 — expose"]
+        LC["Cell state Cₜ\nlong-term memory"]
+        LH["Hidden hₜ\nshort-term output"]
+    end
+
+    subgraph gru_g["GRU — 2 gates, 1 state"]
+        direction TB
+        GZ["🔀 Update gate σ\nz ∈ 0,1\nmerges forget+input\nz=0: keep old · z=1: take new"]
+        GR["🔁 Reset gate σ\nr ∈ 0,1\nhow much past for candidate"]
+        GH["Hidden hₜ\nsingle state\nno separate cell state"]
+    end
+```
+
+| | LSTM | GRU |
+|--|------|-----|
+| Gates | 4 (f, i, g, o) | 2 (z, r) |
+| States | 2 (C, h) | 1 (h) |
+| Parameters | ~4× more | ~2× more vs RNN |
+| Long sequences | Better | Slightly worse |
+| Speed | Slower | Faster |
+| Default choice | When accuracy > speed | When speed matters |
+
 ```
 LSTM: C = f⊙C_{t-1} + i⊙g      (f and i are INDEPENDENT — can both be high)
 GRU:  h = (1-z)⊙h_{t-1} + z⊙h̃  (z controls BOTH — it is a blend gate)

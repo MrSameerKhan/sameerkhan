@@ -15,6 +15,21 @@
 
 ---
 
+```mermaid
+flowchart TD
+    inp["Input tokens + PE\n seq × d_model "] --> mha["Multi-Head Attention\n↔ all-to-all or → causal\nsoftmax·QKᵀ/√d_k·V"]
+    mha --> add1["Add + LayerNorm\nx = LN·x + MHA·x"]
+    add1 --> ffn["FFN\nLinear → SwiGLU → Linear\nper-position · 4× expansion"]
+    ffn --> add2["Add + LayerNorm\nx = LN·x + FFN·x"]
+    add2 -->|"× N layers"| out["Output\n seq × d_model "]
+
+    note["BERT: bidirectional MHA\nGPT: causal MHA\nT5: encoder bidirect\n    decoder causal + cross-attn"]
+    style mha fill:#2980b9,color:#fff
+    style ffn fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> O(1) gradient path between any two tokens via residuals + attention. This is why transformers scale where RNNs couldn't.
+
 ## 1. Why Transformers Won
 
 RNNs process tokens sequentially → O(N) steps, gradients must traverse full sequence — long-range forgetting. CNNs have fixed receptive fields — struggle with long-range dependencies.

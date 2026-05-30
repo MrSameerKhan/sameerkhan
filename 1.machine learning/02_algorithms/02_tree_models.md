@@ -12,6 +12,32 @@
 
 **Rule of thumb:** For tabular data, try LightGBM first. If it underperforms, investigate features. XGBoost for GPU clusters.
 
+```mermaid
+timeline
+    title Tree Ensemble Evolution
+    1984 : Decision Tree  CART 
+         : Single tree · recursive splits
+         : High variance · overfits easily
+    2001 : Random Forest
+         : N trees on bootstrap samples
+         : Feature subsampling + averaging
+         : Variance ↓ · robust baseline
+    2001 : AdaBoost
+         : Sequential · reweight hard samples
+         : First effective boosting algorithm
+    2016 : XGBoost
+         : Regularized gradient boosting
+         : Parallel tree construction
+         : Kaggle winner for years
+    2017 : LightGBM
+         : Leaf-wise growth · histogram
+         : 10-100× faster · large dataset default
+    2018 : CatBoost
+         : Native categorical encoding
+         : Ordered boosting  no leakage
+         : High-cardinality categoricals
+```
+
 ---
 
 ## 1. Decision Tree

@@ -2,6 +2,39 @@
 
 ---
 
+```mermaid
+graph TD
+    subgraph storage["📦 Storage"]
+        S3["S3\ndatasets · artifacts · logs\ncheap · durable"]
+        EFS["EFS / FSx Lustre\nshared NFS\nlarge training jobs"]
+    end
+
+    subgraph compute["⚡ Compute"]
+        EC2["EC2 GPU\np3 · p4 · g5\ntraining · inference"]
+        Lambda["Lambda\nserverless\nlight inference"]
+        ECS["ECS / EKS\ncontainer orchestration\nscale inference"]
+    end
+
+    subgraph ml["🧠 ML Platform"]
+        SM["SageMaker\ntraining · HPO\ndeployment · monitoring\nend-to-end managed"]
+    end
+
+    subgraph data["📊 Data"]
+        Glue["Glue\nETL · data catalog"]
+        Athena["Athena\nSQL on S3"]
+        KDS["Kinesis\nreal-time streams"]
+    end
+
+    S3 --> SM
+    EC2 --> SM
+    Glue --> S3
+    KDS --> Lambda
+
+    style SM fill:#f39c12,color:#fff
+    style S3 fill:#2980b9,color:#fff
+```
+> SageMaker = the glue that connects S3 (data) + EC2 GPU (compute) + model registry + monitoring into one managed flow.
+
 ## Quick Reference — ML-Relevant AWS Services
 
 ```

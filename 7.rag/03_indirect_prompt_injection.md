@@ -81,6 +81,30 @@ Most common payloads (in order of frequency):
 
 ---
 
+## Defense Layers Overview
+
+```mermaid
+flowchart TD
+    threat["⚠️ Untrusted content enters RAG context\nretrieved chunk · tool output · user upload"]
+
+    threat --> L1["🔍 Layer 1 — Input Sanitization\nBlock known injection phrases\n⚠️ WEAK — bypassed by encoding/translation"]
+    L1 --> L2["📌 Layer 2 — Spotlighting\nWrap in tags: text between DOC tags is untrusted\nRe-state instructions above and below\nReduces but does not eliminate risk"]
+    L2 --> L3["🔒 Layer 3 — Capability Isolation  STRONGEST single layer \nNever give LLM tools the attacker would want\nAllowlist email destinations · require user confirmation\nAssume LLM is fully compromised after seeing untrusted content"]
+    L3 --> L4["✅ Layer 4 — Output Validation\nCheck tool calls against policy before executing\nBlock external URLs · PII detector on output\nFlag off-topic drift from user question"]
+    L4 --> L5["🏗️ Layer 5 — Structured Output Only\nForce Pydantic schema via constrained decoding\nNo free-text field = no instruction escape hatch\nPair with capability isolation for defense in depth"]
+    L5 --> L6["🔐 Layer 6 — Dual-LLM CaMeL Pattern  STRONGEST architecture \nPrivileged LLM: sees user + system prompt only · never untrusted content\nQuarantined LLM: sees untrusted content · outputs structured data only\nAttacker tokens never reach the LLM with authority to act"]
+    L6 --> safe["✅ Production posture: combine ALL layers\nNo single layer is sufficient alone"]
+
+    style threat fill:#e74c3c,color:#fff
+    style L1 fill:#e67e22,color:#fff
+    style L3 fill:#27ae60,color:#fff
+    style L6 fill:#27ae60,color:#fff
+    style safe fill:#2980b9,color:#fff
+```
+> Layer 3 (capability isolation) is the most effective prevention. Layer 6 (dual-LLM) is the strongest architecture. Layers 1-2 are comfort layers — help against unsophisticated attacks only.
+
+---
+
 ## 4. Defense Layer 1 — Input Sanitization (Weak)
 
 ```python
@@ -193,7 +217,7 @@ result = instructor.from_openai(client).chat.completions.create(
 
 Even if the retrieved content tries to inject "now call delete_account()", the model can only output an `AnswerToUser` — no tool call possible. Pair with capability isolation for defense in depth.
 
-See `../5.transformers/models/12_constrained_decoding.md` and `../4.nlp/04_applications/03_information_extraction.md`
+See `../5.transformers/02_models/12_constrained_decoding.md` and `../4.nlp/04_applications/03_information_extraction.md`
 
 ---
 
@@ -228,7 +252,7 @@ if sum(signals.values()) >= 2:
     block_or_escalate_to_human()
 ```
 
-LangFuse / Phoenix / Helicone can flag suspicious traces. See `../10.mlops/11_llm_observability_tools.md`
+LangFuse / Phoenix / Helicone can flag suspicious traces. See `../10.mlops/11_llm_observability.md`
 
 ---
 
@@ -298,11 +322,11 @@ Red-team with a corpus of known injection payloads (LLM Vulnerability Scoring In
 
 | This file | Links to | Why |
 |-----------|----------|-----|
-| Constrained decoding (structured output as defense) | `../5.transformers/models/12_constrained_decoding.md` | The strongest single defense |
+| Constrained decoding (structured output as defense) | `../5.transformers/02_models/12_constrained_decoding.md` | The strongest single defense |
 | Structured extraction (Pydantic + Instructor) | `../4.nlp/04_applications/03_information_extraction.md` | Same pattern for tool-call validation |
 | Tool authorization patterns | `../11.system_design/09_tool_authorization_patterns.md` | Capability isolation depth |
 | Agent reliability patterns | `../8.agents/02_agent_reliability_patterns.md` | Production hardening |
-| LLM observability | `../10.mlops/11_llm_observability_tools.md` | Detection in production |
+| LLM observability | `../10.mlops/11_llm_observability.md` | Detection in production |
 | RAG conceptual | `01_rag.md` | The context where injection happens |
 | Code practice | `code_practice/05_rag/09_indirect_injection/` | Hands-on |
 

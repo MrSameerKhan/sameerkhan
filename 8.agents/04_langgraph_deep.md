@@ -106,6 +106,33 @@ This is the canonical ReAct-style loop:
 START → agent —(tool_calls)→ tools → agent —(no tool_calls)→ END
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> agent : START
+
+    agent --> tools : tool_calls present in response
+    tools --> agent : tool results appended to state.messages
+
+    agent --> [*] : no tool_calls → END
+
+    agent --> human_review : interrupt_before=tools\n(HITL approval)
+    human_review --> tools : approved
+    human_review --> [*] : rejected
+
+    note right of agent
+        Calls LLM with full state.messages
+        Decides: use a tool OR answer directly
+        Same node every iteration
+    end note
+
+    note right of tools
+        ToolNode executes all tool_calls
+        Appends ToolMessage results to state
+        Returns to agent node
+    end note
+```
+> `human_review` is optional — add with `interrupt_before=["tools"]` to pause for approval before any tool executes.
+
 The agent sees previous tool results in `state["messages"]` on each iteration and decides: call another tool, or answer.
 
 ---
@@ -421,7 +448,7 @@ Two layers: (1) **Built-in recursion limit** — set when invoking: `graph.invok
 | Multi-agent | `07_multi_agent_orchestration.md` | Multi-agent frameworks |
 | Tool authorization | `../11.system_design/09_tool_authorization_patterns.md` | Capability isolation |
 | LangChain primer | `03_langchain_primer.md` | LCEL chains used INSIDE LangGraph nodes |
-| LLM observability | `../10.mlops/11_llm_observability_tools.md` | Tracing LangGraph runs |
+| LLM observability | `../10.mlops/11_llm_observability.md` | Tracing LangGraph runs |
 | Code practice | `code_practice/06_agents/03_langgraph/` | Hands-on |
 
 ---

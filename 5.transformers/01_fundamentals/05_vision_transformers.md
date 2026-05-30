@@ -26,6 +26,23 @@ The transformer architecture is IDENTICAL — only the input embedding changes.
 
 ---
 
+```mermaid
+flowchart LR
+    img["🖼️ Image\n224 × 224 × 3"] --> patches["Split into patches\n196 patches\n16 × 16 × 3 each"]
+    patches --> proj["Linear projection\nflat 768 → 768d\n196 × 768"]
+    proj --> cls["Prepend [CLS] token\n197 × 768"]
+    cls --> pe["+ Positional embedding\n197 × 768  learned "]
+    pe --> blocks["12 × Transformer Block\n↔ bidirectional attention\n197 × 768"]
+    blocks --> cls_out["[CLS] final state\n768-dim\nglobal image repr"]
+    blocks --> tok_out["196 patch states\n768-dim each\nper-patch repr"]
+    cls_out -->|"Classification"| head1["Linear 768→C\nsoftmax → label"]
+    tok_out -->|"Dense prediction"| head2["Segmentation\nDetection · depth"]
+    style img fill:#2980b9,color:#fff
+    style blocks fill:#8e44ad,color:#fff
+    style head1 fill:#27ae60,color:#fff
+```
+> Key difference from NLP: patch linear projection replaces token embedding lookup. Everything else — attention, FFN, residuals — is identical.
+
 ## 1. Patch Extraction — The Key Difference
 
 ```

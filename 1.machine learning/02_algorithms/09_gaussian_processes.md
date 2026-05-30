@@ -23,6 +23,28 @@ Why interviewers ask about it: - Foundation of **Bayesian optimization** (used i
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant D as Training data  X,y
+    participant GP as Gaussian Process
+    participant K as Kernel k·xi,xj
+    participant P as Posterior prediction
+
+    D->>GP: observed points X,y
+    GP->>K: compute covariance matrix K
+    K->>K: K[i,j] = k·xᵢ,xⱼ = similarity
+    K->>GP: prior distribution over functions
+
+    Note over GP: Condition on observations:
+    GP->>P: posterior μ*,σ* at new point x*
+    P->>P: μ* = K·x*,X · K⁻¹ · y
+    P->>P: σ*² = k·x*,x* - K·x*,X · K⁻¹ · K·X,x*
+
+    Note over P: Output: mean prediction + uncertainty band
+    Note over P: Use σ* for: active learning · Bayesian opt
+```
+> GP is the only regression model with principled, calibrated uncertainty. Neural networks predict but can't say "I'm not sure here."
+
 ## 2. Core concept — a distribution over functions
 
 Think of a GP as an infinite-dimensional Gaussian. For any finite set of points {x_1, ..., x_n}, the function values [f(x_1), ..., f(x_n)] are jointly Gaussian:

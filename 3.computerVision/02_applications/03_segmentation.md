@@ -11,6 +11,21 @@
 
 **Core difference from detection:** detection draws a bounding box; segmentation assigns a label to every single pixel.
 
+```mermaid
+graph LR
+    img["🖼️ Input image\n2 cats · 1 dog · grass"]
+
+    img --> sem["Semantic segmentation\nH×W class map\n🐱🐱🐶🌿 — class per pixel\nSame class = same color\nNo instance distinction"]
+    img --> inst["Instance segmentation\nH×W instance masks\n🐱₁🐱₂🐶₁ — unique ID per object\nDifferentiates Cat 1 vs Cat 2"]
+    img --> pan["Panoptic segmentation\nSemantic + Instance unified\n🐱₁🐱₂🐶₁ + 🌿 as one class\nCovers every pixel"]
+    img --> sam["SAM  Segment Anything \nPrompt: click · box · text\nZero-shot · any object"]
+
+    style sem fill:#2980b9,color:#fff
+    style inst fill:#8e44ad,color:#fff
+    style pan fill:#e74c3c,color:#fff
+    style sam fill:#27ae60,color:#fff
+```
+
 ---
 
 ## 1. Semantic vs Instance vs Panoptic

@@ -26,6 +26,28 @@
 Attention(Q, K, V) = softmax(QK^T / √d_k) · V
 ```
 
+```mermaid
+flowchart TD
+    X["Input X\n seq_len × d_model "]
+
+    X -->|"× W_Q  d_model×d_k "| Q["Q\n seq × d_k "]
+    X -->|"× W_K  d_model×d_k "| K["K\n seq × d_k "]
+    X -->|"× W_V  d_model×d_v "| V["V\n seq × d_v "]
+
+    Q & K --> scores["QKᵀ ÷ √d_k\n seq × seq \nraw similarities"]
+    scores --> mask["+ causal mask\n-∞ for future tokens\nGPT only"]
+    mask --> sm["softmax\n seq × seq \nattention weights"]
+    sm & V --> out["× V\nAttention output\n seq × d_v "]
+    out -->|"× W_O  d_v×d_model "| final["Output\n seq × d_model "]
+
+    style Q fill:#e74c3c,color:#fff
+    style K fill:#e74c3c,color:#fff
+    style V fill:#27ae60,color:#fff
+    style sm fill:#8e44ad,color:#fff
+    style final fill:#2980b9,color:#fff
+```
+> d_k = d_model / num_heads. For BERT-base: d_model=768, 12 heads → d_k=64.
+
 ### Why √d_k scaling?
 
 Without scaling: dot products grow large as d_k increases → softmax saturates into near-one-hot → gradients vanish.

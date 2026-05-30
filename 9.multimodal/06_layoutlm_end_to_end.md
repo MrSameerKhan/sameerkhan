@@ -15,6 +15,28 @@ Standard NLP approach fails because:
   - Position on page is semantically meaningful (header vs footer, label vs value)
 
 LayoutLM v3 solves this by combining 3 modalities in one transformer:
+
+```mermaid
+flowchart LR
+    doc["📄 Document image\ninvoice · form · contract"]
+
+    doc --> ocr["OCR\nPaddleOCR · Tesseract\ntext + bounding boxes"]
+    doc --> patches["Image patches\nViT-style\nvisual features"]
+
+    ocr --> text_tok["Text tokens\n'Total' '$1,250' 'Date'\nWordPiece tokenized"]
+    ocr --> bbox["BBox coordinates\nnormalized 0-1000\n x0,y0,x1,y1 per token"]
+
+    text_tok & bbox & patches --> attn["Transformer\nSelf-attention across\ntext + layout + image\n24 layers · 1024d"]
+
+    attn --> task{"Fine-tune head"}
+    task -->|"NER"| ner["IOB labels\nB-TOTAL · I-DATE · O\nper-token classification"]
+    task -->|"Classification"| cls["Document type\ninvoice · receipt · contract"]
+    task -->|"QA"| qa["Span extraction\nstart/end token indices"]
+
+    style attn fill:#2980b9,color:#fff
+    style ner fill:#27ae60,color:#fff
+```
+> Key: bbox normalization to [0, 1000] makes layout position-invariant to document resolution.
   1. Text tokens (from OCR)
   2. Bounding box coordinates for each token (layout)
   3. Image patches (visual features)

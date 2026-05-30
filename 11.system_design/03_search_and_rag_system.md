@@ -24,6 +24,37 @@ Design a semantic search system for a document corpus (e.g., enterprise knowledg
     + Response
 ```
 
+```mermaid
+flowchart TD
+    subgraph offline["📦 OFFLINE — Indexing"]
+        direction LR
+        D["📄 Documents\nPDF · HTML · DOCX"] --> P["Parse + Chunk\n512 tokens · 50 overlap"]
+        P --> E["Embed\nBGE-large → 1024d"]
+        E --> VDB["Vector DB\nFAISS / pgvector\nANN index"]
+        P --> BM["BM25 Index\nElasticsearch"]
+        P --> META["Metadata Store\nPostgres\nsource · date · type"]
+    end
+
+    subgraph online["⚡ ONLINE — Per Query"]
+        direction TB
+        Q["❓ Query"] --> QP["Query Processing\nspell correct · expand · classify"]
+        QP --> DENSE["Dense ANN\ntop-50"]
+        QP --> SPARSE["BM25\ntop-50"]
+        DENSE & SPARSE --> RRF["RRF Fusion\ntop-50 combined"]
+        META --> FILTER["Metadata filter\nbefore ANN search"]
+        FILTER --> DENSE
+        RRF --> RERANK["Cross-Encoder\nRerank → top-5"]
+        RERANK --> GEN["LLM Generation\n optional for RAG \ngrounded answer"]
+    end
+
+    VDB --> DENSE
+    BM --> SPARSE
+
+    style VDB fill:#2980b9,color:#fff
+    style RERANK fill:#8e44ad,color:#fff
+    style GEN fill:#27ae60,color:#fff
+```
+
 ---
 
 ## Indexing Pipeline
@@ -356,7 +387,7 @@ A: Layered defense: (1) Retrieval quality — if relevant context isn't retrieve
 - RAG theory: `../7.rag/01_rag.md` — chunking, retrieval patterns, Self-RAG/CRAG
 - RAG pipeline: `../7.rag/02_rag_pipeline.md` — dense vs BM25 vs hybrid, reranking decisions
 - Indirect prompt injection: `../7.rag/03_indirect_prompt_injection.md` — top threat for RAG systems
-- System Design Framework: `../10.system_design/01_ml_system_design_framework.md`
+- System Design Framework: `01_ml_system_design_framework.md`
 
 ---
 

@@ -13,6 +13,18 @@ Tabular Q-learning stores Q(s, a) for every (state, action) pair.
 
 **Solution:** Replace the Q-table with a neural network:
 
+```mermaid
+flowchart LR
+    state["State sₜ\nscreen pixels"] --> dqn["DQN\nConv → FC\nQ·s,a for all a"]
+    dqn --> action["argmax Q·s,·\ngreedily pick best action"]
+    action --> env["Environment\n→ rₜ · sₜ₊₁"]
+    env --> replay["Replay Buffer\nstore  sₜ,aₜ,rₜ,sₜ₊₁ \nrandom sample for training"]
+    replay --> loss["Bellman loss\n Q·s,a - r + γ·max Q'·s',· ²\nQ' = target network  frozen periodically"]
+    loss --> dqn
+```
+> Key DQN innovations: (1) replay buffer breaks temporal correlations, (2) target network stabilizes training.
+
+
 ```
 Q(s, a; θ) ≈ Q(s, a)
 

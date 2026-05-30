@@ -2,6 +2,32 @@
 
 **Scope:** NLP-specific applications — tokenization, embeddings, sequence models (pre-transformer), decoding, NER/IE, NLP eval. The transformer architecture itself lives in `../5.transformers/`. Tier 2 (Theory).
 
+```mermaid
+mindmap
+  root((4. NLP))
+    01_fundamentals
+      Text preprocessing
+        classical vs transformer pipeline
+      Representations · BoW → BERT timeline
+      Tokenization · BPE · WordPiece
+      BERT fine-tuning heads · DT
+    02_embeddings
+      Word2Vec · GloVe · FastText
+      Sentence embeddings · BGE · E5
+      Semantic similarity · hybrid retrieval
+      Contrastive training · hard negatives
+    03_sequence_models
+      RNN → LSTM → GRU → Attention
+      Transformer end-to-end
+      Decoding strategies · greedy · beam · top-p
+      Scaling laws · Chinchilla · emergent
+    04_applications
+      Text classification · DT
+      NER · IOB · CRF · BERT-NER
+      Information extraction · Pydantic
+      Evaluation · BLEU · ROUGE · RAGAS
+```
+
 ---
 
 ## Reading Order

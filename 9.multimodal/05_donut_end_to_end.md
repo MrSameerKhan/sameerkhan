@@ -24,6 +24,26 @@ Architecture:
   Decoder: BART-style autoregressive transformer (features → text tokens)
 ```
 
+```mermaid
+flowchart LR
+    img["📄 Document Image\n2560×1920 px\nhigh-res scan/photo"]
+
+    img --> swin["Swin Transformer Encoder\nWindow attention O·n\nhierarchical patch features\n4800 output vectors"]
+
+    swin --> cross["Cross-Attention\n decoder attends encoder \nat every generation step"]
+
+    prompt["Task prompt\n[s_invoice] asking for fields"] --> dec["BART Decoder\nCausal self-attention\n+ Cross-attention to encoder\ntoken-by-token generation"]
+
+    cross --> dec
+
+    dec --> out["Structured JSON output\n{total: 1250.00,\ndate: 2024-03-14,\nvendor: Acme Corp}\nno OCR step needed"]
+
+    style swin fill:#2980b9,color:#fff
+    style cross fill:#8e44ad,color:#fff
+    style out fill:#27ae60,color:#fff
+```
+> Donut's key advantage: OCR errors cannot happen — there is no OCR stage. Image → JSON directly end-to-end.
+
 ---
 
 ## Part 1: Architecture Deep Dive

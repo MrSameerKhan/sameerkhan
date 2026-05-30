@@ -1,5 +1,29 @@
 # 02 — Architectures
 
+```mermaid
+mindmap
+  root((DL Architectures))
+    MLP
+      Tabular data
+      FFN building block
+    CNN
+      Images · local features
+      ResNet · EfficientNet
+    RNN · LSTM · GRU
+      Sequences · streaming · edge
+    Transformer
+      Global attention · parallel
+      BERT · GPT · T5 · LLaMA
+    Generative
+      VAE · GAN · Diffusion
+    GNN
+      Graph message passing
+    MoE
+      Sparse · Mistral · DeepSeek
+    Quantization
+      INT8 · NF4 · AWQ
+```
+
 ## Reading Order
 
 | File | What You'll Learn | Prerequisites |

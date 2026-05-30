@@ -16,6 +16,26 @@
 
 **The insight:** Splitting text into whole words fails on rare/unknown words. Splitting into characters loses meaning. Subword tokenization is the middle ground — common words stay whole, rare words split into known pieces.
 
+```mermaid
+flowchart LR
+    raw["Raw text\n'lower lowest newest'"] --> bpe
+
+    subgraph bpe["BPE Training"]
+        direction TB
+        B1["Start: characters\nl·o·w·e·r  l·o·w·e·s·t  n·e·w·e·s·t"]
+        B2["Count pairs · most frequent: 'e·s' → 'es'"]
+        B3["Merge 'lo' → 'lo' · 'es' → 'es' · ..."]
+        B4["Repeat until vocab_size\n→ learned subword vocab"]
+        B1 --> B2 --> B3 --> B4
+    end
+
+    bpe --> encode["Encode new text\n'lowest' → 'low' + 'est'\n'newest' → 'new' + 'est'\n✅ Never OOV  byte-level BPE "]
+    encode --> ids["Integer IDs\n[1024, 892, 3011]\n→ model input"]
+
+    style bpe fill:#2980b922
+    style ids fill:#27ae60,color:#fff
+```
+
 ### Vocab Size Trend (2018 — 2025)
 
 | Model | Vocab |

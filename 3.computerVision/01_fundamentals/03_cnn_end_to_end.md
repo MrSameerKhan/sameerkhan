@@ -4,6 +4,22 @@
 
 ---
 
+```mermaid
+flowchart LR
+    img["4×4 image\n1 channel"] --> conv["Conv1\n3×3 kernel\n→ 2×2 feature map\nlearn edge detector"]
+    conv --> relu["ReLU\nnegatives → 0"]
+    relu --> pool["MaxPool 2×2\n→ 1×1"]
+    pool --> flat["Flatten\n→ 1-dim vector"]
+    flat --> fc["FC Layer\n1 → 2 logits"]
+    fc --> sm["Softmax\n→ P·cat  P·dog"]
+    sm --> loss["Cross-entropy\nL = -log P·true class"]
+    loss -->|"backward"| grad["∂L/∂W\nfor ALL weights\nconv + fc"]
+    grad -->|"W = W - α·∂L/∂W"| conv
+    style conv fill:#2980b9,color:#fff
+    style loss fill:#e74c3c,color:#fff
+    style sm fill:#27ae60,color:#fff
+```
+
 ## Setup
 
 ```

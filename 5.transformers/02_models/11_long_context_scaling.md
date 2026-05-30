@@ -28,6 +28,34 @@ Each technique below attacks one or two of these. Senior interview Q: "Walk me t
 
 ---
 
+```mermaid
+graph LR
+    subgraph problem["3 Problems in Long Context"]
+        direction TB
+        P1["Compute\nO·n² attention\n100K = 100× of 1K"]
+        P2["Memory\nKV cache ∝ seq_len × layers\nexceeds GPU RAM"]
+        P3["Generalization\ntrained on 4K\nposition 50K is unseen"]
+    end
+
+    subgraph fixes["Techniques — which problem solved"]
+        direction TB
+        F1["ALiBi\ndistance bias · no PE\n✅ extrapolates natively"]
+        F2["RoPE + PI\nrescale positions 0..N into 0..L_train\n✅ generalize · needs fine-tune"]
+        F3["YARN\nNTK-aware + frequency scaling\n✅ 4K→128K no full retrain\nLLaMA-3 default"]
+        F4["Sliding Window Attention\nonly attend to local W tokens\n✅ compute O·n·W"]
+        F5["FlashAttention 2/3\nIO-aware tiling\n✅ memory O·n not O·n²"]
+    end
+
+    P3 --> F1
+    P3 --> F2
+    P3 --> F3
+    P2 --> F4
+    P1 & P2 --> F5
+
+    style F3 fill:#27ae60,color:#fff
+    style F5 fill:#2980b9,color:#fff
+```
+
 ## 2. Core concept — why context length is hard
 
 **Generalization is the deepest issue.** A transformer trained on sequence length L learns position embeddings (or rotation frequencies for RoPE) that work well in [0, L]. Run it at position 4L and the position encoding looks like nothing it's seen — outputs degrade catastrophically. You see this empirically: perplexity remains low until exactly the trained context length, then explodes.

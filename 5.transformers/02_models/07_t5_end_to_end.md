@@ -20,6 +20,32 @@ Classification:  "sentiment: cat sat on mat"                  → "positive"
 Span fill:       "cat <x> mat"                                → "<x> sat on </x>"
 ```
 
+```mermaid
+flowchart LR
+    task["Task prefix + input\n'translate EN→FR:\ncat sat on mat'"]
+
+    task --> enc["ENCODER  6 layers \n↔ Bidirectional self-attention\nReads full input with context"]
+    enc --> enc_kv["Encoder K, V\none per token\npassed to every decoder layer"]
+
+    gen["[BOS] le chat..."] --> dec
+
+    subgraph dec["DECODER  6 layers "]
+        direction TB
+        D1["Causal self-attention\n→ sees only past output tokens"]
+        D2["Cross-attention\nQ from decoder\nK, V from encoder\nconditioned on full input"]
+        D3["FFN + Add & Norm"]
+        D1 --> D2 --> D3
+    end
+
+    enc_kv --> dec
+    dec --> out["Output tokens\n'le chat s'est assis'\ngenerated one at a time"]
+
+    style enc fill:#2980b9,color:#fff
+    style dec fill:#8e44ad22
+    style out fill:#27ae60,color:#fff
+```
+> Cross-attention is the T5 secret: decoder Q attends to full encoder K,V at every generation step — never loses input context.
+
 ---
 
 ## Part 1 — Span Corruption (T5 Pretraining Objective)

@@ -2,6 +2,27 @@
 
 > Purpose: Given a task description, pick the right architecture. Interview shortcut: know the decision tree, the key numbers, and 2-3 failure modes for each.
 
+```mermaid
+flowchart TD
+    A([What is your data?]) --> B{Data type}
+
+    B -->|Fixed-size tabular\nstructured features| C["MLP\nlinear + activation layers\nclassification · regression"]
+    B -->|Images · video| D{Resolution\nand task}
+    D -->|Standard vision\nclassification| E["CNN\nResNet · EfficientNet\nlocal features"]
+    D -->|Large scale\nor dense prediction| F["ViT / Swin\nglobal attention\nDINOv2 backbone"]
+    B -->|Text · code\ndiscrete tokens| G{Context length?}
+    G -->|Standard ≤8K| H["Transformer\nBERT · GPT · T5\nindustry default"]
+    G -->|Very long 100K+\nor streaming| I["Mamba / SSM\nO·n vs O·n² attention"]
+    B -->|Time series\naudio · sensor| J{Task type}
+    J -->|Short patterns| K["LSTM/GRU or\n1D CNN  TCN "]
+    J -->|Long-range| L["Transformer\nor Mamba"]
+    B -->|Graphs\nmolecules · social| M["GNN\nnode + edge message passing"]
+
+    style H fill:#2980b9,color:#fff
+    style F fill:#8e44ad,color:#fff
+    style I fill:#e74c3c,color:#fff
+```
+
 ## One-Page Decision Tree
 
 ```

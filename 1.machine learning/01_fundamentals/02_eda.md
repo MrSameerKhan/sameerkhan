@@ -16,6 +16,21 @@
 
 ---
 
+```mermaid
+flowchart LR
+    data["📊 Raw Dataset"] --> shape["1. Shape + types\ndf.info · dtypes\nrows · cols · dtypes"]
+    shape --> missing["2. Missing values\ndf.isnull·.sum\n% missing per feature"]
+    missing --> dist["3. Distributions\nhistogram · boxplot · KDE\nskew · outliers · modality"]
+    dist --> target["4. Target analysis\nclass balance\ndistribution · leakage check"]
+    target --> corr["5. Correlations\nheatmap · pairplot\nSpearman for non-linear"]
+    corr --> biv["6. Bivariate\nboxplot by class\nscatter vs target"]
+    biv --> ready["✅ Ready to model\nfeatures to engineer identified"]
+
+    style data fill:#2980b9,color:#fff
+    style ready fill:#27ae60,color:#fff
+```
+> Never start modeling before EDA. EDA prevents 80% of modeling mistakes — class imbalance, leakage, distributional surprises.
+
 ## 1. First Pass — Always Run These
 
 ```python

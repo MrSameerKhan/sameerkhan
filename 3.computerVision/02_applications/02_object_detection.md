@@ -10,6 +10,38 @@
 | YOLOv5/v8 | One-stage | Very fast (~140 FPS) | High | Real-time production |
 | DETR | Transformer | Medium | High | No NMS needed, elegant |
 
+```mermaid
+timeline
+    title Object Detection Evolution
+    2014 : R-CNN
+         : Region proposals + CNN per region
+         : Accurate but ~49s per image
+    2015 : Fast R-CNN
+         : Shared CNN for whole image
+         : ROI pooling · 2s per image
+    2016 : Faster R-CNN
+         : Region Proposal Network  RPN
+         : End-to-end · 200ms · two-stage SOTA
+    2016 : SSD + YOLO v1
+         : One-stage: no proposals
+         : Real-time detection begins
+    2017 : RetinaNet + Focal Loss
+         : Solves class imbalance in one-stage
+         : Matches two-stage accuracy
+    2020 : DETR  DEtection TRansformer
+         : No NMS · set prediction
+         : Transformer end-to-end detection
+    2023 : YOLOv8 · RT-DETR
+         : Real-time transformer detection
+         : Production default
+```
+
+| Stage | Method | Speed | Accuracy |
+|-------|--------|-------|---------|
+| Two-stage | Faster R-CNN | Slow | Highest |
+| One-stage | YOLOv8 | Very fast | High |
+| Transformer | DETR / RT-DETR | Medium | High + no NMS |
+
 **Key metrics:** IoU threshold, mAP (mean Average Precision), FPS
 
 ---

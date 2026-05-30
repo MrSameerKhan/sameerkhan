@@ -5,6 +5,27 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph contrastive["Contrastive  SimCLR · DINO "]
+        direction TB
+        C1["Augment image 2×\ndifferent crops · colors"] --> C2["Encode both views"]
+        C2 --> C3["Maximize similarity\nof same image views\nMinimize vs other images"]
+    end
+
+    subgraph masked["Masked Autoencoding  MAE · BERT "]
+        direction TB
+        M1["Mask 75% of patches"] --> M2["Encode visible patches"]
+        M2 --> M3["Reconstruct masked\nforced to learn structure"]
+    end
+
+    subgraph pseudo["Pseudo-labeling  FixMatch "]
+        direction TB
+        P1["Weak augment → prediction"] --> P2["If confidence > 0.95\nuse as pseudo-label"]
+        P2 --> P3["Strong augment → train\non pseudo-labeled data"]
+    end
+```
+
 ## Why Deep SSL Is Different
 
 ```

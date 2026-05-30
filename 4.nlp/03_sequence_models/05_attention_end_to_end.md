@@ -47,6 +47,26 @@ RNN/LSTM/GRU: output = f(h_{t-1}, h_t, h_{t+1}, ...)   sequential, bottleneck
 Attention:    output = f(weighted_sum(x₁, x₂, ..., x_T)) parallel, direct
 ```
 
+```mermaid
+flowchart TD
+    X["Input X  seq × d_model \n'cat sat on mat' → 4 × d"]
+
+    X -->|"× W_Q"| Q["Q Queries\n4 × d_k\n'what am I looking for?'"]
+    X -->|"× W_K"| K["K Keys\n4 × d_k\n'what do I contain?'"]
+    X -->|"× W_V"| V["V Values\n4 × d_v\n'what do I output?'"]
+
+    Q & K --> S["Scores = QKᵀ / √d_k\n4 × 4 matrix\nevery token → every token"]
+    S --> A["softmax → attention weights α\n4 × 4\neach row sums to 1"]
+    A & V --> O["Output = α × V\n4 × d_v\nweighted mix of all positions"]
+
+    style Q fill:#e74c3c,color:#fff
+    style K fill:#e74c3c,color:#fff
+    style V fill:#27ae60,color:#fff
+    style A fill:#8e44ad,color:#fff
+    style O fill:#2980b9,color:#fff
+```
+> O(1) gradient path between ANY two positions — no sequential bottleneck. This is why transformers captured longer dependencies than any RNN variant.
+
 At prediction time, "mat" at position 4 asks: "which positions are most relevant to me?" It computes a score against EVERY position (including "cat" at position 1), then takes a weighted sum — giving more weight to relevant positions.
 
 Gradient flows from the output directly to position 1 in **ONE step**. No sequential chain. No vanishing.

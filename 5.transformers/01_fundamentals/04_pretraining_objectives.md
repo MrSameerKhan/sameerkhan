@@ -20,6 +20,34 @@ The three dominant objectives:
 
 Each objective creates a different kind of representation. The choice determines what the model is good at downstream.
 
+```mermaid
+graph LR
+    subgraph mlm["🔵 MLM — BERT"]
+        direction TB
+        M1["cat sat on ▓▓▓▓\n15% masked"]
+        M2["Bidirectional attention\nleft ← token → right"]
+        M3["Predict: mat\nat masked positions only"]
+        M4["✅ Classification · NER\nUnderstanding tasks"]
+    end
+
+    subgraph clm["🟢 CLM — GPT"]
+        direction TB
+        C1["cat sat on mat\nno masking"]
+        C2["Causal attention\nleft only  →"]
+        C3["Predict next token\nat ALL positions"]
+        C4["✅ Generation · chat\nCompletion · LLMs"]
+    end
+
+    subgraph sc["🟠 Span Corruption — T5"]
+        direction TB
+        S1["cat ✦ on ✦✦✦\nspans masked"]
+        S2["Encoder: bidirectional\nDecoder: causal"]
+        S3["Reconstruct masked spans\nvariable length"]
+        S4["✅ Translation\nSummarization · seq2seq"]
+    end
+```
+> Choose by task type: understanding → BERT/MLM, generation → GPT/CLM, seq2seq → T5/span.
+
 ---
 
 ## 1. Masked Language Modeling (MLM) — BERT

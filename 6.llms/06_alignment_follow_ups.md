@@ -174,6 +174,25 @@ Want to combine everything?
 └── SFT + DPO → final
 ```
 
+```mermaid
+flowchart TD
+    A([Choose alignment method]) --> B{What data\ndo you have?}
+    B -->|Paired chosen/rejected| C{Data quality?}
+    B -->|Binary thumbs up/down| D([KTO])
+    B -->|Verifiable rewards\nmath · code · tests| E([GRPO / PPO])
+    C -->|Clean labels + large dataset| F{GPU memory\nconstrained?}
+    C -->|Noisy labels or\nsmall dataset| G([IPO\nsquared margin loss])
+    F -->|Yes OR no SFT yet| H([ORPO\nSFT + align in one pass\nno ref model needed])
+    F -->|No| I([DPO\ndefault 2024-25])
+    style D fill:#f39c12,color:#fff
+    style E fill:#8e44ad,color:#fff
+    style G fill:#e74c3c,color:#fff
+    style H fill:#2980b9,color:#fff
+    style I fill:#27ae60,color:#fff
+```
+
+**Memory tip:** DPO=default · ORPO=no GPU budget · KTO=thumbs data · IPO=noisy labels · GRPO=verifiable reward
+
 ---
 
 ## 7. Failure Modes

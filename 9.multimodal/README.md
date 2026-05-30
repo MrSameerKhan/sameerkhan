@@ -1,6 +1,33 @@
 # 11. Multimodal
 
-Scope: vision+language fusion — VLMs, document AI, multimodal RAG. Pure-vision applications in `../3.computerVision/`; pure-NLP in `../4.nlp/`. **Tier: 2 (Theory).** Note: `00_roadmap.md` is legacy navigation. This README supersedes it. `00_roadmap.md` will be archived in Phase 8.
+Scope: vision+language fusion — VLMs, document AI, multimodal RAG.
+
+```mermaid
+mindmap
+  root((9. Multimodal))
+    Vision-Language Models
+      CLIP · dual encoder · InfoNCE
+      BLIP-2 · Q-Former · LLaVA
+      Modern VLMs 2024-25
+        PaliGemma · Qwen-VL · Florence-2 · Phi-3
+    Document AI
+      OCR → layout → LayoutLM pipeline
+      Donut · end-to-end no OCR
+      LayoutLM v3 · bbox normalization
+      ColPali · multimodal RAG
+    Vision Transformers
+      ViT · patch embedding · CLS token
+      Swin · window attention · dense prediction
+      DINO · DINOv2 · self-supervised
+    CLIP fine-tuning
+      Contrastive loss · LoRA on CLIP
+    Audio
+      Whisper · mel spectrogram · encoder-decoder
+      Audio LLMs · Gemini native
+    Hallucination mitigation
+      Object · attribute · relation types
+      Verifier · constrained · ensemble
+``` Pure-vision applications in `../3.computerVision/`; pure-NLP in `../4.nlp/`. **Tier: 2 (Theory).** Note: `00_roadmap.md` is legacy navigation. This README supersedes it. `00_roadmap.md` will be archived in Phase 8.
 
 ---
 
@@ -49,10 +76,10 @@ Scope: vision+language fusion — VLMs, document AI, multimodal RAG. Pure-vision
 - **Transformer architecture** (ViT is a transformer): `../5.transformers/01_fundamentals/05_vision_transformers.md`
 - **Generative models** (Diffusion / Stable Diffusion / DiT): `../2.deep_learning/02_architectures/05_generative.md`
 - **Document RAG** (visual retrieval): `../7.rag/`
-- **Document processing system design**: `../10.system_design/04_document_processing_pipeline.md`
+- **Document processing system design**: `../11.system_design/04_document_processing_pipeline.md`
 
 ---
 
 ## Practice
 
-No dedicated multimodal phase in `code_practice/` yet. Document AI work happens via Sameer's `../10.system_design/` and via `../code_practice/05_rag/`.
+No dedicated multimodal phase in `code_practice/` yet. Document AI work happens via Sameer's `../11.system_design/` and via `../code_practice/05_rag/`.

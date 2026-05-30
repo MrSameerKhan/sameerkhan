@@ -36,6 +36,31 @@ Self-supervised learning constructs a "pretext task" — one that requires LEARN
 2. **Self-distillation** — student network predicts teacher network's representations (BYOL, DINO)
 3. **Reconstruction** — mask part of the image, predict it (MAE, MaskFeat)
 
+```mermaid
+sequenceDiagram
+    participant I as Image
+    participant A as Augment×2
+    participant E1 as Encoder  query 
+    participant E2 as Encoder  key/teacher 
+    participant L as Loss
+
+    I->>A: apply random augmentations
+    A->>E1: view 1  crop + color jitter + flip
+    A->>E2: view 2  different augmentations
+
+    E1->>L: z₁ = projection·encoder·view1
+    E2->>L: z₂ = projection·encoder·view2
+
+    L->>L: NT-Xent  SimCLR  or\nInfoNCE  MoCo \nminimize distance z₁,z₂\nmaximize distance to other images
+
+    note right of E2
+        DINO: E2 is EMA teacher
+        BYOL: no negative pairs needed
+        Both prevent collapse via
+        centering + sharpening
+    end note
+```
+
 All three produce strong frozen features that transfer to classification, detection, segmentation.
 
 ---

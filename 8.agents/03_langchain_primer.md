@@ -20,6 +20,22 @@
 
 ---
 
+```mermaid
+flowchart LR
+    PT["PromptTemplate\n{question} slot"] -->|"pipe |"| LM["ChatModel\nClaude · GPT · Llama"]
+    LM -->|"pipe |"| OP["OutputParser\nStr · Pydantic · JSON"]
+    OP --> out["Typed output"]
+
+    out -->|".invoke"| inv["Single call\ndict → output"]
+    out -->|".stream"| str["Token stream\nreal-time UI"]
+    out -->|".batch"| bat["Parallel batch\nhigh throughput"]
+
+    style PT fill:#2980b9,color:#fff
+    style LM fill:#8e44ad,color:#fff
+    style OP fill:#27ae60,color:#fff
+```
+> LCEL: `chain = prompt | model | parser`. Everything is a Runnable with `.invoke / .stream / .batch`. For loops/state → LangGraph.
+
 ## 1. LCEL — The One Idea That Matters
 
 LCEL replaced the old class-based chains with a **pipe-composition syntax**:
@@ -140,7 +156,7 @@ joke = chain.invoke({"topic": "programming"})
 - **Instructor library** — wraps Pydantic + native structured output with retries
 - **outlines** — constrained decoding for local models
 
-See `../5.transformers/models/12_constrained_decoding.md`.
+See `../5.transformers/02_models/12_constrained_decoding.md`.
 
 LangChain has caught up partially via `with_structured_output(Pydantic_model)`:
 
@@ -342,9 +358,9 @@ LangChain is for composing linear/branching chains of LLM calls using LCEL. Lang
 | LangGraph deep-dive | `04_langgraph_deep.md` | Short-term memory = LangGraph state |
 | Agent fundamentals | `01_agents.md` | What an agent is conceptually |
 | Multi-agent frameworks | `07_multi_agent_orchestration.md` | Planner-executor patterns |
-| Structured output / constrained decoding | `../5.transformers/models/12_constrained_decoding.md` | Alternative to PydanticOutputParser |
+| Structured output / constrained decoding | `../5.transformers/02_models/12_constrained_decoding.md` | Alternative to PydanticOutputParser |
 | Pydantic structured extraction | `../4.nlp/04_applications/03_information_extraction.md` | Same pattern for tool-call validation |
-| LLM observability (LangSmith etc.) | `../10.mlops/11_llm_observability_tools.md` | |
+| LLM observability (LangSmith etc.) | `../10.mlops/11_llm_observability.md` | |
 | Code practice | `code_practice/06_agents/02_langchain_primer/` | |
 
 ---

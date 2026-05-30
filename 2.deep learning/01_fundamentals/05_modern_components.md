@@ -11,6 +11,33 @@
 
 ---
 
+```mermaid
+graph LR
+    subgraph act["Activation Functions"]
+        direction TB
+        R["ReLU\nmax·0,x\nfast · dead neuron risk"]
+        G["GELU\nx·Φ·x\nsmooth · BERT default"]
+        S["SwiGLU\nx·σ·Wx⊗Vx\nbest quality · LLaMA"]
+        SIG["Sigmoid\n1/1+e^-x\noutput layer only"]
+    end
+
+    subgraph norm["Normalization Methods"]
+        direction TB
+        BN["BatchNorm\nnormalize across batch\nCNN default · fails at batch=1"]
+        LN["LayerNorm\nnormalize across features\nTransformer default"]
+        RMS["RMSNorm\nno mean centering\nfaster · LLaMA default"]
+    end
+
+    subgraph res["Residual Connection"]
+        direction LR
+        X2["x"] --> F["F·x sublayer"]
+        X2 --> ADD{"+"}
+        F --> ADD
+        ADD --> OUT["x + F·x\ngradient highway"]
+    end
+```
+> Residuals solved the depth problem (2015): gradient can skip any sublayer via the + shortcut, reaching early layers without vanishing.
+
 ## 1. Residual Connections
 
 ### The Problem They Solved

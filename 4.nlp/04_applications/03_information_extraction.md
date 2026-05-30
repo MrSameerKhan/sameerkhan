@@ -14,6 +14,26 @@
 | Open IE | Text | (subject, predicate, object) | Stanford OpenIE |
 | Coreference | Text | Entity clusters | CorefBERT |
 
+```mermaid
+flowchart LR
+    text["📝 Text / Document"] --> ner["NER\nBERT token classification\nentity spans + types"]
+    ner --> re["Relation Extraction\nentity pairs → relation type\n'Apple' FOUNDED_BY 'Steve Jobs'"]
+    re --> kg["Knowledge Graph\nor Structured DB"]
+
+    text --> slot["Slot Filling\nLLM + Pydantic schema\nkey-value extraction"]
+    slot --> json["Structured JSON\n{invoice_no, date, total}"]
+
+    text --> doc_img["Document image"]
+    doc_img --> donut["Donut / LayoutLMv3\nOCR + layout aware\nend-to-end extraction"]
+    donut --> json
+
+    style ner fill:#2980b9,color:#fff
+    style slot fill:#8e44ad,color:#fff
+    style donut fill:#e74c3c,color:#fff
+    style json fill:#27ae60,color:#fff
+```
+> Modern default: LLM + Pydantic schema for flexible extraction; Donut/LayoutLMv3 for high-volume document AI.
+
 **IE pipeline: Text → NER (entities) → RE (relations between entities) → Knowledge Graph / Structured DB**
 
 ---

@@ -16,6 +16,29 @@
 
 **Core principle:** A model that performs well in development will degrade in production — when and by how much is unknowable without monitoring.
 
+```mermaid
+flowchart TD
+    alert(["🚨 Alert triggered"]) --> B{What kind\nof signal?}
+
+    B -->|Infra: latency spike · error rate| C["Check infrastructure\nGPU memory · pod restarts\nrequests queued"]
+    C --> C1["Scale up / restart\nfix code bug"]
+
+    B -->|Data drift: PSI > 0.2 or KS p < 0.05| D["Identify drifted features\ncheck upstream data pipeline"]
+    D --> D1{How severe?}
+    D1 -->|Minor · model still accurate| E["Log + monitor more closely\nschedule incremental retrain"]
+    D1 -->|Severe · predictions degraded| F["Trigger full retrain\non recent data window"]
+
+    B -->|Concept drift: accuracy drop vs baseline| G["Check ground truth labels\nvs model predictions"]
+    G --> G1{Is ground truth\nlagged or missing?}
+    G1 -->|Yes| H["Use proxy metrics\nCTR · user corrections\nconfidence calibration"]
+    G1 -->|No| I["Retrain on recent window\nor roll back to last stable model"]
+
+    style alert fill:#e74c3c,color:#fff
+    style F fill:#f39c12,color:#fff
+    style I fill:#f39c12,color:#fff
+    style E fill:#27ae60,color:#fff
+```
+
 ---
 
 ## Core Concepts

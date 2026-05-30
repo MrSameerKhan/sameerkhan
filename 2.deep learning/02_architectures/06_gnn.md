@@ -12,6 +12,21 @@
 
 **One-line summary:** GNNs update each node's embedding by aggregating information from its neighbors, iteratively — after K layers, each node sees its K-hop neighborhood.
 
+```mermaid
+flowchart LR
+    subgraph msg["GNN Message Passing  per layer "]
+        direction TB
+        N["Node v\nembedding hᵥ"]
+        NB["Neighbors N·v\nembeddings hᵤ"]
+        NB -->|"AGGREGATE\nGCN: mean · GAT: weighted · GIN: sum"| AGG["Aggregated\nneighbor info m_N·v"]
+        N & AGG -->|"COMBINE\nMLP or sum"| NEW["Updated hᵥ'\nincorporates 1-hop context"]
+    end
+
+    note["After K layers: node v sees K-hop neighborhood\nK=1: direct neighbors\nK=2: friends of friends\nK=3: most social graphs covered"]
+    style N fill:#2980b9,color:#fff
+    style NEW fill:#27ae60,color:#fff
+```
+
 ---
 
 ## 1. Why Graphs? When Standard DL Fails

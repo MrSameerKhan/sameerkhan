@@ -14,6 +14,25 @@
 
 **Golden rule for time series:** Never random-shuffle for train/test split. Always train on past, test on future.
 
+```mermaid
+flowchart TD
+    A([Time series forecasting]) --> B{How many series?}
+
+    B -->|Single univariate| C{Data size + seasonality?}
+    C -->|Small · has seasonality| D["SARIMA or Prophet\neasy to interpret\nholiday effects"]
+    C -->|Large · simple trend| E["ARIMA or ETS\nstatistical baseline"]
+
+    B -->|Multiple multivariate| F{Feature richness?}
+    F -->|Many features · tabular-style| G["LightGBM / XGBoost\ncreate lag features\nFast · scalable · strong baseline"]
+    F -->|Raw sequence · complex patterns| H{Sequence length?}
+    H -->|Short ≤200 steps| I["LSTM / GRU\nsequential patterns"]
+    H -->|Long 200+ steps · SOTA needed| J["PatchTST / N-BEATS\ntransformer-based\nbest benchmark results"]
+
+    style D fill:#f39c12,color:#fff
+    style G fill:#27ae60,color:#fff
+    style J fill:#2980b9,color:#fff
+```
+
 ---
 
 ## 1. Core Concepts

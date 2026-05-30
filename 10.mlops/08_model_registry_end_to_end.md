@@ -22,6 +22,39 @@ Registry stores:
   - Transition log: who promoted it, when, why
 ```
 
+```mermaid
+stateDiagram-v2
+    [*] --> training : new experiment
+
+    training --> logged : mlflow.log_metrics + log_model
+    logged --> registered : mlflow.register_model
+
+    registered --> staging : promote to Staging\n auto or manual
+    staging --> production : validation gate passes\nF1 > threshold · latency SLA met
+    staging --> registered : validation fails\nroll back to previous version
+
+    production --> archived : new model replaces it
+    production --> staging : rollback triggered\n drift detected · error spike
+
+    archived --> [*]
+
+    note right of staging
+        Validation gate:
+        - offline metrics vs baseline
+        - shadow traffic test
+        - latency P95 check
+        - human approval optional
+    end note
+
+    note right of production
+        Monitor:
+        - data drift (PSI)
+        - prediction drift
+        - latency degradation
+        Trigger rollback if needed
+    end note
+```
+
 ---
 
 ## MLflow — Full Workflow

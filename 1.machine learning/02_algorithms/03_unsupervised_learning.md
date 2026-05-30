@@ -17,6 +17,30 @@
 
 ---
 
+```mermaid
+flowchart TD
+    A([Unsupervised task]) --> B{Goal?}
+
+    B -->|Group similar items| C{Cluster shape?}
+    C -->|Globular · known k| D["K-Means\nfast · scalable · assumes spherical"]
+    C -->|Arbitrary shapes · noise| E["DBSCAN\nhandles outliers · no k needed"]
+    C -->|Hierarchical structure| F["Agglomerative\ndendrogram · any linkage"]
+    C -->|Soft assignments| G["GMM\nElliptical clusters · probabilistic"]
+
+    B -->|Reduce dimensions| H{Purpose?}
+    H -->|Preprocessing / noise removal| I["PCA\nlinear · fast · variance-preserving"]
+    H -->|Visualization 2D/3D| J["UMAP  default \nor t-SNE"]
+
+    B -->|Find anomalies| K{Data type?}
+    K -->|General tabular| L["Isolation Forest\nfast · scales well"]
+    K -->|Local density anomalies| M["LOF\nn_neighbors based"]
+
+    style D fill:#2980b9,color:#fff
+    style I fill:#8e44ad,color:#fff
+    style L fill:#e74c3c,color:#fff
+    style J fill:#27ae60,color:#fff
+```
+
 ## 1. K-Means Clustering
 
 ### How It Works
