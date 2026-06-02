@@ -6,6 +6,54 @@
 
 ---
 
+## Session Log
+
+### 2026-06-03
+
+**Phase 1 — COMPLETE**
+- `nvidia-smi` output: Driver 512.72, CUDA 11.6, GPU at 65°C, 375MiB/4096MiB used, WDDM mode
+- Device status: `OK` for GeForce GTX 1650 Ti (and Intel UHD Graphics)
+- Driver 512.72 < 527.41 required → **must do Phase 2 (driver update)**
+
+**Phase 2 — COMPLETE**
+- GeForce Experience not installed → used manual driver method (Phase 2.2)
+- Installed: NVIDIA Studio Driver 610.47 | WHQL | Windows 11 64-bit | Released 2026-05-26
+- `nvidia-smi` confirmed: Driver 610.47, CUDA UMD Version 13.3, GPU healthy (66°C, 310MiB/4096MiB)
+
+**Phase 3 — COMPLETE**
+- Uninstalled: torch (CPU-only)
+- Installed: torch-2.5.1+cu121, torchvision-0.20.1+cu121, torchaudio-2.5.1+cu121 (Python 3.12, win_amd64)
+- Note: CUDA toolkit/cuDNN not needed separately — bundled inside PyTorch wheel
+
+**Phase 4 — COMPLETE**
+- PyTorch version : 2.5.1+cu121
+- CUDA available  : True
+- CUDA version    : 12.1
+- GPU name        : NVIDIA GeForce GTX 1650 Ti
+- VRAM (GB)       : 4.29
+
+**Phase 5 — COMPLETE**
+- Tensor device   : cuda:0
+- Shape           : torch.Size([1000, 1000])
+- VRAM used (MB)  : 21.0
+
+**Phase 6 — COMPLETE**
+- CPU benchmark   : 7.911s for 100 iterations (2048x2048 matmul)
+- CUDA benchmark  : 0.804s for 100 iterations → ~10x speedup
+- BERT forward pass on cuda:0 → logits device confirmed cuda:0
+- Script: `cuda/smoke_test.py`
+
+**Real Training Run — 01_bert_classification.ipynb**
+- Epoch 1/3 | loss: 0.4123 | val_acc: 0.8980
+- GPU-Util     : 97% during training
+- VRAM used    : 3431MiB / 4096MiB (84%)
+- Temperature  : 84°C (safe, limit ~95°C)
+- Power        : 41W / 50W (82% TDP)
+- Process type : C (Compute) — confirmed GPU training, not display
+- Process      : sameerkhan\python.exe (PID 21892)
+
+---
+
 ## Phase 1 — Verify Laptop Config
 
 ### 1.1 Confirm GPU is recognized by OS
@@ -269,10 +317,21 @@ For QLoRA on larger models: use `device_map="auto"` + `load_in_4bit=True` with b
 
 ## Summary Checklist
 
-- [ ] Phase 1: `nvidia-smi` shows GTX 1650 Ti
-- [ ] Phase 2: Driver updated to ≥ 527.41, CUDA 12.x shown in `nvidia-smi`
-- [ ] Phase 3: `pip install torch ... --index-url .../cu121` completed
-- [ ] Phase 4: `torch.cuda.is_available()` returns `True`
-- [ ] Phase 5: Tensor ops run on `cuda:0` without error
-- [ ] Phase 6: Transformer model loads and runs forward pass on GPU
-- [ ] Phase 6: `nvidia-smi -l 1` shows GPU-Util > 0% during training
+- [x] Phase 1: `nvidia-smi` shows GTX 1650 Ti
+- [x] Phase 2: Driver updated to 610.47, CUDA 13.3 shown in `nvidia-smi`
+- [x] Phase 3: `pip install torch ... --index-url .../cu121` completed → torch-2.5.1+cu121
+- [x] Phase 4: `torch.cuda.is_available()` returns `True`
+- [x] Phase 5: Tensor ops run on `cuda:0` without error
+- [x] Phase 6: Transformer model loads and runs forward pass on GPU
+- [x] Phase 6: CPU vs GPU benchmark — CPU 7.911s vs CUDA 0.804s (~10x speedup)
+
+## Cache Relocation — COMPLETE
+
+| Cache | Location |
+|-------|----------|
+| HF_HOME | S:\huggingface_cache |
+| Datasets cache | S:\huggingface_cache\datasets |
+| Transformers cache | S:\huggingface_cache\hub |
+| Torch hub cache | S:\torch_cache |
+
+Verified via `cuda/smoke_test_2.py` — all 4 caches on S: drive.
