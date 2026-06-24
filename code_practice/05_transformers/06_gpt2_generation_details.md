@@ -1,5 +1,5 @@
 # Session 6 — GPT-2 Causal Language Modeling + Text Generation
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../5.transformers/02_models/02_gpt_family.md](../../../5.transformers/02_models/02_gpt_family.md)
 
@@ -109,13 +109,41 @@ Saved to models/05_transformers/gpt2_generation
 
 ---
 
-## How to Run
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-25)
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 06_gpt2_generation.py
+```
+Device: cuda
+
+Epoch 1/3 | loss: 3.6503 | perplexity: 38.49
+Epoch 2/3 | loss: 3.2548 | perplexity: 25.91
+Epoch 3/3 | loss: 3.1254 | perplexity: 22.77
+
+Saved to models/05_transformers/gpt2_generation
+
+-- Generation — same prompt, different strategies --
+  [greedy]  repetitive — "bank...bank...bank obligations" loop (expected greedy behavior)
+  [top_k]   diverse, domain-relevant (state inspection, emergency guarantees)
+  [top_p]   fluent financial prose (application fee, annual report submission)
+
+-- Synthetic training data examples --
+  → Customer complaint: interest rate fixed at $3/year, could not retrieve funds
+  → Loan application status update: approved for review, submit within weeks
+  → Mortgage terms: fixed rate 15-20% first two years, 12% premium thereafter
 ```
 
-First run: downloads `gpt2` (~500 MB) + WikiText-2 (~12 MB).
-MPS training: ~10–15 min for 3 epochs on 2k examples.
+- Perplexity dropped 38.5 → 25.9 → 22.8 — model adapting to domain
+- All 3 generation strategies produced distinct outputs — sampling working correctly
+- Warning: `attention_mask` not set (pad=eos token) — cosmetic, does not affect output
 
-**Note:** `tokenizer.pad_token = tokenizer.eos_token` is required — GPT-2 was trained without a pad token and will error if you don't set one for batched encoding.
+---
+
+## How to Run
+
+```powershell
+python code_practice\05_transformers\06_gpt2_generation.py
+```
+
+First run: downloads `gpt2` (~548 MB) + WikiText-2 (~8 MB).
+CUDA training: ~3–5 min for 3 epochs on 2k examples.
+
+**Note:** `tokenizer.pad_token = tokenizer.eos_token` is required — GPT-2 has no pad token.

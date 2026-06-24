@@ -1,5 +1,5 @@
 # Session 2 — Chunking Strategies
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../7.rag/02_rag_pipeline.md](../../../7.rag/02_rag_pipeline.md)
 
@@ -51,6 +51,25 @@ for i in range(len(embeddings) - 1):
 ```
 
 When similarity drops below 0.72, the sentences are about different topics. Split there — not at arbitrary character boundaries.
+
+---
+
+## Actual Output (Windows, local embeddings only, 2026-06-25)
+
+```
+fixed-150    : 52 chunks, avg 132 chars
+fixed-300    : 25 chunks, avg 257 chars
+sentence-2   : 29 chunks, avg 194 chars
+hierarchical : 55 chunks, avg 102 chars
+semantic     : 55 chunks, avg 102 chars
+```
+
+**Winner by query:**
+- Q1 (LTV first-time buyers): `sentence-2` top score 0.755 — retrieved complete sentence with 95% fact
+- Q2 (documents + affordability): `fixed-300` top score 0.731 — longer chunks capture multi-sentence rules
+- Q3 (ERC schedule): `sentence-2`/`hierarchical`/`semantic` tied at 0.705–0.707 — all retrieved the full ERC list
+
+**Fixes S01 Q1 failure:** sentence-2 and hierarchical both retrieved the "95% LTV" chunk cleanly vs fixed-150/200 which split it mid-sentence.
 
 ---
 

@@ -1,5 +1,5 @@
 # Session 3 — LLM Evaluation: A/B Testing Two Prompt Strategies
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../6.llms/04_evaluation.md](../../../6.llms/04_evaluation.md)
 
@@ -89,6 +89,25 @@ Return JSON: {"correctness": int, "completeness": int, "specificity": int, "reas
 - Include `reference` in the judge prompt — judge verifies against ground truth, not just its own knowledge
 - Three separate dimensions — easier to diagnose which system fails and why
 - `response_format={"type": "json_object"}` — no manual JSON parsing
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+```
+Metric                           System A   System B     Winner
+--------------------------------------------------------------
+ROUGE-L (avg)                       0.306      0.215          A
+Judge correctness                    5.00       4.80          A
+Judge completeness                   4.40       5.00          B
+Judge specificity                    3.80       4.60          B
+Judge overall avg                    4.40       4.80          B
+```
+
+- ROUGE-L favoured A (shorter answers overlap better with reference) — expected limitation
+- Judge overall B wins: 4.80 vs 4.40 — few-shot domain prompt consistently more specific
+- B won 4/5 questions on judge score; Q3 (loan tenor) was a tie
+- DECISION: Ship System B
 
 ---
 

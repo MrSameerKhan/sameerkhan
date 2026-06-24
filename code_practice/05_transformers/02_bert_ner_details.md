@@ -1,5 +1,5 @@
 # Session 2 — BERT Named Entity Recognition (NER)
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 ---
 
@@ -90,13 +90,44 @@ Saved to models/05_transformers/bert_ner
 
 ---
 
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-17)
+
+```
+Device: cuda
+
+Epoch 1/3 | loss: 0.4796 | val_f1: 0.9004
+Epoch 2/3 | loss: 0.0511 | val_f1: 0.9432
+Epoch 3/3 | loss: 0.0232 | val_f1: 0.9465
+
+Saved to models/05_transformers/bert_ner
+
+-- Inference --
+  Apple                 B-ORG
+  Tim                   B-PER
+  Cook                  I-PER
+  San                   B-LOC
+  Francisco             I-LOC
+
+  Elon                  B-PER
+  Musk                  I-PER
+  Tesla                 B-ORG
+  Austin                B-LOC
+  Texas                 I-LOC
+```
+
+- val_f1 reached **0.9465** on 4k subset — exceeds expected ~84–86% (GPU training benefits)
+- Fix applied: `datasets` downgraded to 2.20.0 (4.x dropped loading script support)
+- Fix applied: `──` → `--` in print (Windows cp1252 encoding)
+
+---
+
 ## How to Run
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 02_bert_ner.py
+```powershell
+python code_practice\05_transformers\02_bert_ner.py
 ```
 
 First run downloads `bert-base-cased` (~400 MB) and CoNLL-2003 (~7 MB) — cached after that.  
-Training on Apple Silicon MPS: ~5–8 minutes for 3 epochs on 4k samples.
+Training on GTX 1650 Ti CUDA: ~2–3 minutes for 3 epochs on 4k samples.
 
-**Extra dependency** (already in `environment.yml`): `seqeval`
+**Extra dependency:** `seqeval` (install via `pip install seqeval`)

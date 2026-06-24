@@ -59,8 +59,9 @@ def main():
     # 1. Tokenizer + base model
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     tokenizer.pad_token = tokenizer.eos_token   # OPT has no pad token
+    tokenizer.model_max_length = 256            # cap sequence length (TRL 1.x: set here, not in SFTTrainer)
 
-    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, use_safetensors=True, device_map="auto")
 
     # 2. Wrap with LoRA
     model = get_peft_model(model, LORA_CONFIG)
@@ -81,7 +82,6 @@ def main():
         learning_rate=2e-4,
         lr_scheduler_type="cosine",
         warmup_ratio=0.05,
-        max_seq_length=256,
         dataset_text_field="text",
         logging_steps=50,
         save_strategy="epoch",
@@ -109,7 +109,7 @@ def main():
 
     # 6. Inference — load base + adapter
     print("\n── Inference (base model vs LoRA adapter) ──")
-    base_model   = AutoModelForCausalLM.from_pretrained(MODEL_NAME).to(DEVICE)
+    base_model   = AutoModelForCausalLM.from_pretrained(MODEL_NAME, use_safetensors=True, device_map="auto")
     lora_model   = PeftModel.from_pretrained(base_model, OUTPUT_DIR).to(DEVICE)
     lora_model.eval()
 

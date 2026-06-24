@@ -32,13 +32,35 @@ POLICY_DB = {
 }
 
 
+POLICY_ALIASES = {
+    "deposit":    "ltv",
+    "first-time": "ltv",
+    "first time": "ltv",
+    "loan to value": "ltv",
+    "document":   "income",
+    "payslip":    "income",
+    "proof":      "income",
+    "early repayment": "erc",
+    "overpay":    "erc",
+    "debt":       "affordability",
+    "national":   "personal",
+    "expatriate": "personal",
+    "expat":      "personal",
+    "fixed":      "rates",
+    "tracker":    "rates",
+}
+
+
 def search_policy(query: str) -> str:
     """Search bank policy documents for the given query."""
     q = query.lower()
+    for alias, key in POLICY_ALIASES.items():
+        if alias in q:
+            return POLICY_DB[key]
     for keyword, answer in POLICY_DB.items():
         if keyword in q or any(w in q for w in keyword.split()):
             return answer
-    return "No specific policy found for that query. Try rephrasing."
+    return f"No policy found. Try one of these keywords: {', '.join(POLICY_DB.keys())}"
 
 
 def calculate(expression: str) -> str:
@@ -55,6 +77,8 @@ def calculate(expression: str) -> str:
 
 def lookup_rate(product: str) -> str:
     """Look up the current rate for a product."""
+    if not product:
+        return "Please specify a product. Available: 2-year fixed, 3-year fixed, 5-year fixed, 10-year fixed, tracker, svr, savings, personal"
     rates = {
         "2-year fixed":  "4.85% fixed",
         "3-year fixed":  "4.72% fixed",
@@ -122,12 +146,18 @@ def parse_action(text: str) -> tuple[str | None, str | None, str | None]:
     action_input = re.search(r"Action Input:\s*(.+?)(?=\n|$)", text, re.S)
     final        = re.search(r"Final Answer:\s*(.+)", text, re.S)
 
+    def clean(s: str) -> str:
+        s = s.strip()
+        if len(s) >= 2 and s[0] in ('"', "'") and s[-1] == s[0]:
+            s = s[1:-1]
+        return s
+
     if final:
         return (thought.group(1).strip() if thought else ""), "FINAL", final.group(1).strip()
     return (
         thought.group(1).strip() if thought else None,
         action.group(1).strip() if action else None,
-        action_input.group(1).strip() if action_input else None,
+        clean(action_input.group(1)) if action_input else None,
     )
 
 
@@ -158,6 +188,8 @@ def run_react(question: str, verbose: bool = True) -> str:
 
         if action not in TOOLS:
             observation = f"Unknown tool '{action}'. Available: {list(TOOLS.keys())}"
+        elif not action_input:
+            observation = "Action Input was missing. Add 'Action Input: <value>' on its own line."
         else:
             if verbose:
                 print(f"Action: {action}({action_input!r})")

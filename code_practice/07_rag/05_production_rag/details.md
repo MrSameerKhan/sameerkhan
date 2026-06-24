@@ -1,5 +1,5 @@
 # Session 5 — Production RAG
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../7.rag/06_production_rag.md](../../../7.rag/06_production_rag.md)
 
@@ -82,6 +82,25 @@ curl -X POST http://localhost:8000/query \
 # Cache stats
 curl http://localhost:8000/cache/stats
 ```
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+```
+[      API CALL] ( 2037ms)  What is the maximum LTV for first-time buyers?  → 95% ✓
+[      API CALL] ( 1024ms)  What is the early repayment charge in year 3?   → 3% ✓
+[CACHE SEMANTIC] (   10ms)  What is max LTV for a first-time home buyer?    → cached ✓
+[      API CALL] ( 1700ms)  Can expatriates apply for personal finance?     → yes, 24× salary ✓
+[      API CALL] ( 1506ms)  What documents are needed for a mortgage?       → correct ✓
+[CACHE SEMANTIC] (    9ms)  Maximum LTV for first-time buyer?               → cached ✓
+
+Cache stats: hit_rate 0.333, semantic_hits 2, misses 4
+```
+
+- Semantic cache working: 10ms vs 1500–2000ms on cache hits (150–200× faster)
+- 33% hit rate on 6 queries — expected for a cold cache with varied questions
+- All 4 API-call answers correct
 
 ---
 

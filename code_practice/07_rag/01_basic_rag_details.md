@@ -1,5 +1,5 @@
 # Session 1 — Basic RAG Pipeline
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../7.rag/01_rag.md](../../../7.rag/01_rag.md)
 
@@ -56,6 +56,22 @@ Query:
   embed([query]) → shape (1, 384)
   index.search(q, k=3) → scores (1, 3), indices (1, 3)
 ```
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+```
+8 documents → 39 chunks indexed
+
+Q1 (LTV first-time buyers)  → FAILED: "I don't have that information" ← retrieval bug
+Q2 (mortgage documents)     → correct (payslips, SA302 tax returns)
+Q3 (early repayment year 3) → correct (3%)
+Q4 (expatriate finance)     → correct (24× monthly salary)
+Q5 (savings below SAR 500)  → correct (monthly maintenance fee — amount not stated)
+```
+
+**Q1 retrieval bug:** Sources were correct (all 3 from "Residential Mortgage Policy — LTV") but the 200-char chunks split the "95% for first-time buyers" sentence across a chunk boundary — the LLM received fragments without the key fact. This is exactly the limitation that Session 02 (chunking strategies) fixes.
 
 ---
 

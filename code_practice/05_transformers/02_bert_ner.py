@@ -183,7 +183,7 @@ def main():
     tokenizer.save_pretrained(SAVE_DIR)
     print(f"\nSaved to {SAVE_DIR}")
 
-    print("\n── Inference ──")
+    print("\n-- Inference --")
     tests = [
         "Apple CEO Tim Cook announced new products in San Francisco on Tuesday .",
         "Elon Musk 's company Tesla is based in Austin Texas .",

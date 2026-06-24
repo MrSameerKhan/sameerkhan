@@ -1,5 +1,5 @@
 # Session 3 — BERT Extractive Question Answering
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../5.transformers/02_models/01_bert_family.md](../../../5.transformers/02_models/01_bert_family.md)
 
@@ -95,11 +95,38 @@ Full SQuAD (87k examples, 3 epochs) → ~80 Exact Match / ~88 F1.
 
 ---
 
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-17)
+
+```
+Device: cuda
+
+Epoch 1/2 | loss: 2.7236
+Epoch 2/2 | loss: 1.0881
+
+Saved to models/05_transformers/bert_qa
+
+-- Inference --
+  Q: What is the maximum LTV for first-time buyers?
+  A: 95%
+
+  Q: How long is the fixed interest rate period?
+  A: 5 years
+
+  Q: What is the early repayment charge?
+  A: 2%
+```
+
+- Loss dropped 2.72 → 1.09 — strong convergence on 4k subset
+- GPU-Util: 93%, VRAM: 3878MiB / 4096MiB (95%) — near VRAM limit due to MAX_LEN=384
+- All 3 answers extracted correctly from context
+
+---
+
 ## How to Run
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 03_bert_qa.py
+```powershell
+python code_practice\05_transformers\03_bert_qa.py
 ```
 
 First run: downloads `bert-base-uncased` (~400 MB) + SQuAD (~30 MB).
-MPS training time: ~15–20 min for 2 epochs on 4k examples (MAX_LEN=384 is 3× slower than 128).
+CUDA training time: ~3–5 min for 2 epochs on 4k examples.

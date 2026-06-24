@@ -3,23 +3,54 @@
 # Metrics: ROUGE-L (automated) + LLM-as-judge (correctness, completeness, grounding)
 # Shows  : evaluation pipeline every ML engineer runs before shipping a model change
 #
-# Pattern: build a small eval set → run both versions → score → decide
-# Same pipeline works for: model A vs B, prompt v1 vs v2, RAG vs no-RAG
-#
-# Set OPENAI_API_KEY before running.
+# Change PROVIDER to switch backends. Nothing else needs to change.
+#   "openai"  → needs OPENAI_API_KEY env var
+#   "claude"  → needs ANTHROPIC_API_KEY env var
+#   "ollama"  → needs Ollama running locally (ollama serve)
 
 import os
 import json
-import math
-from dataclasses import dataclass, field, asdict
-from openai import OpenAI
+from dataclasses import dataclass, field
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-MODEL  = "gpt-4o-mini"
+PROVIDER = "openai"   # "openai" | "claude" | "ollama"
+
+if PROVIDER == "openai":
+    from openai import OpenAI
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    MODEL  = "gpt-4o-mini"
+
+elif PROVIDER == "claude":
+    import anthropic
+    client = anthropic.Anthropic()
+    MODEL  = "claude-haiku-4-5-20251001"
+
+elif PROVIDER == "ollama":
+    from openai import OpenAI
+    client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    MODEL  = "llama3.2"
+
+
+def ask(system: str, query: str, json_mode: bool = False) -> str:
+    if PROVIDER == "claude":
+        sys_text = system + ("\n\nReturn valid JSON only. No markdown." if json_mode else "")
+        r = client.messages.create(
+            model=MODEL, max_tokens=1024, temperature=0,
+            system=sys_text,
+            messages=[{"role": "user", "content": query}],
+        )
+        return r.content[0].text
+    else:
+        extra = {"response_format": {"type": "json_object"}} if json_mode else {}
+        r = client.chat.completions.create(
+            model=MODEL, max_tokens=1024, temperature=0,
+            messages=[{"role": "system", "content": system},
+                      {"role": "user",   "content": query}],
+            **extra,
+        )
+        return r.choices[0].message.content.strip()
 
 
 # ── Evaluation dataset ─────────────────────────────────────────────────────────
-# (question, reference_answer) pairs — ground truth for scoring
 EVAL_SET = [
     {
         "question":  "What is the minimum down payment for a residential mortgage in Saudi Arabia?",
@@ -62,15 +93,7 @@ finance calculator for a personalised quote."""
 
 
 def call_llm(system: str, question: str) -> str:
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=0,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user",   "content": question},
-        ],
-    )
-    return response.choices[0].message.content.strip()
+    return ask(system, question)
 
 
 # ── ROUGE-L ───────────────────────────────────────────────────────────────────
@@ -121,16 +144,9 @@ class JudgeScore:
 
 
 def llm_judge(question: str, reference: str, response: str) -> JudgeScore:
-    prompt = JUDGE_PROMPT.format(
-        question=question, reference=reference, response=response
-    )
-    result = client.chat.completions.create(
-        model=MODEL,
-        temperature=0,
-        response_format={"type": "json_object"},
-        messages=[{"role": "user", "content": prompt}],
-    )
-    data = json.loads(result.choices[0].message.content)
+    prompt = JUDGE_PROMPT.format(question=question, reference=reference, response=response)
+    raw    = ask("You are an impartial JSON evaluator.", prompt, json_mode=True)
+    data   = json.loads(raw)
     return JudgeScore(
         correctness=data.get("correctness", 0),
         completeness=data.get("completeness", 0),
@@ -143,24 +159,22 @@ def llm_judge(question: str, reference: str, response: str) -> JudgeScore:
 
 @dataclass
 class EvalResult:
-    question:     str
-    reference:    str
-    response_a:   str
-    response_b:   str
-    rouge_a:      float = 0.0
-    rouge_b:      float = 0.0
-    judge_a:      JudgeScore = field(default_factory=JudgeScore)
-    judge_b:      JudgeScore = field(default_factory=JudgeScore)
+    question:   str
+    reference:  str
+    response_a: str
+    response_b: str
+    rouge_a:    float = 0.0
+    rouge_b:    float = 0.0
+    judge_a:    JudgeScore = field(default_factory=JudgeScore)
+    judge_b:    JudgeScore = field(default_factory=JudgeScore)
 
 
 def run_eval(n_examples: int = len(EVAL_SET)) -> list[EvalResult]:
     results = []
     for i, ex in enumerate(EVAL_SET[:n_examples]):
         print(f"  Evaluating {i+1}/{n_examples}: {ex['question'][:60]}...")
-
         resp_a = call_llm(SYSTEM_A, ex["question"])
         resp_b = call_llm(SYSTEM_B, ex["question"])
-
         r = EvalResult(
             question=ex["question"],
             reference=ex["reference"],
@@ -172,47 +186,44 @@ def run_eval(n_examples: int = len(EVAL_SET)) -> list[EvalResult]:
             judge_b=llm_judge(ex["question"], ex["reference"], resp_b),
         )
         results.append(r)
-
     return results
 
 
 # ── Report ────────────────────────────────────────────────────────────────────
 
 def print_report(results: list[EvalResult]) -> None:
-    print("\n" + "═" * 70)
+    print("\n" + "=" * 70)
     print("EVALUATION REPORT: System A (zero-shot) vs System B (few-shot)")
-    print("═" * 70)
-
-    rouge_a_scores = [r.rouge_a for r in results]
-    rouge_b_scores = [r.rouge_b for r in results]
-    judge_a_scores = [r.judge_a.average for r in results]
-    judge_b_scores = [r.judge_b.average for r in results]
+    print("=" * 70)
 
     mean = lambda lst: sum(lst) / len(lst) if lst else 0.0
 
+    rouge_a = [r.rouge_a for r in results]
+    rouge_b = [r.rouge_b for r in results]
+    judge_a = [r.judge_a.average for r in results]
+    judge_b = [r.judge_b.average for r in results]
+
     print(f"\n{'Metric':<30} {'System A':>10} {'System B':>10} {'Winner':>10}")
     print("-" * 62)
-    print(f"{'ROUGE-L (avg)':<30} {mean(rouge_a_scores):>10.3f} {mean(rouge_b_scores):>10.3f} {'B ✓' if mean(rouge_b_scores) > mean(rouge_a_scores) else 'A ✓':>10}")
-    print(f"{'LLM-Judge correctness':<30} {mean([r.judge_a.correctness for r in results]):>10.2f} {mean([r.judge_b.correctness for r in results]):>10.2f} {'B ✓' if mean([r.judge_b.correctness for r in results]) > mean([r.judge_a.correctness for r in results]) else 'A ✓':>10}")
-    print(f"{'LLM-Judge completeness':<30} {mean([r.judge_a.completeness for r in results]):>10.2f} {mean([r.judge_b.completeness for r in results]):>10.2f} {'B ✓' if mean([r.judge_b.completeness for r in results]) > mean([r.judge_a.completeness for r in results]) else 'A ✓':>10}")
-    print(f"{'LLM-Judge specificity':<30} {mean([r.judge_a.specificity for r in results]):>10.2f} {mean([r.judge_b.specificity for r in results]):>10.2f} {'B ✓' if mean([r.judge_b.specificity for r in results]) > mean([r.judge_a.specificity for r in results]) else 'A ✓':>10}")
-    print(f"{'LLM-Judge overall avg':<30} {mean(judge_a_scores):>10.2f} {mean(judge_b_scores):>10.2f} {'B ✓' if mean(judge_b_scores) > mean(judge_a_scores) else 'A ✓':>10}")
+    print(f"{'ROUGE-L (avg)':<30} {mean(rouge_a):>10.3f} {mean(rouge_b):>10.3f} {'B' if mean(rouge_b) > mean(rouge_a) else 'A':>10}")
+    print(f"{'Judge correctness':<30} {mean([r.judge_a.correctness for r in results]):>10.2f} {mean([r.judge_b.correctness for r in results]):>10.2f} {'B' if mean([r.judge_b.correctness for r in results]) > mean([r.judge_a.correctness for r in results]) else 'A':>10}")
+    print(f"{'Judge completeness':<30} {mean([r.judge_a.completeness for r in results]):>10.2f} {mean([r.judge_b.completeness for r in results]):>10.2f} {'B' if mean([r.judge_b.completeness for r in results]) > mean([r.judge_a.completeness for r in results]) else 'A':>10}")
+    print(f"{'Judge specificity':<30} {mean([r.judge_a.specificity for r in results]):>10.2f} {mean([r.judge_b.specificity for r in results]):>10.2f} {'B' if mean([r.judge_b.specificity for r in results]) > mean([r.judge_a.specificity for r in results]) else 'A':>10}")
+    print(f"{'Judge overall avg':<30} {mean(judge_a):>10.2f} {mean(judge_b):>10.2f} {'B' if mean(judge_b) > mean(judge_a) else 'A':>10}")
 
-    # Per-example detail
-    print(f"\n{'─' * 70}")
+    print(f"\n{'-' * 70}")
     print("Per-question breakdown:")
     for i, r in enumerate(results):
         winner = "B" if r.judge_b.average > r.judge_a.average else "A"
         print(f"\n  Q{i+1}: {r.question[:65]}")
         print(f"        ROUGE  A={r.rouge_a:.3f}  B={r.rouge_b:.3f}")
-        print(f"        Judge  A={r.judge_a.average:.2f}  B={r.judge_b.average:.2f}  → {winner} wins")
+        print(f"        Judge  A={r.judge_a.average:.2f}  B={r.judge_b.average:.2f}  -> {winner} wins")
         print(f"        Reasoning: {r.judge_b.reasoning[:120]}")
 
-    # Decision
-    print(f"\n{'═' * 70}")
-    if mean(judge_b_scores) > mean(judge_a_scores) + 0.3:
-        print("DECISION: Ship System B — meaningfully better across all judge dimensions.")
-    elif mean(judge_b_scores) > mean(judge_a_scores):
+    print(f"\n{'=' * 70}")
+    if mean(judge_b) > mean(judge_a) + 0.3:
+        print("DECISION: Ship System B -- meaningfully better across all judge dimensions.")
+    elif mean(judge_b) > mean(judge_a):
         print("DECISION: B is marginally better. Run human eval on 50+ examples to confirm.")
     else:
         print("DECISION: No significant difference. Stick with simpler System A.")
@@ -220,10 +231,9 @@ def print_report(results: list[EvalResult]) -> None:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    print("Running LLM evaluation...")
-    print(f"  Model: {MODEL}")
-    print(f"  Eval set size: {len(EVAL_SET)} questions")
-    print(f"  Metrics: ROUGE-L + LLM-as-judge (3 dimensions)\n")
+    print(f"Provider: {PROVIDER} | Model: {MODEL}")
+    print(f"Eval set: {len(EVAL_SET)} questions")
+    print(f"Metrics : ROUGE-L + LLM-as-judge (3 dimensions)\n")
 
     results = run_eval()
     print_report(results)

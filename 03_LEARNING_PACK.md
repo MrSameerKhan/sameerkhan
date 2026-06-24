@@ -300,15 +300,15 @@ Phase 01: Sequence Models  (9 sessions)  ✅ Run  —  RNN + LSTM + GRU + BiLSTM
 Phase 02: Transformers     (11 sessions) ✅ Run  —  understand the engine (incl. cross-attention)
 Phase 03: Prompting        (10 sessions) ✅ Run  —  call LLMs fluently
 Phase 04: LLMs legacy      (14 sessions) ✅ Run  —  fine-tune + serve + observability
-Phase 05: Transformers HF  (7 sessions)  🔧 Code-built  —  apply pretrained models to NLP tasks
-Phase 06: LLMs Core        (3 sessions)  🔧 Code-built  —  LLM APIs: prompting, extraction, eval
-Phase 07: RAG              (5 sessions)  🔧 Code-built  —  full RAG with hybrid search + eval   [Project 1+]
-Phase 08: Agents           (4 sessions)  🔧 Code-built  —  ReAct → LangGraph → portfolio agent  [Project 3]
-Phase 09: Fine-tuning      (6 sessions)  🔧 Code-built  —  LoRA/QLoRA/DPO/vLLM/monitoring       [Project 2]
+Phase 05: Transformers HF  (7 sessions)  ✅ Run  —  apply pretrained models to NLP tasks
+Phase 06: LLMs Core        (3 sessions)  ✅ Run  —  LLM APIs: prompting, extraction, eval
+Phase 07: RAG              (5 sessions)  ✅ Run  —  full RAG with hybrid search + eval   [Project 1+]
+Phase 08: Agents           (4 sessions)  ✅ Run  —  ReAct → LangGraph → portfolio agent  [Project 3]
+Phase 09: Fine-tuning      (6 sessions)  ⏸ Parked  —  LoRA/QLoRA/DPO/vLLM/monitoring   [Project 2] (torch 2.6 not on cu121)
 Phase 10: Document AI      (4 sessions)  🔧 Code-built  —  LayoutLM + Donut + ColPali + pipeline [Differentiator]
 ```
 
-**Total coded: 73 sessions (phases 01-10) · Phases 01-04 run · Phases 05-10 coded, awaiting run.**
+**Total coded: 73 sessions (phases 01-10) · Phases 01-08 run · Phase 09 parked (PyTorch compat) · Phase 10 next.**
 
 ---
 
@@ -567,7 +567,7 @@ For each topic, ask the **5 questions**. If you can answer all 5, you KNOW it. I
 - [ ] vLLM continuous batching + paged attention
 - [ ] Observability — 4 golden signals for LLMs
 
-**Phase 07 — RAG (coded)**
+**Phase 07 — RAG (✅ all 5 run)**
 - [ ] Chunking strategies — fixed / sentence / hierarchical / semantic
 - [ ] FAISS IndexFlatIP + L2-normalised embeddings
 - [ ] Hybrid search: BM25 + dense + RRF fusion
@@ -577,7 +577,7 @@ For each topic, ask the **5 questions**. If you can answer all 5, you KNOW it. I
 - [ ] Semantic cache (two-tier: exact + cosine)
 - [ ] Indirect prompt injection in RAG
 
-**Phase 08 — Agents (coded)**
+**Phase 08 — Agents (✅ all 4 run)**
 - [ ] ReAct loop from scratch (parse Thought/Action/Observation)
 - [ ] OpenAI function calling (tool schemas, parallel tool calls)
 - [ ] LangGraph state machine (StateGraph, MemorySaver, tools_condition)
@@ -585,7 +585,7 @@ For each topic, ask the **5 questions**. If you can answer all 5, you KNOW it. I
 - [ ] Specialist agent pattern (supervisor + workers)
 - [ ] Planner-executor patterns: ReAct vs Plan&Execute vs ReWoo vs LATS vs Reflexion
 
-**Phase 09 — Fine-tuning (coded)**
+**Phase 09 — Fine-tuning (⏸ parked — torch 2.6 not on cu121)**
 - [ ] LoRA config: r, alpha, target_modules — what each does
 - [ ] QLoRA = NF4 4-bit base + LoRA adapters (6× memory reduction)
 - [ ] SFT with trl SFTTrainer + SFTConfig

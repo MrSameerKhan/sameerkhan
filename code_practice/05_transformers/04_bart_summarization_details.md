@@ -1,5 +1,5 @@
 # Session 4 — BART Abstractive Summarization
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../5.transformers/02_models/03_encoder_decoder_family.md](../../../5.transformers/02_models/03_encoder_decoder_family.md)
 
@@ -112,13 +112,39 @@ Production ROUGE-L with `bart-large-cnn` on CNN/DM test set: ~40–44. Our basel
 
 ---
 
-## How to Run
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-17)
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 04_bart_summarization.py
+```
+Device: cuda
+
+Epoch 1/2 | loss: 2.6505
+Epoch 2/2 | loss: 2.0713
+
+Saved to models/05_transformers/bart_summarization
+
+-- Inference --
+  Generated : Apple Inc. reported third-quarter earnings on Thursday that exceeded
+              Wall Street expectations, driven by strong iPhone sales in emerging
+              markets and continued growth in its services segment. The company
+              guided for Q4 revenue between $89B and $90B, slightly below forecasts.
+  Reference : Apple Q3 revenue $94.9B, up 5%, EPS $1.53 beat estimates. Services
+              hit record $24.2B. China sales fell 6%. Q4 guidance slightly below forecasts.
+  ROUGE-L   : 0.1471
 ```
 
-First run: downloads `facebook/bart-base` (~550 MB) + CNN/DailyMail (~1.2 GB).
-MPS training: ~20–30 min for 2 epochs on 2k examples.
+- Low ROUGE-L (0.1471) expected — 2 epochs on 2k examples is a demonstration, not production
+- Model is generating plausible but verbose summaries (not yet compressed to bullet style)
+- Warnings: `as_target_tokenizer` deprecated → use `text_target` arg in future versions
+
+---
+
+## How to Run
+
+```powershell
+python code_practice\05_transformers\04_bart_summarization.py
+```
+
+First run: downloads `facebook/bart-base` (~558 MB) + CNN/DailyMail (~838 MB).
+CUDA training: ~5–8 min for 2 epochs on 2k examples.
 
 **Upgrade path:** swap `MODEL_NAME = "facebook/bart-large-cnn"` and skip fine-tuning — it already achieves state-of-the-art on CNN/DM out of the box.

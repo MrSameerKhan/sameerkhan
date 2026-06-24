@@ -1,5 +1,5 @@
 # Session 1 — ReAct Agent from Scratch
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../8.agents/01_agents.md](../../../8.agents/01_agents.md) · [../../../8.agents/06_planner_executor_patterns.md](../../../8.agents/06_planner_executor_patterns.md)
 
@@ -50,6 +50,34 @@ final        = re.search(r"Final Answer:\s*(.+)", text, re.S)
 **Why OpenAI tool calling (session 02) is better:** no regex, no parsing, structured JSON — the LLM returns a typed `tool_calls` object. ReAct from scratch is educational; in production, use function calling.
 
 **Max iterations guard:** without `MAX_ITERATIONS = 8`, a confused LLM can loop forever. Always cap.
+
+---
+
+## Fixes Applied (bugs found during run)
+
+1. **Quoted action inputs**: LLM wrapped inputs in quotes → `calculate('"expr"')` evaluated to a string, `round(string)` crashed. Fix: `clean()` helper strips surrounding quotes in `parse_action`.
+2. **search_policy too strict**: LLM used natural phrases ("minimum deposit first time buyer"), DB keys are acronyms ("ltv"). Fix: `POLICY_ALIASES` dict maps common phrases to DB keys before keyword scan.
+3. **Missing Action Input**: LLM occasionally wrote `lookup_rate(None)` inline instead of using the `Action Input:` line. Fix: guard in `run_react` returns helpful error message instead of crashing.
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+```
+Q1: Monthly payment £250k / 25yr / 5-year fixed
+  Step 1: lookup_rate → 4.61%
+  Step 2: calculate → 1405.236286
+  Final Answer: ~£1,405.24 ✓
+
+Q2: First-time buyer £320k — deposit + documents
+  Step 1: search_policy(deposit) → LTV 95% for first-time buyers
+  Step 2: calculate(320000 * 0.05) → £16,000
+  Final Answer: £16,000 deposit ✓ (docs from general knowledge — policy alias overlap)
+
+Q3: Max personal finance SAR 12,000 salary
+  Step 1: search_policy → 36× salary for nationals
+  Final Answer: SAR 432,000 ✓
+```
+
+All 3 questions answered correctly. Q1 took 4 steps (1 bad step from missing Action Input, then recovered).
 
 ---
 

@@ -1,5 +1,5 @@
 # Session 1 — Prompt Engineering
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../6.llms/01_prompting.md](../../../6.llms/01_prompting.md)
 
@@ -52,6 +52,12 @@ client.chat.completions.create(
 ```
 
 **temperature=0** for evaluation/extraction. **temperature=0.7–0.9** for creative generation. **temperature=0.2** for support — consistent but not robotic.
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+Both queries ran successfully across all 4 techniques. All strategies returned valid responses — few-shot added Al Rajhi-specific details (mobile app, branch), CoT structured as NEED/FACTS/ANSWER, JSON mode returned parseable `{"answer", "confidence", "next_step", "escalate_to_human"}`. Technique decision guide printed correctly at end.
 
 ---
 

@@ -15,10 +15,32 @@ POLICY_DB = {
 }
 
 
+POLICY_ALIASES = {
+    "early repayment": "erc",
+    "overpay":         "erc",
+    "deposit":         "ltv",
+    "first time":      "ltv",
+    "loan to value":   "ltv",
+    "document":        "income",
+    "payslip":         "income",
+    "proof":           "income",
+    "debt":            "affordability",
+    "expatriate":      "personal",
+    "expat":           "personal",
+    "national":        "personal",
+    "fixed":           "rates",
+    "tracker":         "rates",
+    "svr":             "rates",
+}
+
+
 @tool
 def search_policy(query: str) -> str:
     """Search bank policy documents for eligibility rules, LTV limits, and documentation requirements."""
     q = query.lower()
+    for alias, key in POLICY_ALIASES.items():
+        if alias in q:
+            return POLICY_DB[key]
     for keyword, answer in POLICY_DB.items():
         if keyword in q or any(w in q for w in keyword.split("_")):
             return answer

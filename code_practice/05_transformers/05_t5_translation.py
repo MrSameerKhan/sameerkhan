@@ -126,7 +126,7 @@ def main():
     tokenizer = T5TokenizerFast.from_pretrained(MODEL_NAME)
     model     = T5ForConditionalGeneration.from_pretrained(MODEL_NAME).to(DEVICE)
 
-    raw       = load_dataset("Helsinki-NLP/opus_books", "en-de")
+    raw       = load_dataset("Helsinki-NLP/opus_books", "de-en")
     train_raw = raw["train"].select(range(TRAIN_SIZE))
 
     train_loader = DataLoader(

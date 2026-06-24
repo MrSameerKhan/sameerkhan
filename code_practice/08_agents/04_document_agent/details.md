@@ -1,5 +1,5 @@
 # Session 4 — Mortgage Document Processing Agent (Portfolio Project)
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../8.agents/07_multi_agent_orchestration.md](../../../8.agents/07_multi_agent_orchestration.md) · [../../../8.agents/04_langgraph_deep.md](../../../8.agents/04_langgraph_deep.md)
 
@@ -75,6 +75,20 @@ result = app.invoke(
 ```
 
 The state at interrupt time is fully serialised. The graph can be resumed hours later — critical for real workflows where manager review takes time.
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+**Thread 001 (Sarah Mitchell — standard):**
+- 5-step pipeline: classify → extract → policy_retrieval → eligibility_check → report ✓
+- LTV 82.05%, DSR 7.26% — well within limits → APPROVED ✓
+- All 12 fields extracted correctly from unstructured document text ✓
+
+**Thread 002 (James Okafor — borderline):**
+- LTV 89.66% (just under 90%), DSR 41.67% (just under 45%) → APPROVED
+- HITL showed `human_approved: None`, `manager_note: None` — interrupt triggered but demo auto-continued without simulated manager input (run.py passed empty resume)
+- Pipeline still completed all 5 steps and generated full report ✓
 
 ---
 

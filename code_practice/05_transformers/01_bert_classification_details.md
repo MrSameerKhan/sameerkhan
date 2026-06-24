@@ -1,5 +1,5 @@
 # Session 1 — BERT Text Classification
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 ---
 
@@ -74,11 +74,34 @@ Saved to ./bert_sst2
 
 ---
 
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-17)
+
+```
+Device: cuda
+
+Epoch 1/3 | loss: 0.4108 | val_acc: 0.8800
+Epoch 2/3 | loss: 0.1871 | val_acc: 0.9180
+Epoch 3/3 | loss: 0.0787 | val_acc: 0.9060
+
+Saved to models/05_transformers/bert_classification
+
+── Inference ──
+  [positive 99.89%]  This movie was absolutely fantastic, I loved every second!
+  [negative 99.75%]  What a waste of time. Terrible acting, boring plot.
+  [negative 93.79%]  It was okay, nothing special but not awful either.
+```
+
+- GPU-Util peaked at 97%, VRAM 3431MiB / 4096MiB during training
+- Loss dropped sharply: 0.41 → 0.19 → 0.08 (strong convergence on 4k samples)
+- Confidence on ambiguous sentence improved to 93.79% (vs 54.20% on Mac MPS)
+
+---
+
 ## How to Run
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 01_bert_classification.py
+```powershell
+python code_practice\05_transformers\01_bert_classification.py
 ```
 
 First run downloads `bert-base-uncased` (~440 MB) — cached after that.
-Training on Apple Silicon MPS: ~4–6 minutes for 3 epochs on 4k samples.
+Training on GTX 1650 Ti CUDA: ~2–3 minutes for 3 epochs on 4k samples.

@@ -1,5 +1,5 @@
 # Session 3 — LangGraph Production Workflow Agent
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../8.agents/04_langgraph_deep.md](../../../8.agents/04_langgraph_deep.md) · [../../../8.agents/06_planner_executor_patterns.md](../../../8.agents/06_planner_executor_patterns.md)
 
@@ -81,6 +81,17 @@ result = app.invoke(initial_state, config={"configurable": {"thread_id": "t1"}})
 # Resume:
 result = app.invoke(Command(resume="approved"), config={"configurable": {"thread_id": "t1"}})
 ```
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+- Thread 001 (LTV): 95% first-time buyers ✓
+- Thread 002 (payment calc): £1,236.61/month ✓
+- Thread 003 (multi-turn): deposit eligibility remembered across 3 turns ✓ — agent knew £310k loan on turn 3 from turn 2 context
+- Streaming: tool result repeated 3× before final answer (streaming artifact — each token chunk includes tool output prefix)
+
+**Fix applied:** `POLICY_ALIASES` added to `tools.py` — "early repayment" now maps to "erc" key (same fix as S01).
 
 ---
 

@@ -1,27 +1,55 @@
 # Session 2 — Structured Extraction with Pydantic + Instructor
-# Task   : parse unstructured invoice/contract text → validated Python objects
-# Model  : gpt-4o-mini via Instructor (wraps OpenAI function calling)
+# Task   : parse unstructured invoice/contract text -> validated Python objects
 # Shows  : Pydantic schema, instructor retry-on-validation-fail, nested models
 #
-# Instructor forces the LLM to return valid JSON matching your Pydantic model.
-# If the output fails validation, Instructor automatically retries with the
-# validation error injected back into the prompt (up to max_retries).
-#
-# Install: pip install instructor (already in environment.yml)
-# Set OPENAI_API_KEY before running.
+# Change PROVIDER to switch backends. Nothing else needs to change.
+#   "openai"  → needs OPENAI_API_KEY env var
+#   "claude"  → needs ANTHROPIC_API_KEY env var
+#   "ollama"  → needs Ollama running locally (ollama serve)
 
 import os
 import json
-from datetime import date
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 import instructor
-from openai import OpenAI
 
-raw_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-client     = instructor.from_openai(raw_client)   # patches OpenAI client
+PROVIDER   = "openai"   # "openai" | "claude" | "ollama"
+MAX_TOKENS = 1024
 
-MODEL = "gpt-4o-mini"
+if PROVIDER == "openai":
+    from openai import OpenAI
+    client = instructor.from_openai(OpenAI(api_key=os.environ["OPENAI_API_KEY"]))
+    MODEL  = "gpt-4o-mini"
+
+elif PROVIDER == "claude":
+    import anthropic
+    client = instructor.from_anthropic(anthropic.Anthropic())
+    MODEL  = "claude-haiku-4-5-20251001"
+
+elif PROVIDER == "ollama":
+    from openai import OpenAI
+    client = instructor.from_openai(OpenAI(base_url="http://localhost:11434/v1", api_key="ollama"))
+    MODEL  = "llama3.2"
+
+
+def _extract(response_model, system: str, content: str):
+    """Single call wrapper — handles Claude vs OpenAI/Ollama message format."""
+    if PROVIDER == "claude":
+        return client.messages.create(
+            model=MODEL, max_tokens=MAX_TOKENS,
+            response_model=response_model, max_retries=3,
+            system=system,
+            messages=[{"role": "user", "content": content}],
+        )
+    else:
+        return client.chat.completions.create(
+            model=MODEL, max_tokens=MAX_TOKENS,
+            response_model=response_model, max_retries=3,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user",   "content": content},
+            ],
+        )
 
 
 # ── Pydantic schemas ───────────────────────────────────────────────────────────
@@ -36,8 +64,8 @@ class LineItem(BaseModel):
     @classmethod
     def total_must_match(cls, v, info):
         expected = round(info.data.get("quantity", 0) * info.data.get("unit_price", 0), 2)
-        if abs(v - expected) > 0.02:   # allow small float rounding
-            raise ValueError(f"total {v} does not match quantity × unit_price = {expected}")
+        if abs(v - expected) > 0.02:
+            raise ValueError(f"total {v} does not match quantity x unit_price = {expected}")
         return v
 
 
@@ -45,7 +73,7 @@ class Invoice(BaseModel):
     invoice_number:  str
     vendor_name:     str
     customer_name:   str
-    invoice_date:    str                    # keep as string — dates vary in format
+    invoice_date:    str
     due_date:        Optional[str] = None
     currency:        str = Field(default="USD")
     line_items:      list[LineItem]
@@ -57,60 +85,46 @@ class Invoice(BaseModel):
 
 
 class ContractClause(BaseModel):
-    clause_type:     str   # e.g. "payment", "termination", "liability", "confidentiality"
-    summary:         str   # 1-2 sentence plain English summary
-    key_dates:       list[str]
-    key_amounts:     list[str]
-    obligations:     list[str]   # who must do what
+    clause_type:  str
+    summary:      str
+    key_dates:    list[str]
+    key_amounts:  list[str]
+    obligations:  list[str]
 
 
 class Contract(BaseModel):
-    parties:         list[str]
-    effective_date:  str
-    expiry_date:     Optional[str] = None
-    contract_type:   str
-    governing_law:   Optional[str] = None
-    clauses:         list[ContractClause]
-    risk_flags:      list[str]   # unusual or high-risk terms for human review
+    parties:        list[str]
+    effective_date: str
+    expiry_date:    Optional[str] = None
+    contract_type:  str
+    governing_law:  Optional[str] = None
+    clauses:        list[ContractClause]
+    risk_flags:     list[str]
 
 
 # ── Extraction functions ───────────────────────────────────────────────────────
 
 def extract_invoice(raw_text: str) -> Invoice:
-    return client.chat.completions.create(
-        model=MODEL,
-        response_model=Invoice,
-        max_retries=3,   # retry if Pydantic validation fails
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Extract all invoice fields from the text. "
-                    "Compute missing totals from quantity × unit_price. "
-                    "If a field is missing, use null."
-                ),
-            },
-            {"role": "user", "content": raw_text},
-        ],
+    return _extract(
+        Invoice,
+        system=(
+            "Extract all invoice fields from the text. "
+            "Compute missing totals from quantity x unit_price. "
+            "If a field is missing, use null."
+        ),
+        content=raw_text,
     )
 
 
 def extract_contract(raw_text: str) -> Contract:
-    return client.chat.completions.create(
-        model=MODEL,
-        response_model=Contract,
-        max_retries=3,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "Extract structured data from this contract. "
-                    "Identify risk flags: unusual indemnification, unlimited liability, "
-                    "auto-renewal without notice, non-standard governing law."
-                ),
-            },
-            {"role": "user", "content": raw_text},
-        ],
+    return _extract(
+        Contract,
+        system=(
+            "Extract structured data from this contract. "
+            "Identify risk flags: unusual indemnification, unlimited liability, "
+            "auto-renewal without notice, non-standard governing law."
+        ),
+        content=raw_text,
     )
 
 
@@ -175,24 +189,26 @@ unless explicitly assigned in a separate written instrument.
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    print("── Invoice Extraction ──\n")
+    print(f"Provider: {PROVIDER} | Model: {MODEL}\n")
+
+    print("-- Invoice Extraction --\n")
     invoice = extract_invoice(SAMPLE_INVOICE)
     print(invoice.model_dump_json(indent=2))
 
-    print("\n── Validation check ──")
+    print("\n-- Validation check --")
     for item in invoice.line_items:
         expected = round(item.quantity * item.unit_price, 2)
-        status   = "✓" if abs(item.total - expected) < 0.02 else "✗ MISMATCH"
-        print(f"  {item.description}: {item.quantity} × {item.unit_price} = {expected} | extracted: {item.total} {status}")
+        status   = "OK" if abs(item.total - expected) < 0.02 else "MISMATCH"
+        print(f"  {item.description}: {item.quantity} x {item.unit_price} = {expected} | extracted: {item.total} [{status}]")
     print(f"  Grand total: {invoice.total_amount}")
 
-    print("\n\n── Contract Extraction ──\n")
+    print("\n\n-- Contract Extraction --\n")
     contract = extract_contract(SAMPLE_CONTRACT)
     print(json.dumps(contract.model_dump(), indent=2))
 
-    print("\n── Risk Flags ──")
+    print("\n-- Risk Flags --")
     for flag in contract.risk_flags:
-        print(f"  ⚠  {flag}")
+        print(f"  [!] {flag}")
 
 
 if __name__ == "__main__":

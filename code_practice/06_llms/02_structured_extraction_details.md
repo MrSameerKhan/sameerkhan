@@ -1,5 +1,5 @@
 # Session 2 — Structured Extraction with Pydantic + Instructor
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../4.nlp/04_applications/03_information_extraction.md](../../../4.nlp/04_applications/03_information_extraction.md)
 
@@ -94,6 +94,12 @@ Expected risk_flags:
 ```
 
 These flags surface in human review before contract execution — exactly what a Document AI system at a bank needs.
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+All 3 line items validated OK (quantity × unit_price matched exactly). Contract extracted 7 clauses. Risk flags correctly identified: unlimited liability, auto-renewal without notice, non-standard governing law (Cayman Islands). Invoice grand total $8,912.50 correct.
 
 ---
 

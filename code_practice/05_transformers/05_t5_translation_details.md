@@ -1,5 +1,5 @@
 # Session 5 — T5 Neural Machine Translation
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../5.transformers/02_models/03_encoder_decoder_family.md](../../../5.transformers/02_models/03_encoder_decoder_family.md)
 
@@ -127,11 +127,45 @@ Saved to models/05_transformers/t5_translation
 
 ---
 
-## How to Run
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-17)
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 05_t5_translation.py
+```
+Device: cuda
+
+Epoch 1/3 | loss: 2.2194
+Epoch 2/3 | loss: 1.9881
+Epoch 3/3 | loss: 1.8935
+
+Saved to models/05_transformers/t5_translation
+
+-- Inference --
+  EN  : The quarterly report shows a 12% increase in revenue.
+  DE  : Der vierteljährliche Bericht zeigt eine Erhöhung der Einnahmen um 12 %.
+  Ref : Der Quartalsbericht zeigt eine Umsatzsteigerung von 12 Prozent.
+  BLEU-1: 0.455
+
+  EN  : Please submit all documents before the deadline.
+  DE  : Bitte schicken Sie alle Dokumente vor Ablauf der Frist.
+  Ref : Bitte reichen Sie alle Unterlagen vor Ablauf der Frist ein.
+  BLEU-1: 0.667
+
+  EN  : The loan application requires proof of income.
+  DE  : Der Darlehensantrag erfordert einen Nachweis des Einkommens.
+  Ref : Der Kreditantrag erfordert einen Einkommensnachweis.
+  BLEU-1: 0.429
 ```
 
-First run: downloads `t5-small` (~230 MB) + opus_books/en-de (~50 MB).
-MPS training: ~15–20 min for 3 epochs on 4k examples.
+- Translations are grammatically correct German — model learned the task
+- BLEU scores lower than expected (0.43–0.67 vs 0.5–1.0) — different word choices, not wrong
+- Fix applied: dataset config `en-de` → `de-en` (opus_books key order)
+
+---
+
+## How to Run
+
+```powershell
+python code_practice\05_transformers\05_t5_translation.py
+```
+
+First run: downloads `t5-small` (~242 MB) + opus_books/de-en (~9 MB).
+CUDA training: ~3–5 min for 3 epochs on 4k examples.

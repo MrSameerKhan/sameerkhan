@@ -9,19 +9,19 @@
 
 | Field | Value |
 |-------|-------|
-| **Machine** | Mac |
-| **Date** | 16 June 2026, 23:39 IST |
-| **What I did** | Created `02_INTERVIEW_PACK.md` (20 tech Q&A + behavioral STAR + BarRaiser tips + checklist), created `SYNC.md`, updated `00_HUB.md` timestamp |
-| **Files changed** | `02_INTERVIEW_PACK.md`, `SYNC.md`, `00_HUB.md` |
+| **Machine** | Windows |
+| **Date** | 25 June 2026 |
+| **What I did** | Ran all 4 Phase 08 Agent sessions (S01–S04 all ✅ Run). Installed langchain-openai, langgraph. Fixed ReAct quote-stripping + policy aliases bug. LangGraph multi-turn memory + HITL confirmed. |
+| **Files changed** | `code_practice/08_agents/` all `_details.md` files, `01_react_agent.py`, `03_langgraph_agent/tools.py` |
 
 ---
 
 ## Next Task
 
 ```
-What:   Update progress.md — session log is stale (shows S1 only, but S2-S7 exist in 05_transformers)
-Then:   Resume code practice — check which sessions are ✅ Run vs 🔧 Code-built and run the next one
-File:   code_practice/05_transformers/ → open each _details.md to check status badges
+What:   Run Phase 10 Document AI sessions (S01–S04) — all 🔧 Code-built
+File:   code_practice/10_document_ai/
+Note:   Phase 09 parked — torch 2.6 not available for cu121; resume when cu124 wheel releases
 ```
 
 ---
@@ -40,11 +40,11 @@ File:   code_practice/05_transformers/ → open each _details.md to check status
 
 | Phase | Topic | Sessions | Confirmed Run | Notes |
 |-------|-------|----------|--------------|-------|
-| 05 | Transformers | S01-S07 | S01 🔧 only | Need to verify S02-S07 status |
-| 06 | LLMs | S01-S03 | unknown | Check _details.md badges |
-| 07 | RAG | S01-S05 | unknown | Check _details.md badges |
-| 08 | Agents | S01-S04 | unknown | Check _details.md badges |
-| 09 | Fine-tuning | S01-S06 | unknown | Check _details.md badges |
+| 05 | Transformers | S01-S07 | ✅ All 7 run | GPU, GTX 1650 Ti |
+| 06 | LLMs | S01-S03 | ✅ All 3 run | OpenAI gpt-4o-mini; S01 also tested on Ollama |
+| 07 | RAG | S01-S05 | ✅ All 5 run | faiss-cpu + rank-bm25 installed |
+| 08 | Agents | S01-S04 | ✅ All 4 run | langchain-openai + langgraph installed |
+| 09 | Fine-tuning | S01-S06 | ⏸ Parked | torch 2.6 not on cu121; trl 1.6 meta tensor bug with 2.5.1 |
 | 10 | Document AI | S01-S04 | unknown | Check _details.md badges |
 
 ---

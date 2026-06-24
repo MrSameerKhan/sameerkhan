@@ -1,5 +1,5 @@
 # Session 4 — RAG Evaluation
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../7.rag/05_rag_evaluation.md](../../../7.rag/05_rag_evaluation.md)
 
@@ -58,6 +58,23 @@ The `ragas` library has breaking API changes across versions. The manual LLM-as-
 - Is fully inspectable and modifiable
 - Teaches the concepts rather than hiding them in a library call
 - Same accuracy (both use LLM judgment)
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+```
+Metric                         RAG   No-RAG   Winner
+----------------------------------------------------
+  faithfulness               1.000    0.438    RAG ✓
+  relevancy                  0.800    0.765    RAG ✓
+  precision                  1.000    0.000    RAG ✓
+  recall                     1.000    0.000    RAG ✓
+```
+
+- Faithfulness 1.000 vs 0.438 — the largest gap; no-RAG hallucinated on ~56% of claims
+- Precision/recall 1.000 vs 0.000 — no-RAG has no sources to evaluate (expected 0)
+- RAG beats no-RAG on all 4 metrics — clear data-driven case to ship RAG
 
 ---
 

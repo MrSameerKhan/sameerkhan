@@ -1,43 +1,61 @@
 # Session 1 — Prompt Engineering
 # Task   : domain-aware customer support bot for a bank
-# Model  : gpt-4o-mini (OpenAI API) — swap for any OpenAI-compatible endpoint
-# Shows  : zero-shot → few-shot → CoT progression on identical queries
-# Metric : qualitative comparison + response length and confidence tracking
+# Shows  : zero-shot -> few-shot -> CoT -> JSON mode progression on identical queries
 #
-# Set OPENAI_API_KEY in your environment before running.
+# Change PROVIDER to switch backends. Nothing else needs to change.
+#   "openai"  → needs OPENAI_API_KEY env var
+#   "claude"  → needs ANTHROPIC_API_KEY env var
+#   "ollama"  → needs Ollama running locally (ollama serve)
 
 import os
 import time
-from openai import OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+PROVIDER = "ollama"   # "openai" | "claude" | "ollama"
 
-MODEL      = "gpt-4o-mini"
-TEMPERATURE = 0.2   # low for deterministic support responses
+if PROVIDER == "openai":
+    from openai import OpenAI
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    MODEL  = "gpt-4o-mini"
+
+elif PROVIDER == "claude":
+    import anthropic
+    client = anthropic.Anthropic()
+    MODEL  = "claude-haiku-4-5-20251001"
+
+elif PROVIDER == "ollama":
+    from openai import OpenAI
+    client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    MODEL  = "llama3.2"
+
+
+def ask(system: str, query: str, json_mode: bool = False) -> str:
+    if PROVIDER == "claude":
+        sys_text = system + ("\n\nReturn valid JSON only. No markdown." if json_mode else "")
+        r = client.messages.create(
+            model=MODEL, max_tokens=512, temperature=0.2,
+            system=sys_text,
+            messages=[{"role": "user", "content": query}],
+        )
+        return r.content[0].text
+    else:
+        extra = {"response_format": {"type": "json_object"}} if json_mode else {}
+        r = client.chat.completions.create(
+            model=MODEL, max_tokens=512, temperature=0.2,
+            messages=[{"role": "system", "content": system},
+                      {"role": "user",   "content": query}],
+            **extra,
+        )
+        return r.choices[0].message.content
 
 
 # ── Prompting strategies ───────────────────────────────────────────────────────
 
 def zero_shot(query: str) -> str:
-    """No examples — model uses general knowledge only."""
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=TEMPERATURE,
-        messages=[
-            {"role": "system", "content": "You are a helpful banking assistant."},
-            {"role": "user",   "content": query},
-        ],
-    )
-    return response.choices[0].message.content
+    return ask("You are a helpful banking assistant.", query)
 
 
 def few_shot(query: str) -> str:
-    """
-    3 domain-specific examples in the system prompt.
-    Shows the model the exact format, tone, and depth expected.
-    """
-    examples = """
-You are a customer support specialist for Al Rajhi Bank. Answer clearly and specifically.
+    system = """You are a customer support specialist for Al Rajhi Bank. Answer clearly and specifically.
 Always mention the relevant product, include actual figures where known, and end with
 a next step the customer can take.
 
@@ -57,25 +75,11 @@ Calculate your monthly instalment using the finance calculator in our mobile app
 Example 3:
 Q: Can I open a savings account online?
 A: Yes. Download the Al Rajhi mobile app, tap "Open Account", complete the biometric
-ID verification, and your account is live within 10 minutes. No branch visit required.
-""".strip()
-
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=TEMPERATURE,
-        messages=[
-            {"role": "system", "content": examples},
-            {"role": "user",   "content": query},
-        ],
-    )
-    return response.choices[0].message.content
+ID verification, and your account is live within 10 minutes. No branch visit required."""
+    return ask(system, query)
 
 
 def chain_of_thought(query: str) -> str:
-    """
-    Instruct the model to reason through the answer before responding.
-    Most effective for complex multi-part questions or policy lookups.
-    """
     system = """You are an Al Rajhi Bank specialist. For each customer question:
 1. First identify what the customer actually needs (restated simply)
 2. List the key facts relevant to their question
@@ -85,34 +89,18 @@ Use this format:
 NEED: [one sentence]
 FACTS: [bullet points]
 ANSWER: [response to customer]"""
-
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=TEMPERATURE,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user",   "content": query},
-        ],
-    )
-    return response.choices[0].message.content
+    return ask(system, query)
 
 
-def self_consistency(query: str, n: int = 3) -> str:
-    """
-    Sample n independent answers and return the one that appears most consistent.
-    For factual QA: pick the answer whose key claim appears in ≥ 2 responses.
-    Simplified here: return all n answers for comparison.
-    """
+def self_consistency(query: str, n: int = 3) -> list:
     responses = []
     for _ in range(n):
         responses.append(few_shot(query))
-        time.sleep(0.5)   # avoid rate limiting
+        time.sleep(0.3)
     return responses
 
 
-# ── Structured output (JSON mode) ─────────────────────────────────────────────
 def json_response(query: str) -> str:
-    """Force JSON output — reliable for downstream parsing."""
     system = """You are an Al Rajhi Bank assistant. Respond ONLY in valid JSON:
 {
   "answer": "...",
@@ -120,29 +108,22 @@ def json_response(query: str) -> str:
   "next_step": "...",
   "escalate_to_human": true|false
 }"""
-    response = client.chat.completions.create(
-        model=MODEL,
-        temperature=TEMPERATURE,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user",   "content": query},
-        ],
-    )
-    return response.choices[0].message.content
+    return ask(system, query, json_mode=True)
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
+    print(f"Provider: {PROVIDER} | Model: {MODEL}\n")
+
     queries = [
         "How do I increase my credit card limit?",
-        "My salary transfer was delayed — what should I do?",
+        "My salary transfer was delayed -- what should I do?",
     ]
 
     for query in queries:
-        print(f"\n{'═' * 70}")
+        print(f"\n{'=' * 70}")
         print(f"QUERY: {query}")
-        print("═" * 70)
+        print("=" * 70)
 
         print("\n[Zero-shot]")
         print(zero_shot(query))
@@ -156,20 +137,19 @@ def main():
         print("\n[JSON mode]")
         print(json_response(query))
 
-        time.sleep(1)   # rate limit buffer
+        time.sleep(0.5)
 
-    # Decision tree: which technique to use
-    print("\n\n── Technique decision guide ──")
+    print("\n\n-- Technique decision guide --")
     guide = {
-        "Simple FAQ (account balance, branch hours)":    "zero-shot",
-        "Domain format critical (regulatory, compliance)": "few-shot (3-5 domain examples)",
-        "Complex policy lookup (multi-condition eligibility)": "chain-of-thought",
-        "High-stakes decision (loan approval, fraud query)": "self-consistency (vote N=3-5)",
-        "Downstream parsing needed (API, database write)": "json_mode",
+        "Simple FAQ (account balance, branch hours)":           "zero-shot",
+        "Domain format critical (regulatory, compliance)":      "few-shot (3-5 domain examples)",
+        "Complex policy lookup (multi-condition eligibility)":  "chain-of-thought",
+        "High-stakes decision (loan approval, fraud query)":    "self-consistency (vote N=3-5)",
+        "Downstream parsing needed (API, database write)":      "json_mode",
     }
     for task, technique in guide.items():
         print(f"  {task}")
-        print(f"    → {technique}\n")
+        print(f"    -> {technique}\n")
 
 
 if __name__ == "__main__":

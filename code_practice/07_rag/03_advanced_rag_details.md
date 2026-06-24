@@ -1,5 +1,5 @@
 # Session 3 — Advanced RAG: Hybrid Search + Reranking + HyDE
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../7.rag/04_advanced_rag.md](../../../7.rag/04_advanced_rag.md)
 
@@ -53,6 +53,18 @@ rrf_score(doc) = Σ 1 / (60 + rank_in_each_list)
 | BM25 | rank_bm25 (no model) | — |
 | Cross-encoder | ms-marco-MiniLM-L-6-v2 | 90 MB |
 | Generation | gpt-4o-mini (API) | — |
+
+---
+
+## Actual Output (Windows, gpt-4o-mini, 2026-06-25)
+
+| Query | Basic RAG | Advanced RAG |
+|-------|-----------|--------------|
+| ERC in year 3 | ✅ correct (3%) | ✅ correct (3%) |
+| Debt burden ratio limit | ❌ "not specified" — wrong sources retrieved | ✅ correct (33% of gross salary) |
+| Expat credit card docs | ✅ correct | ✅ correct + more complete |
+
+**Key win — Q2:** Basic RAG retrieved Credit Card and Mortgage docs instead of Personal Finance. Hybrid BM25 matched "debt burden ratio" as exact keywords → correct doc retrieved → correct answer. This is the canonical example of why hybrid search beats dense-only on financial domain terms.
 
 ---
 

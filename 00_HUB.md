@@ -1,6 +1,6 @@
 # Hub — Sameer Khan | Daily Action Center
 
-> **Open this every day.** Everything actionable is here. Deep reference — follow the links. Last updated: 16 June 2026, 01:03 AM
+> **Open this every day.** Everything actionable is here. Deep reference — follow the links. Last updated: 25 June 2026
 
 ---
 
@@ -41,38 +41,37 @@
 | Code Phase 02 — Transformers | ✅ Run (11/11 on work laptop) |
 | Code Phase 03 — Prompting | ✅ Run (10/10 on work laptop with Ollama) |
 | Code Phase 04 — LLMs (legacy) | ✅ Run (14/14 on work laptop) |
-| Code Phase 05 — Transformers (HF models) | ✅ 01-02 Run · 🔧 03-07 Code-built — run on Windows |
-| Code Phase 06 — LLMs Core | 🔧 Code-built (3/3) · needs `OPENAI_API_KEY` |
-| Code Phase 07 — RAG | 🔧 Code-built (5/5) · needs `OPENAI_API_KEY` |
-| Code Phase 08 — Agents / LangGraph | 🔧 Code-built (4/4) · needs `OPENAI_API_KEY` |
-| Code Phase 09 — Fine-tuning | 🔧 Code-built (6/6) · sessions 01+04 run on CPU/MPS |
-| Code Phase 10 — Document AI | 🔧 Code-built (4/4) · run on Windows |
+| Code Phase 05 — Transformers (HF models) | ✅ All 7 run (GPU, GTX 1650 Ti, 25 Jun 2026) |
+| Code Phase 06 — LLMs Core | ✅ All 3 run · Scripts updated with openai/claude/ollama PROVIDER flag |
+| Code Phase 07 — RAG | ✅ All 5 run · faiss-cpu + rank-bm25 installed |
+| Code Phase 08 — Agents / LangGraph | ✅ All 4 run · langchain-openai + langgraph installed |
+| Code Phase 09 — Fine-tuning | ⏸ Parked — PyTorch 2.5.1 incompatible with trl 1.6 + safetensors (torch 2.6 not available for cu121) |
+| Code Phase 10 — Document AI | 🔧 Code-built (4/4) · run next |
 | RAG project (`archive/projects/rag_system/`) | ✅ Built: FastAPI + Streamlit + eval · ⏳ HF Spaces deploy pending |
 | Resume | ✅ Updated: tagline, summary, skills, ICE bullets, RAG project |
-| LLM fine-tune resume bullet | ⏳ Add after Phase 09/02 QLoRA runs + output captured |
-| LangGraph agent resume bullet | ⏳ Add after Phase 08/04 document agent runs |
+| LLM fine-tune resume bullet | ⏸ On hold (Phase 09 parked) |
+| LangGraph agent resume bullet | ✅ Ready to add — Phase 08/04 document agent ran successfully |
 | Document AI pipeline resume bullet | ⏳ Add after Phase 10/04 runs + pin to GitHub |
-| Job applications | ⏸ Hold — run API sessions + portfolio milestones first |
+| Job applications | ⏸ Hold — Phase 10 + portfolio milestones first |
 
 ---
 
 ## What To Do RIGHT NOW (priority order)
 
-### 1. Run API sessions on Windows — no GPU, no MacBook needed ⏳ ACTIVE
+### 1. ✅ Run API sessions on Windows — COMPLETE (25 Jun 2026)
 
-All three phases below run with just `$env:OPENAI_API_KEY = "sk-..."`. See `code_practice/WINDOWS_SETUP.md`.
+Phases 06, 07, 08 all run. All `_details.md` updated with actual output.
 
-- [ ] **Phase 06** — `01_prompt_engineering.py`, `02_structured_extraction.py`, `03_llm_evaluation.py`
-- [ ] **Phase 07** — `01_basic_rag.py` → `04_rag_evaluation.py` (sessions 01-04; 05 needs FastAPI separately)
-- [ ] **Phase 08** — `01_react_agent.py`, `02_tool_calling.py`, `03_langgraph_agent/run.py`, `04_document_agent/run.py`
-- [ ] For each: capture real output in `_details.md`, flip badge `🔧 → ✅`
+### 2. Run Phase 10 — Document AI ⏳ ACTIVE
 
-### 2. Run the two portfolio milestone sessions
+- [ ] `code_practice/10_document_ai/` — run all 4 sessions
+- [ ] **Session 04** `04_document_pipeline.py` → pin repo to GitHub → add resume bullet
 
-- [ ] **Phase 08/04** `04_document_agent/run.py` → add resume bullet: *"Built LangGraph mortgage document agent: classify → extract → policy retrieval → eligibility → HITL approval → report"*
-- [ ] **Phase 10/04** `04_document_pipeline.py` → pin repo to GitHub → add to resume as differentiator demo
+### 3. Add LangGraph agent resume bullet — READY NOW
 
-### 3. Deploy RAG project to HuggingFace Spaces
+Phase 08/04 document agent ran. Copy bullet from "Personal Projects" section below → paste to resume.
+
+### 4. Deploy RAG project to HuggingFace Spaces
 
 - [ ] Set `LLM_PROVIDER=huggingface` + `HF_TOKEN` in Spaces secrets
 - [ ] Test live link
@@ -139,11 +138,11 @@ Add to resume after run: *"Fine-tuned LLM (LoRA + QLoRA) on synthetic banking da
 
 ---
 
-**Document Agent POC (2026)** &nbsp;&nbsp;&nbsp;&nbsp;→ run `code_practice/08_agents/04_document_agent/run.py`
+**Document Agent POC (2026)** &nbsp;&nbsp;&nbsp;&nbsp;✅ Run (25 Jun 2026)
 
 LangGraph supervisor agent for mortgage document processing — classify → extract fields → retrieve policy → eligibility check → HITL manager approval (interrupt/resume) → decision report. 5 specialist agents wired with conditional routing.
 
-Add to resume after run: *"Built LangGraph mortgage document processing agent: classify → extract → policy RAG → eligibility → HITL approval → report; handles borderline cases via interrupt-based manager review"*
+**Add to resume now:** *"Built LangGraph mortgage document processing agent: classify → extract → policy RAG → eligibility → HITL approval → report; handles borderline cases via interrupt-based manager review"*
 
 ---
 
@@ -193,20 +192,21 @@ Full gap analysis — 01 CAREER PACK §15
 | Stack | FastAPI + FAISS IndexFlatIP + sentence-transformers + Ollama/HF + Streamlit |
 | Covers (% JDs) | RAG 51%, FAISS 38%, Embeddings 38%, FastAPI, Deployment |
 
-### Project 2: LLM Fine-tuning → ⏳ In progress (Phase 4 code built, waiting for MacBook run)
+### Project 2: LLM Fine-tuning → ⏸ Parked (PyTorch 2.5.1 + trl 1.6 incompatibility on cu121)
 
 | | |
 |---|---|
-| Folder | `code_practice/04_llms/07_qlora_train/` |
-| Stack | TinyLlama + PEFT + Trainer (Mac MPS, no bitsandbytes) |
+| Folder | `code_practice/09_finetuning/` |
+| Stack | opt-125m + PEFT LoRA + TRL SFTTrainer |
+| Blocker | torch 2.6 not available for cu121; resume when cu124 wheel releases or upgrade to 3060+ |
 | Covers (% JDs) | LLM fine-tuning 36%, LoRA/QLoRA 15%, PEFT, HuggingFace 31% |
 
-### Project 3: Document Agent → ⏳ Docs ready, code on request (Phase 6)
+### Project 3: Document Agent → ✅ Run (25 Jun 2026)
 
 | | |
 |---|---|
-| Folder | `code_practice/06_agents/` |
-| Stack | LangGraph + tools registry + memory + planner/executor |
+| Folder | `code_practice/08_agents/04_document_agent/` |
+| Stack | LangGraph + 5 specialist agents + MemorySaver + HITL interrupt |
 | Covers (% JDs) | LangChain 46%, LangGraph mandatory at Infosys, Agents 23% |
 
 ---

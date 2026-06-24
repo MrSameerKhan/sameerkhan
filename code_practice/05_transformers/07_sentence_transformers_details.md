@@ -1,5 +1,5 @@
 # Session 7 — Sentence Transformers: Semantic Document Search
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../4.nlp/02_embeddings/02_sentence_embeddings.md](../../../4.nlp/02_embeddings/02_sentence_embeddings.md)
 
@@ -130,14 +130,44 @@ Saved to models/05_transformers/sentence_transformers
 
 ---
 
-## How to Run
+## Actual Output (Windows, GTX 1650 Ti, 2026-06-25)
 
-```bash
-KMP_DUPLICATE_LIB_OK=TRUE python 07_sentence_transformers.py
+```
+Device: cuda
+
+Epoch 1/2 | loss: 0.2672
+Epoch 2/2 | loss: 0.2406
+
+Saved to models/05_transformers/sentence_transformers
+
+-- Semantic Search --
+  Query: What is the LTV limit for first-time buyers?
+    [0.690] First-time buyers are eligible for a 95% LTV mortgage...
+    [0.370] The maximum loan-to-value ratio is 90% for standard residential mortgages.
+
+  Query: How much do I pay if I repay the loan early?
+    [0.716] Early repayment charges of 2% apply within the initial fixed-rate period.
+    [0.360] First-time buyers are eligible for a 95% LTV mortgage...
+
+  Query: What income documents do I need to provide?
+    [0.585] All applications require proof of income for the past three months.
+    [0.347] Joint applications require both applicants to provide identification documents.
 ```
 
-First run: downloads `all-MiniLM-L6-v2` (~90 MB) + SNLI (~100 MB).
-MPS training: ~10–15 min for 2 epochs on 4k examples.
+- Loss 0.267 → 0.241 — already low (pretrained model is strong, fine-tuning refines)
+- Top-1 retrieval correct on all 3 queries — semantic search working
+- Scores lower than expected (0.59–0.72 vs 0.88) — small fine-tuning subset, pretrained weights dominate
+
+---
+
+## How to Run
+
+```powershell
+python code_practice\05_transformers\07_sentence_transformers.py
+```
+
+First run: downloads `all-MiniLM-L6-v2` (~91 MB) + SNLI (~20 MB).
+CUDA training: ~1–2 min for 2 epochs on 4k examples.
 
 **Production scale-up:** replace the numpy dot-product search with FAISS:
 ```python
