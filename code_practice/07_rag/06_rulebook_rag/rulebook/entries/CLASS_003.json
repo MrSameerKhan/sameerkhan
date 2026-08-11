@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A schedule used by partnerships and S corporations to report income and deductible expenses from rental real estate activities, including net income or loss from rental properties that flow through from partnerships, estates, or trusts.",
+  "includes": [
+    {
+      "text": "Reports rental real estate income and expenses for multiple properties with separate columns for each property",
+      "quote": "For each property in column (a), enter the street address",
+      "rule_id": "CLASS_003.inc.1"
+    },
+    {
+      "text": "Requires specification of property type using standardized codes",
+      "quote": "Specify the type of property by entering one of the following codes in column (b)",
+      "rule_id": "CLASS_003.inc.2"
+    },
+    {
+      "text": "Includes depreciation deduction calculations for rental property",
+      "quote": "Line 14\u2014Depreciation",
+      "rule_id": "CLASS_003.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report supplemental income and loss from other sources like partnerships, S corporations, estates, trusts, and REITs",
+      "quote": "Income or deductions from a trade or business activity or a rental activity other than rental real estate",
+      "rule_id": "CLASS_003.exc.1"
+    },
+    {
+      "text": "Does not report mortgage interest statements issued to borrowers",
+      "quote": "Portfolio income or deductions",
+      "rule_id": "CLASS_003.exc.2"
+    },
+    {
+      "text": "Does not report interest and ordinary dividends from investments",
+      "quote": "Section 179 expense deduction",
+      "rule_id": "CLASS_003.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Reports only rental real estate activities and expenses; the sibling reports supplemental income and loss from partnerships, S corporations, estates, trusts, and other pass-through entities",
+      "quote": "Partnerships and S corporations use Form 8825 to report income and deductible expenses from rental real estate activities",
+      "rule_id": "CLASS_003.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Reports rental property income and expenses for the entity; the sibling is a statement of mortgage interest paid by individual borrowers",
+      "quote": "For each property in column (a), enter the street address, city or town, and ZIP code",
+      "rule_id": "CLASS_003.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_024",
+      "text": "Reports rental real estate income and expenses; the sibling reports interest and ordinary dividend income from investments",
+      "quote": "Rental real estate income and expenses of a partnership or an S corporation",
+      "rule_id": "CLASS_003.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_003",
+  "source_doc": "i8825.pdf"
+}

@@ -1,0 +1,64 @@
+{
+  "document_type": "certificate",
+  "definition": "A withholding certificate completed by a foreign individual to establish nonresident alien status and claim reduced withholding rates or exemptions on U.S. source income, or to document foreign status for financial account purposes.",
+  "includes": [
+    {
+      "text": "Form identifies the beneficial owner as a nonresident alien individual",
+      "quote": "Establish that you are not a U.S. person",
+      "rule_id": "CLASS_021.inc.1"
+    },
+    {
+      "text": "Form requests country of citizenship and permanent residence address",
+      "quote": "Enter your country of citizenship",
+      "rule_id": "CLASS_021.inc.2"
+    },
+    {
+      "text": "Form includes certification section requiring signature and date",
+      "quote": "Form W-8BEN must be signed and dated by the beneficial owner",
+      "rule_id": "CLASS_021.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Sibling is used by U.S. persons and citizens to document U.S. status",
+      "quote": "You are a U.S. citizen (even if you reside outside the United States) or other U.S. person (including a resident alien individual). Instead, use Form W-9",
+      "rule_id": "CLASS_021.exc.1"
+    },
+    {
+      "text": "Sibling is used to report foreign earned income of U.S. citizens or residents abroad",
+      "quote": "Foreign Earned Income",
+      "rule_id": "CLASS_021.exc.2"
+    },
+    {
+      "text": "Sibling is a worksheet or computation form for qualified business income deduction",
+      "quote": "Qualified Business Income Deduction Simplified Computation",
+      "rule_id": "CLASS_021.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_017",
+      "text": "This form certifies foreign nonresident alien status for withholding purposes; the sibling documents U.S. person status and requests taxpayer identification number",
+      "quote": "Establish that you are not a U.S. person",
+      "rule_id": "CLASS_021.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_015",
+      "text": "This form is a withholding certificate for foreign individuals on U.S. source income; the sibling is a tax return reporting foreign earned income of U.S. citizens or residents",
+      "quote": "Certificate of Foreign Status of Beneficial Owner for United States Tax Withholding and Reporting",
+      "rule_id": "CLASS_021.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_010",
+      "text": "This form is a withholding certificate for individuals; the sibling is a computation worksheet for calculating qualified business income deduction",
+      "quote": "Certification",
+      "rule_id": "CLASS_021.disc.3"
+    }
+  ],
+  "aliases": [
+    "foreign withholding certificate",
+    "nonresident alien certification"
+  ],
+  "class_id": "CLASS_021",
+  "source_doc": "iw8ben.pdf"
+}

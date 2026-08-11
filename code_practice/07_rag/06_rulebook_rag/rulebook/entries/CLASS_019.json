@@ -1,0 +1,66 @@
+{
+  "document_type": "worksheet",
+  "definition": "A form used to calculate this document for qualified improvements and property installed in a home, including credits for solar, wind, geothermal, battery storage, fuel cells, and energy-efficient building components and equipment.",
+  "includes": [
+    {
+      "text": "Form contains sections for residential clean energy credit and energy efficient home improvement credit",
+      "quote": "Residential Energy Credits",
+      "rule_id": "CLASS_019.inc.1"
+    },
+    {
+      "text": "Form requires qualification criteria verification for energy property and improvements",
+      "quote": "To qualify for the credit, any qualified energy efficiency improvements",
+      "rule_id": "CLASS_019.inc.2"
+    },
+    {
+      "text": "Form addresses joint occupancy situations with allocation rules",
+      "quote": "Joint occupants of a home who are claiming the energy",
+      "rule_id": "CLASS_019.inc.3"
+    },
+    {
+      "text": "Form includes condominium and cooperative ownership provisions",
+      "quote": "Occupants of a condominium or cooperative who are",
+      "rule_id": "CLASS_019.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report business income or self-employment income from a trade or business",
+      "quote": "Profit or Loss From Business",
+      "rule_id": "CLASS_019.exc.1"
+    },
+    {
+      "text": "Does not report rental real estate income and expenses",
+      "quote": "Supplemental Income and Loss",
+      "rule_id": "CLASS_019.exc.2"
+    },
+    {
+      "text": "Does not report partnership or S corporation rental real estate income and expenses",
+      "quote": "Rental Real Estate Income and Expenses of a Partnership or S Corp",
+      "rule_id": "CLASS_019.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Reports this document for home improvements and renewable energy property, not business profit or loss from self-employment activities",
+      "quote": "Residential Energy Credits",
+      "rule_id": "CLASS_019.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Reports this document for home improvements and renewable energy property, not supplemental rental income and loss from real estate",
+      "quote": "Residential Energy Credits",
+      "rule_id": "CLASS_019.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_003",
+      "text": "Reports individual this document for home improvements and renewable energy property, not partnership or S corporation rental real estate income and expenses",
+      "quote": "Residential Energy Credits",
+      "rule_id": "CLASS_019.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_019",
+  "source_doc": "i5695.pdf"
+}

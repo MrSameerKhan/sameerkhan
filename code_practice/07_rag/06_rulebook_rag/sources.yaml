@@ -1,0 +1,151 @@
+# IRS forms (spec section 2). URLs live here, never in code - a dead link is a yaml edit.
+#
+# 40 candidates probed; 4 dropped because IRS prints their instructions ON the form,
+# so no standalone instructions PDF exists and section 1.1's train/test separation
+# cannot hold: f1040es, f4506c, f4868, f8879.
+# 4 needed non-obvious instruction filenames: i1040sca, iw2w3, i1099mec, i1120ssk.
+classes:
+  - slug: f1040
+    real_name: "Form 1040 - U.S. Individual Income Tax Return"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040.pdf
+  - slug: f1040sa
+    real_name: "Schedule A (Form 1040) - Itemized Deductions"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040sa.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040sca.pdf
+  - slug: f1040sb
+    real_name: "Schedule B (Form 1040) - Interest and Ordinary Dividends"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040sb.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040sb.pdf
+  - slug: f1040sc
+    real_name: "Schedule C (Form 1040) - Profit or Loss From Business"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040sc.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040sc.pdf
+  - slug: f1040sd
+    real_name: "Schedule D (Form 1040) - Capital Gains and Losses"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040sd.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040sd.pdf
+  - slug: f1040se
+    real_name: "Schedule E (Form 1040) - Supplemental Income and Loss"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040se.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040se.pdf
+  - slug: f1040sf
+    real_name: "Schedule F (Form 1040) - Profit or Loss From Farming"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040sf.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040sf.pdf
+  - slug: f1040sse
+    real_name: "Schedule SE (Form 1040) - Self-Employment Tax"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040sse.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040sse.pdf
+  - slug: f1040x
+    real_name: "Form 1040-X - Amended U.S. Individual Income Tax Return"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1040x.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1040x.pdf
+  - slug: f1065
+    real_name: "Form 1065 - U.S. Return of Partnership Income"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1065.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1065.pdf
+  - slug: f1065sk1
+    real_name: "Schedule K-1 (Form 1065) - Partner's Share of Income"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1065sk1.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1065sk1.pdf
+  - slug: f1120
+    real_name: "Form 1120 - U.S. Corporation Income Tax Return"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1120.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1120.pdf
+  - slug: f1120s
+    real_name: "Form 1120-S - U.S. Income Tax Return for an S Corporation"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1120s.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1120s.pdf
+  - slug: f1120ssk
+    real_name: "Schedule K-1 (Form 1120-S) - Shareholder's Share of Income"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1120ssk.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1120ssk.pdf
+  - slug: fw2
+    real_name: "Form W-2 - Wage and Tax Statement"
+    form_url: https://www.irs.gov/pub/irs-pdf/fw2.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/iw2w3.pdf
+  - slug: fw9
+    real_name: "Form W-9 - Request for Taxpayer Identification Number"
+    form_url: https://www.irs.gov/pub/irs-pdf/fw9.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/iw9.pdf
+  - slug: fw8ben
+    real_name: "Form W-8BEN - Certificate of Foreign Status of Beneficial Owner"
+    form_url: https://www.irs.gov/pub/irs-pdf/fw8ben.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/iw8ben.pdf
+  - slug: f1098
+    real_name: "Form 1098 - Mortgage Interest Statement"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1098.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1098.pdf
+  - slug: f1099msc
+    real_name: "Form 1099-MISC - Miscellaneous Information"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1099msc.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1099mec.pdf
+  - slug: f1099int
+    real_name: "Form 1099-INT - Interest Income"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1099int.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1099int.pdf
+  - slug: f1099div
+    real_name: "Form 1099-DIV - Dividends and Distributions"
+    form_url: https://www.irs.gov/pub/irs-pdf/f1099div.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i1099div.pdf
+  - slug: f2106
+    real_name: "Form 2106 - Employee Business Expenses"
+    form_url: https://www.irs.gov/pub/irs-pdf/f2106.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i2106.pdf
+  - slug: f4562
+    real_name: "Form 4562 - Depreciation and Amortization"
+    form_url: https://www.irs.gov/pub/irs-pdf/f4562.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i4562.pdf
+  - slug: f4797
+    real_name: "Form 4797 - Sales of Business Property"
+    form_url: https://www.irs.gov/pub/irs-pdf/f4797.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i4797.pdf
+  - slug: f8825
+    real_name: "Form 8825 - Rental Real Estate Income and Expenses of a Partnership or S Corp"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8825.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8825.pdf
+  - slug: f8582
+    real_name: "Form 8582 - Passive Activity Loss Limitations"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8582.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8582.pdf
+  - slug: f8606
+    real_name: "Form 8606 - Nondeductible IRAs"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8606.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8606.pdf
+  - slug: f8889
+    real_name: "Form 8889 - Health Savings Accounts"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8889.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8889.pdf
+  - slug: fss4
+    real_name: "Form SS-4 - Application for Employer Identification Number"
+    form_url: https://www.irs.gov/pub/irs-pdf/fss4.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/iss4.pdf
+  - slug: f2441
+    real_name: "Form 2441 - Child and Dependent Care Expenses"
+    form_url: https://www.irs.gov/pub/irs-pdf/f2441.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i2441.pdf
+  - slug: f8949
+    real_name: "Form 8949 - Sales and Other Dispositions of Capital Assets"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8949.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8949.pdf
+  - slug: f8863
+    real_name: "Form 8863 - Education Credits"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8863.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8863.pdf
+  - slug: f5695
+    real_name: "Form 5695 - Residential Energy Credits"
+    form_url: https://www.irs.gov/pub/irs-pdf/f5695.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i5695.pdf
+  - slug: f2555
+    real_name: "Form 2555 - Foreign Earned Income"
+    form_url: https://www.irs.gov/pub/irs-pdf/f2555.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i2555.pdf
+  - slug: f3903
+    real_name: "Form 3903 - Moving Expenses"
+    form_url: https://www.irs.gov/pub/irs-pdf/f3903.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i3903.pdf
+  - slug: f8995
+    real_name: "Form 8995 - Qualified Business Income Deduction Simplified Computation"
+    form_url: https://www.irs.gov/pub/irs-pdf/f8995.pdf
+    instructions_url: https://www.irs.gov/pub/irs-pdf/i8995.pdf

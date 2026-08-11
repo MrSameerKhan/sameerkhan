@@ -1,0 +1,69 @@
+{
+  "document_type": "information_return",
+  "definition": "A statement reporting this document and original issue discount earned by an individual or entity during the tax year, including various categories of interest, penalties, withholdings, and premium or discount adjustments on debt obligations.",
+  "includes": [
+    {
+      "text": "Reports this document from savings accounts, bonds, and other debt instruments",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_022.inc.1"
+    },
+    {
+      "text": "Reports original issue discount accrued on obligations",
+      "quote": "Original Issue Discount",
+      "rule_id": "CLASS_022.inc.2"
+    },
+    {
+      "text": "Reports tax-exempt interest from municipal and other qualifying bonds",
+      "quote": "Tax-Exempt Interest",
+      "rule_id": "CLASS_022.inc.3"
+    },
+    {
+      "text": "Reports federal income tax withheld and foreign taxes paid on interest",
+      "quote": "Federal Income Tax Withheld",
+      "rule_id": "CLASS_022.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report mortgage interest paid by the taxpayer; that is reported on a different form",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_022.exc.1"
+    },
+    {
+      "text": "Does not report dividend distributions from mutual funds and regulated investment companies",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_022.exc.2"
+    },
+    {
+      "text": "Does not report miscellaneous income such as rents, royalties, or other non-interest payments",
+      "quote": "Miscellaneous Information",
+      "rule_id": "CLASS_022.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Reports interest earned by the recipient on various debt instruments and savings accounts; the sibling reports mortgage interest paid by a borrower to a lender",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_022.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "Reports this document and original issue discount on bonds and debt obligations; the sibling reports dividend and distribution payments from investment companies and corporations",
+      "quote": "Interest Income, later",
+      "rule_id": "CLASS_022.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_031",
+      "text": "Reports this document and original issue discount; the sibling reports miscellaneous income including rents, royalties, prizes, and other non-interest payments",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_022.disc.3"
+    }
+  ],
+  "aliases": [
+    "Interest and OID Statement",
+    "Interest Reporting Form"
+  ],
+  "class_id": "CLASS_022",
+  "source_doc": "i1099int.pdf"
+}

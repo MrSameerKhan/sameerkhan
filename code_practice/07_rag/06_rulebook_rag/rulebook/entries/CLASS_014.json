@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_return",
+  "definition": "A form used to correct or amend a previously filed individual income tax return, allowing taxpayers to report changes to income, deductions, credits, filing status, or other tax items for a specific tax year.",
+  "includes": [
+    {
+      "text": "Form used to amend a previously filed individual income tax return",
+      "quote": "Amended U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_014.inc.1"
+    },
+    {
+      "text": "Contains columns for original amounts, changes, and corrected amounts",
+      "quote": "Columns A Through C",
+      "rule_id": "CLASS_014.inc.2"
+    },
+    {
+      "text": "Requires explanation of all changes made",
+      "quote": "Part II\u2014Explanation of Changes",
+      "rule_id": "CLASS_014.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Mortgage interest reported by lenders",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_014.exc.1"
+    },
+    {
+      "text": "Dividend and distribution information from corporations and funds",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_014.exc.2"
+    },
+    {
+      "text": "Original annual income tax return for individuals",
+      "quote": "U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_014.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "This form amends a previously filed return and requires explanation of changes; the sibling reports mortgage interest paid during the year with no amendment capability",
+      "quote": "Amended U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_014.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "This form allows correction of tax liability across multiple line items; the sibling reports only dividend and distribution amounts from a single source",
+      "quote": "Income and Deductions",
+      "rule_id": "CLASS_014.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_020",
+      "text": "This form shows original and corrected amounts in separate columns for comparison; the sibling is the original return filed for the tax year",
+      "quote": "Columns A Through C",
+      "rule_id": "CLASS_014.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_014",
+  "source_doc": "i1040x.pdf"
+}

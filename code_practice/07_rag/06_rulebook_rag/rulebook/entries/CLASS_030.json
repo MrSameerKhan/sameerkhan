@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A schedule used to report and calculate overall this document from various transactions, including those reported on that document, and to determine the tax treatment of different types of capital gains.",
+  "includes": [
+    {
+      "text": "Reports this document from transactions",
+      "quote": "Capital Gains and Losses",
+      "rule_id": "CLASS_030.inc.1"
+    },
+    {
+      "text": "Aggregates gains and losses from a detailed transaction schedule and other sources",
+      "quote": "To figure the overall gain or loss from transactions reported on Form 8949",
+      "rule_id": "CLASS_030.inc.2"
+    },
+    {
+      "text": "Contains lines for short-term and long-term capital transactions",
+      "quote": "Short- or Long-Term Gain",
+      "rule_id": "CLASS_030.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report individual sales of capital assets; those are reported on a detailed transaction schedule instead",
+      "quote": "Complete Form 8949 before you complete line 1b, 2, 3, 8b, 9, or 10 of Schedule D",
+      "rule_id": "CLASS_030.exc.1"
+    },
+    {
+      "text": "Does not report dividend distributions directly; those are reported on a dividend and distribution statement",
+      "quote": "Gain from Form 1099-DIV",
+      "rule_id": "CLASS_030.exc.2"
+    },
+    {
+      "text": "Does not report interest income; that is reported on a sibling schedule",
+      "quote": "Schedule B (Form 1040) - Interest and Ordinary Dividends",
+      "rule_id": "CLASS_030.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_006",
+      "text": "Aggregates and summarizes this document from multiple transactions already reported on that document; that document reports individual transactions in detail",
+      "quote": "To figure the overall gain or loss from transactions reported on Form 8949",
+      "rule_id": "CLASS_030.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "Reports this document from sales of securities and property; that document reports dividend and distribution income from investments",
+      "quote": "Capital Gains and Losses",
+      "rule_id": "CLASS_030.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_024",
+      "text": "Reports this document from all sources including long-term transactions; that schedule reports only interest and ordinary dividends",
+      "quote": "To report capital gain distributions not reported directly on Form 1040 or 1040-SR, line 7a",
+      "rule_id": "CLASS_030.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_030",
+  "source_doc": "i1040sd.pdf"
+}

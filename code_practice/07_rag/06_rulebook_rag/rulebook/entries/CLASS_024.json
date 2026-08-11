@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A supplemental schedule for reporting interest income, ordinary dividend income, and disclosures regarding foreign financial accounts and foreign trusts.",
+  "includes": [
+    {
+      "text": "Contains a section for reporting all taxable interest income from various sources",
+      "quote": "Interest",
+      "rule_id": "CLASS_024.inc.1"
+    },
+    {
+      "text": "Contains a section for reporting ordinary dividend income",
+      "quote": "Ordinary Dividends",
+      "rule_id": "CLASS_024.inc.2"
+    },
+    {
+      "text": "Contains questions and disclosures about foreign financial accounts and foreign trust distributions",
+      "quote": "Foreign Accounts and Trusts",
+      "rule_id": "CLASS_024.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports only interest income without dividend reporting capability",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_024.exc.1"
+    },
+    {
+      "text": "Reports only dividend and distribution income without interest reporting",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_024.exc.2"
+    },
+    {
+      "text": "Reports mortgage interest paid by a borrower to a lender, not interest received by the taxpayer",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_024.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_022",
+      "text": "This schedule reports interest received by the taxpayer along with ordinary dividends and foreign account disclosures; the sibling reports only interest income received from financial institutions",
+      "quote": "Interest and Ordinary Dividends",
+      "rule_id": "CLASS_024.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "This schedule reports both this document plus foreign account disclosures; the sibling reports only dividends and distributions from corporations and mutual funds",
+      "quote": "Interest and Ordinary Dividends",
+      "rule_id": "CLASS_024.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "This schedule reports interest received by the taxpayer; the sibling reports mortgage interest paid by a borrower to a lending institution",
+      "quote": "Interest",
+      "rule_id": "CLASS_024.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_024",
+  "source_doc": "i1040sb.pdf"
+}

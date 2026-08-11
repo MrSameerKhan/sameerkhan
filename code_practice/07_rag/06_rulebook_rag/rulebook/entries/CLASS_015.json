@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A form used by U.S. citizens and resident aliens to calculate this document exclusion and housing exclusion or deduction when living and working abroad, provided they meet the tax home test and either the bona fide residence test or physical presence test.",
+  "includes": [
+    {
+      "text": "Contains sections for reporting this document from wages, salaries, professional fees, and other compensation for personal services performed in a foreign country",
+      "quote": "Foreign Earned Income",
+      "rule_id": "CLASS_015.inc.1"
+    },
+    {
+      "text": "Includes calculation of housing exclusion or deduction for reasonable expenses paid for foreign housing of the taxpayer, spouse, and dependents",
+      "quote": "Housing Exclusion and/or Deduction",
+      "rule_id": "CLASS_015.inc.2"
+    },
+    {
+      "text": "Requires documentation of the 12-month period used to establish physical presence in a foreign country",
+      "quote": "The 12-month period on which the physical",
+      "rule_id": "CLASS_015.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not include self-employment tax calculation or Social Security wage base information",
+      "quote": "Self-Employment Tax",
+      "rule_id": "CLASS_015.exc.1"
+    },
+    {
+      "text": "Does not report moving expenses or relocation costs",
+      "quote": "Moving Expenses",
+      "rule_id": "CLASS_015.exc.2"
+    },
+    {
+      "text": "Does not calculate qualified business income deduction or pass-through entity income",
+      "quote": "Qualified Business Income Deduction",
+      "rule_id": "CLASS_015.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_035",
+      "text": "Reports this document exclusion and housing costs for individuals working abroad; the sibling calculates self-employment tax on net earnings from self-employment",
+      "quote": "Foreign Earned Income",
+      "rule_id": "CLASS_015.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_027",
+      "text": "Addresses housing and living expenses incurred while maintaining a tax home in a foreign country; the sibling reports costs of moving to a new residence within the United States",
+      "quote": "List other foreign earned income not included on",
+      "rule_id": "CLASS_015.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_010",
+      "text": "Calculates exclusions and deductions for this document; the sibling computes qualified business income deduction for domestic pass-through entities",
+      "quote": "Foreign Earned Income Exclusion",
+      "rule_id": "CLASS_015.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_015",
+  "source_doc": "i2555.pdf"
+}

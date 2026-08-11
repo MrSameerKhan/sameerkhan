@@ -1,0 +1,63 @@
+{
+  "document_type": "worksheet",
+  "definition": "A worksheet used by noncorporate taxpayers to calculate passive activity losses and determine the amount of losses that can be deducted in the current tax year versus those that must be carried forward to future years.",
+  "includes": [
+    {
+      "text": "Contains parts for combining net income and losses from passive activities",
+      "quote": "Use Part I to combine the net income and net loss from all passive activities",
+      "rule_id": "CLASS_007.inc.1"
+    },
+    {
+      "text": "Includes sections for rental real estate activities with active participation",
+      "quote": "Use Part IV for rental real estate activities with active participation",
+      "rule_id": "CLASS_007.inc.2"
+    },
+    {
+      "text": "Contains calculation of modified adjusted gross income for special allowance determination",
+      "quote": "To figure modified adjusted gross income",
+      "rule_id": "CLASS_007.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report business income of a sole proprietor",
+      "quote": "Trade or business activities are generally reported on Schedule C",
+      "rule_id": "CLASS_007.exc.1"
+    },
+    {
+      "text": "Does not report capital gains and losses from investment property dispositions",
+      "quote": "Capital losses that are allowable under the passive loss rules may be limited under the capital loss limitations",
+      "rule_id": "CLASS_007.exc.2"
+    },
+    {
+      "text": "Does not report corporate passive activity losses",
+      "quote": "Corporations subject to the passive activity rules must use Form 8810",
+      "rule_id": "CLASS_007.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Allocates passive activity losses among multiple activities and carries forward disallowed losses; a sibling reports business income of one self-employed individual with no loss limitation carryforward mechanism",
+      "quote": "PALs not allowed in the current year are carried forward until they're allowed",
+      "rule_id": "CLASS_007.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_030",
+      "text": "Limits passive activity losses based on passive income and special allowances; that schedule reports capital gains and losses without this document",
+      "quote": "PALs can't be used to offset income from nonpassive activities",
+      "rule_id": "CLASS_007.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_032",
+      "text": "Applies this document to individual taxpayers; corporate income tax returns do not use this document",
+      "quote": "Form 8582 is used by noncorporate taxpayers to figure the amount of any passive activity loss",
+      "rule_id": "CLASS_007.disc.3"
+    }
+  ],
+  "aliases": [
+    "PAL worksheet"
+  ],
+  "class_id": "CLASS_007",
+  "source_doc": "i8582.pdf"
+}

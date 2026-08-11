@@ -1,0 +1,65 @@
+{
+  "document_type": "application",
+  "definition": "A form used to request and obtain the taxpayer identification number (TIN) and certifications from a U.S. person, including residents and entities, for purposes of information reporting and withholding compliance.",
+  "includes": [
+    {
+      "text": "Form requests the taxpayer's identification number and certification of U.S. status",
+      "quote": "Request for Taxpayer Identification Number",
+      "rule_id": "CLASS_017.inc.1"
+    },
+    {
+      "text": "Form includes certification statements regarding TIN accuracy, backup withholding status, and U.S. person status",
+      "quote": "The payee's TIN is correct",
+      "rule_id": "CLASS_017.inc.2"
+    },
+    {
+      "text": "Form contains fields for tax classification and foreign ownership status",
+      "quote": "A new line has been added for partnerships (including",
+      "rule_id": "CLASS_017.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Interest income reporting form that reports payments made to the payee",
+      "quote": "Interest payments",
+      "rule_id": "CLASS_017.exc.1"
+    },
+    {
+      "text": "Wage and tax statement reporting employment income and withholding",
+      "quote": "Wages",
+      "rule_id": "CLASS_017.exc.2"
+    },
+    {
+      "text": "Certificate of foreign status used by foreign persons instead of U.S. persons",
+      "quote": "Foreign Account Tax Compliance Act (FATCA) and backup",
+      "rule_id": "CLASS_017.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_022",
+      "text": "This form requests TIN from the payee for reporting purposes; the sibling reports interest income amounts paid to the payee",
+      "quote": "Request for Taxpayer Identification Number",
+      "rule_id": "CLASS_017.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_025",
+      "text": "This form is a request for identification and certification from any U.S. person; the sibling reports wages and employment tax withholding for employees",
+      "quote": "The payee is a U.S. person, and",
+      "rule_id": "CLASS_017.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_021",
+      "text": "This form is completed by U.S. persons to establish their status; the sibling is a certificate of foreign status completed by foreign persons",
+      "quote": "Request for Taxpayer Identification Number",
+      "rule_id": "CLASS_017.disc.3"
+    }
+  ],
+  "aliases": [
+    "TIN request form",
+    "payee identification form",
+    "withholding certification form"
+  ],
+  "class_id": "CLASS_017",
+  "source_doc": "iw9.pdf"
+}

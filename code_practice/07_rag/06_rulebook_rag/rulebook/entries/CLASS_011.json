@@ -1,0 +1,69 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A statement provided by a partnership to each partner reporting that partner's distributive share of partnership income, deductions, credits, and other tax items for the tax year.",
+  "includes": [
+    {
+      "text": "Reports this document and deductions from partnership operations",
+      "quote": "Partner's Share of Current",
+      "rule_id": "CLASS_011.inc.1"
+    },
+    {
+      "text": "Contains sections for ordinary business income, rental income, capital gains, and other income items",
+      "quote": "Ordinary Business Income (Loss)",
+      "rule_id": "CLASS_011.inc.2"
+    },
+    {
+      "text": "Includes information about the partnership and the individual partner",
+      "quote": "Information About the Partnership",
+      "rule_id": "CLASS_011.inc.3"
+    },
+    {
+      "text": "Reports distributions made to the partner during the tax year",
+      "quote": "Distributions",
+      "rule_id": "CLASS_011.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report the partnership's total income or consolidated tax liability",
+      "quote": "Although the partnership generally isn't subject to income tax",
+      "rule_id": "CLASS_011.exc.1"
+    },
+    {
+      "text": "Does not include the partnership's complete tax return with all partners' shares combined",
+      "quote": "The partnership files a copy of",
+      "rule_id": "CLASS_011.exc.2"
+    },
+    {
+      "text": "Does not report only one shareholder's allocable share of S corporation income",
+      "quote": "Shareholder's Share of Income",
+      "rule_id": "CLASS_011.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_033",
+      "text": "Reports each partner's share of partnership income with multiple partners receiving separate statements; the sibling reports a single shareholder's share of S corporation income",
+      "quote": "Partner's Share of Current",
+      "rule_id": "CLASS_011.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_032",
+      "text": "Reports distributive shares allocated among multiple partners; the sibling is a corporate tax return reporting the corporation's own tax liability",
+      "quote": "Allocates income among several partners",
+      "rule_id": "CLASS_011.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_000",
+      "text": "This is the partner's statement of their individual share; the sibling is the partnership's own return filed with the IRS",
+      "quote": "The partnership files a copy of",
+      "rule_id": "CLASS_011.disc.3"
+    }
+  ],
+  "aliases": [
+    "Partner statement",
+    "Distributive share statement"
+  ],
+  "class_id": "CLASS_011",
+  "source_doc": "i1065sk1.pdf"
+}

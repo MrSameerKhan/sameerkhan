@@ -1,0 +1,66 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A form used to report contributions to and distributions from this document (HSAs), figure HSA deductions, and report income and additional taxes related to HSA eligibility and qualified medical expenses.",
+  "includes": [
+    {
+      "text": "Reports HSA contributions and deductions for the tax year",
+      "quote": "Health Savings Accounts (HSAs)",
+      "rule_id": "CLASS_026.inc.1"
+    },
+    {
+      "text": "Reports distributions made from HSAs during the tax year",
+      "quote": "Distributions From an HSA",
+      "rule_id": "CLASS_026.inc.2"
+    },
+    {
+      "text": "Calculates deductible HSA contributions based on coverage type and eligibility",
+      "quote": "Figuring Your HSA Deduction",
+      "rule_id": "CLASS_026.inc.3"
+    },
+    {
+      "text": "Reports qualified medical expenses paid from HSA distributions",
+      "quote": "Qualified Medical Expenses",
+      "rule_id": "CLASS_026.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports dependent care expenses and credits",
+      "quote": "Child and Dependent Care Expenses",
+      "rule_id": "CLASS_026.exc.1"
+    },
+    {
+      "text": "Reports itemized deductions including medical expenses",
+      "quote": "Schedule A (Form 1040) - Itemized Deductions",
+      "rule_id": "CLASS_026.exc.2"
+    },
+    {
+      "text": "Reports rental income, royalties, and supplemental income from multiple sources",
+      "quote": "Schedule E (Form 1040) - Supplemental Income and Loss",
+      "rule_id": "CLASS_026.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_005",
+      "text": "Focuses on HSA contributions and distributions rather than dependent care expenses and credits",
+      "quote": "Report contributions to your HSA",
+      "rule_id": "CLASS_026.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_034",
+      "text": "Reports HSA-specific deductions and distributions rather than itemized deductions from all sources",
+      "quote": "Figure your HSA deduction",
+      "rule_id": "CLASS_026.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Reports HSA account activity rather than rental, royalty, or other supplemental income from multiple sources",
+      "quote": "Report distributions from HSAs",
+      "rule_id": "CLASS_026.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_026",
+  "source_doc": "i8889.pdf"
+}

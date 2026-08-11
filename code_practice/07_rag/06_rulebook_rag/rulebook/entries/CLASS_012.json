@@ -1,0 +1,66 @@
+{
+  "document_type": "information_return",
+  "definition": "A statement reporting mortgage interest received from individual borrowers, mortgage insurance premiums, points paid on principal residence purchases, and related mortgage loan information.",
+  "includes": [
+    {
+      "text": "Reports mortgage interest received from individual borrowers during the calendar year",
+      "quote": "Mortgage Interest Received From",
+      "rule_id": "CLASS_012.inc.1"
+    },
+    {
+      "text": "Shows the outstanding principal balance on the mortgage as of a specific date",
+      "quote": "Outstanding Mortgage Principal",
+      "rule_id": "CLASS_012.inc.2"
+    },
+    {
+      "text": "Identifies when the mortgage was originally created",
+      "quote": "Mortgage Origination Date",
+      "rule_id": "CLASS_012.inc.3"
+    },
+    {
+      "text": "Reports qualified mortgage insurance premiums paid during the tax year",
+      "quote": "Mortgage Insurance Premiums",
+      "rule_id": "CLASS_012.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports dividend and distribution payments from corporations and mutual funds",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_012.exc.1"
+    },
+    {
+      "text": "Reports interest income from savings accounts, bonds, and other non-mortgage sources",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_012.exc.2"
+    },
+    {
+      "text": "Reports miscellaneous income including rents, royalties, and other non-mortgage payments",
+      "quote": "Miscellaneous Income",
+      "rule_id": "CLASS_012.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "Reports mortgage-specific items including mortgage principal balance, origination date, and property address; the sibling reports dividend distributions from investments",
+      "quote": "Outstanding Mortgage Principal",
+      "rule_id": "CLASS_012.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_022",
+      "text": "Reports interest received in the course of a mortgage lending business with property securing the obligation; the sibling reports interest from savings and investment accounts without real property security",
+      "quote": "Address of Property Securing Mortgage",
+      "rule_id": "CLASS_012.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_031",
+      "text": "Focuses exclusively on mortgage interest, mortgage insurance premiums, and points on principal residence purchases; the sibling reports various miscellaneous income types from different sources",
+      "quote": "Points Paid on Purchase of Principal Residence",
+      "rule_id": "CLASS_012.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_012",
+  "source_doc": "i1098.pdf"
+}

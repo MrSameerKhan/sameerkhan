@@ -1,0 +1,58 @@
+# Every download URL + fetch policy. §19.1. Edit this file when a link rots — never hardcode
+# URLs in Python. Currently IRS-only (confirmed working via direct HTTP test); Fannie
+# Mae/Freddie Mac/CFPB/HUD are blocked by CDN-level bot protection (Cloudflare/Akamai) even with
+# a browser user-agent — those 22 classes are marked real_text_available: false in the taxonomy
+# and rely on synthetic-only generation until a working access path is found.
+
+fetch_policy:
+  user_agent: "rulebook-rag/1.0 (personal research project)"
+  delay_seconds: 1.0
+  timeout_seconds: 30
+  retries: 2
+  cache_dir: data/pdfs
+  skip_if_cached: true
+
+sources:
+  - {class_id: irs_1040, url: "https://www.irs.gov/pub/irs-pdf/f1040.pdf", kind: form}
+  - {class_id: irs_1040_schedule_a, url: "https://www.irs.gov/pub/irs-pdf/f1040sa.pdf", kind: form}
+  - {class_id: irs_1040_schedule_b, url: "https://www.irs.gov/pub/irs-pdf/f1040sb.pdf", kind: form}
+  - {class_id: irs_1040_schedule_c, url: "https://www.irs.gov/pub/irs-pdf/f1040sc.pdf", kind: form}
+  - {class_id: irs_1040_schedule_d, url: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf", kind: form}
+  - {class_id: irs_1040_schedule_e, url: "https://www.irs.gov/pub/irs-pdf/f1040se.pdf", kind: form}
+  - {class_id: irs_1040_schedule_f, url: "https://www.irs.gov/pub/irs-pdf/f1040sf.pdf", kind: form}
+  - {class_id: irs_1040_schedule_se, url: "https://www.irs.gov/pub/irs-pdf/f1040sse.pdf", kind: form}
+  - {class_id: irs_1040x, url: "https://www.irs.gov/pub/irs-pdf/f1040x.pdf", kind: form}
+  - {class_id: irs_1040es, url: "https://www.irs.gov/pub/irs-pdf/f1040es.pdf", kind: form}
+  - {class_id: irs_1040nr, url: "https://www.irs.gov/pub/irs-pdf/f1040nr.pdf", kind: form}
+  - {class_id: irs_1065, url: "https://www.irs.gov/pub/irs-pdf/f1065.pdf", kind: form}
+  - {class_id: irs_1065_schedule_k1, url: "https://www.irs.gov/pub/irs-pdf/f1065sk1.pdf", kind: form}
+  - {class_id: irs_1120, url: "https://www.irs.gov/pub/irs-pdf/f1120.pdf", kind: form}
+  - {class_id: irs_1120s, url: "https://www.irs.gov/pub/irs-pdf/f1120s.pdf", kind: form}
+  - {class_id: irs_1120s_schedule_k1, url: "https://www.irs.gov/pub/irs-pdf/f1120ssk1.pdf", kind: form}
+  - {class_id: irs_1120x, url: "https://www.irs.gov/pub/irs-pdf/f1120x.pdf", kind: form}
+  - {class_id: irs_w2, url: "https://www.irs.gov/pub/irs-pdf/fw2.pdf", kind: form}
+  - {class_id: irs_w4, url: "https://www.irs.gov/pub/irs-pdf/fw4.pdf", kind: form}
+  - {class_id: irs_w9, url: "https://www.irs.gov/pub/irs-pdf/fw9.pdf", kind: form}
+  - {class_id: irs_w8ben, url: "https://www.irs.gov/pub/irs-pdf/fw8ben.pdf", kind: form}
+  - {class_id: irs_1098, url: "https://www.irs.gov/pub/irs-pdf/f1098.pdf", kind: form}
+  - {class_id: irs_1099_misc, url: "https://www.irs.gov/pub/irs-pdf/f1099msc.pdf", kind: form}
+  - {class_id: irs_1099_int, url: "https://www.irs.gov/pub/irs-pdf/f1099int.pdf", kind: form}
+  - {class_id: irs_1099_div, url: "https://www.irs.gov/pub/irs-pdf/f1099div.pdf", kind: form}
+  - {class_id: irs_1099_nec, url: "https://www.irs.gov/pub/irs-pdf/f1099nec.pdf", kind: form}
+  - {class_id: irs_1099_r, url: "https://www.irs.gov/pub/irs-pdf/f1099r.pdf", kind: form}
+  - {class_id: irs_1099_g, url: "https://www.irs.gov/pub/irs-pdf/f1099g.pdf", kind: form}
+  - {class_id: irs_4506c, url: "https://www.irs.gov/pub/irs-pdf/f4506c.pdf", kind: form}
+  - {class_id: irs_2106, url: "https://www.irs.gov/pub/irs-pdf/f2106.pdf", kind: form}
+  - {class_id: irs_4562, url: "https://www.irs.gov/pub/irs-pdf/f4562.pdf", kind: form}
+  - {class_id: irs_4797, url: "https://www.irs.gov/pub/irs-pdf/f4797.pdf", kind: form}
+  - {class_id: irs_4868, url: "https://www.irs.gov/pub/irs-pdf/f4868.pdf", kind: form}
+  - {class_id: irs_8879, url: "https://www.irs.gov/pub/irs-pdf/f8879.pdf", kind: form}
+  - {class_id: irs_8825, url: "https://www.irs.gov/pub/irs-pdf/f8825.pdf", kind: form}
+  - {class_id: irs_8582, url: "https://www.irs.gov/pub/irs-pdf/f8582.pdf", kind: form}
+  - {class_id: irs_8606, url: "https://www.irs.gov/pub/irs-pdf/f8606.pdf", kind: form}
+  - {class_id: irs_8889, url: "https://www.irs.gov/pub/irs-pdf/f8889.pdf", kind: form}
+  - {class_id: irs_2441, url: "https://www.irs.gov/pub/irs-pdf/f2441.pdf", kind: form}
+  - {class_id: irs_ss4, url: "https://www.irs.gov/pub/irs-pdf/fss4.pdf", kind: form}
+  - {class_id: irs_1041, url: "https://www.irs.gov/pub/irs-pdf/f1041.pdf", kind: form}
+  - {class_id: irs_990, url: "https://www.irs.gov/pub/irs-pdf/f990.pdf", kind: form}
+  - {class_id: irs_5498, url: "https://www.irs.gov/pub/irs-pdf/f5498.pdf", kind: form}

@@ -1,0 +1,69 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A schedule used by self-employed individuals and sole proprietors to report income or loss from a business or professional activity, including gross income, cost of goods sold, business expenses, and net profit or loss.",
+  "includes": [
+    {
+      "text": "Reports business income and expenses for sole proprietors",
+      "quote": "Profit or Loss From Business",
+      "rule_id": "CLASS_028.inc.1"
+    },
+    {
+      "text": "Contains sections for income, cost of goods sold, and expenses",
+      "quote": "Income",
+      "rule_id": "CLASS_028.inc.2"
+    },
+    {
+      "text": "Includes vehicle expense information section",
+      "quote": "Information on Your Vehicle",
+      "rule_id": "CLASS_028.inc.3"
+    },
+    {
+      "text": "Reports final net profit or loss calculation",
+      "quote": "Profit or Loss From Business",
+      "rule_id": "CLASS_028.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports rental real estate and royalty income not subject to self-employment tax",
+      "quote": "Schedule E (Form 1040) to report rental real estate and royalty income",
+      "rule_id": "CLASS_028.exc.1"
+    },
+    {
+      "text": "Used for farming income and loss",
+      "quote": "Schedule F (Form 1040) to report profit or (loss) from farming",
+      "rule_id": "CLASS_028.exc.2"
+    },
+    {
+      "text": "Used for employee business expenses, not self-employed business income",
+      "quote": "Form 2106",
+      "rule_id": "CLASS_028.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Reports business income of a sole proprietor with self-employment tax implications; a sibling reports rental real estate and royalty income that is not subject to self-employment tax",
+      "quote": "Schedule E (Form 1040) to report rental real estate and royalty income or (loss) that is not subject to self-employment tax",
+      "rule_id": "CLASS_028.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_018",
+      "text": "Reports profit or loss from any business or profession; a sibling is specifically for farming activities",
+      "quote": "Schedule F (Form 1040) to report profit or (loss) from farming",
+      "rule_id": "CLASS_028.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_023",
+      "text": "Reports business income and deductions for self-employed individuals; a sibling is for employee business expenses only",
+      "quote": "Form 2106",
+      "rule_id": "CLASS_028.disc.3"
+    }
+  ],
+  "aliases": [
+    "Business Income Schedule",
+    "Self-Employment Income Schedule"
+  ],
+  "class_id": "CLASS_028",
+  "source_doc": "i1040sc.pdf"
+}

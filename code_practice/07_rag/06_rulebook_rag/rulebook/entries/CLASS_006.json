@@ -1,0 +1,66 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A worksheet for reporting sales and exchanges of capital assets, reconciling amounts reported on information returns with amounts reported on the taxpayer's return, and allowing adjustments to basis and gain or loss calculations.",
+  "includes": [
+    {
+      "text": "Form used to report sales and exchanges of capital assets with reconciliation to information returns",
+      "quote": "Use Form 8949 to report sales and exchanges of capital assets",
+      "rule_id": "CLASS_006.inc.1"
+    },
+    {
+      "text": "Separates transactions by holding period into short-term and long-term capital gains and losses",
+      "quote": "Report short-term gains and losses on Part I. Report long-term gains and losses on Part II",
+      "rule_id": "CLASS_006.inc.2"
+    },
+    {
+      "text": "Contains columns for description, dates, proceeds, basis, adjustments, and gain or loss",
+      "quote": "Column (a)\u2014Description of Property",
+      "rule_id": "CLASS_006.inc.3"
+    },
+    {
+      "text": "Includes provisions for reporting digital asset transactions separately from traditional securities",
+      "quote": "Digital asset transactions should not be reported using box C or F. Instead, digital asset transactions should be reported using box G, H, or I for short-term transactions",
+      "rule_id": "CLASS_006.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report overall capital gains and losses summary or capital loss carryovers",
+      "quote": "To figure the overall gain (or loss) from transactions reported on Form 8949",
+      "rule_id": "CLASS_006.exc.1"
+    },
+    {
+      "text": "Does not report gains from business property sales or involuntary conversions from casualty or theft",
+      "quote": "To report a gain from Form 6252 or Part I of Form 4797",
+      "rule_id": "CLASS_006.exc.2"
+    },
+    {
+      "text": "Does not report the corporation's total income and tax liability",
+      "quote": "Corporations and partnerships use Form 8949 to report",
+      "rule_id": "CLASS_006.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_030",
+      "text": "This form reports individual transactions with detailed columns for each sale; the sibling summarizes overall capital gains and losses by type and holding period",
+      "quote": "Enter all sales and exchanges of capital assets",
+      "rule_id": "CLASS_006.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_029",
+      "text": "This form reports capital asset sales including stocks, bonds, and real estate held for investment; the sibling reports sales of business property and depreciable assets used in trade or business",
+      "quote": "Enter all sales and exchanges of capital assets, including stocks, bonds, digital assets, and real estate",
+      "rule_id": "CLASS_006.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_032",
+      "text": "This form is filed by individuals, partnerships, estates, and trusts to report capital asset transactions; the sibling is a corporation income tax return reporting total corporate income and tax",
+      "quote": "Individuals. Individuals use Form 8949 to report",
+      "rule_id": "CLASS_006.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_006",
+  "source_doc": "i8949.pdf"
+}

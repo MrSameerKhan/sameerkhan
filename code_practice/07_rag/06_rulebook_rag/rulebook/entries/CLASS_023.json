@@ -1,0 +1,66 @@
+{
+  "document_type": "worksheet",
+  "definition": "A form used by employees in specific categories to calculate and report deductible business expenses, including vehicle expenses, travel, meals, and other job-related costs, with detailed sections for depreciation calculations and mileage tracking.",
+  "includes": [
+    {
+      "text": "Contains sections for calculating vehicle business use percentage and mileage deductions",
+      "quote": "Don't include commuting miles on this line",
+      "rule_id": "CLASS_023.inc.1"
+    },
+    {
+      "text": "Includes meal expense deduction calculations with 50% limitation",
+      "quote": "Generally, you can deduct only 50% of your",
+      "rule_id": "CLASS_023.inc.2"
+    },
+    {
+      "text": "Contains vehicle depreciation basis and method calculations",
+      "quote": "To figure the basis for depreciation, multiply",
+      "rule_id": "CLASS_023.inc.3"
+    },
+    {
+      "text": "Includes date placed in service for vehicle tracking",
+      "quote": "Date placed in service is generally the date you",
+      "rule_id": "CLASS_023.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report rental income or loss from real property",
+      "quote": "Rental real estate, royalties, partnerships, S corporations, trusts, etc.",
+      "rule_id": "CLASS_023.exc.1"
+    },
+    {
+      "text": "Does not report farming business profit or loss",
+      "quote": "Profit or Loss From Farming",
+      "rule_id": "CLASS_023.exc.2"
+    },
+    {
+      "text": "Does not report self-employed business income and expenses",
+      "quote": "Profit or Loss From Business",
+      "rule_id": "CLASS_023.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Reports this document for specific employee categories only; the sibling reports rental and other supplemental income and loss from various sources",
+      "quote": "Armed Forces reservist, a qualified performing artist, a fee-basis state or local government official",
+      "rule_id": "CLASS_023.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_018",
+      "text": "Reports this document with vehicle depreciation and mileage calculations; the sibling reports farming business profit or loss",
+      "quote": "Employee Business Expenses",
+      "rule_id": "CLASS_023.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Reports this document for wage earners in specific categories; the sibling reports self-employed business profit or loss",
+      "quote": "Employees who do not fit into one of the listed categories may not use",
+      "rule_id": "CLASS_023.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_023",
+  "source_doc": "i2106.pdf"
+}

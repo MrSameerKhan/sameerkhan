@@ -1,0 +1,66 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A supplemental schedule used to report farm income and farm business expenses for individuals, estates, trusts, and partnerships engaged in farming activities, including both cash and accrual method accounting.",
+  "includes": [
+    {
+      "text": "Reports farm income using cash method accounting",
+      "quote": "Farm Income\u2014Cash Method",
+      "rule_id": "CLASS_018.inc.1"
+    },
+    {
+      "text": "Reports farm business expenses and deductions",
+      "quote": "Farm Expenses",
+      "rule_id": "CLASS_018.inc.2"
+    },
+    {
+      "text": "Reports farm income using accrual method accounting",
+      "quote": "Farm Income\u2014Accrual",
+      "rule_id": "CLASS_018.inc.3"
+    },
+    {
+      "text": "Calculates the net this document operations",
+      "quote": "Profit or Loss From Farming",
+      "rule_id": "CLASS_018.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports rental income from real property not materially participated in by the taxpayer",
+      "quote": "Schedule E (Form 1040), Part I",
+      "rule_id": "CLASS_018.exc.1"
+    },
+    {
+      "text": "Reports employee business expenses and reimbursements",
+      "quote": "Form 2106 - Employee Business Expenses",
+      "rule_id": "CLASS_018.exc.2"
+    },
+    {
+      "text": "Reports profit or loss from self-employment business activities other than farming",
+      "quote": "Schedule C (Form 1040) - Profit or Loss From Business",
+      "rule_id": "CLASS_018.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Specifically designed for farming and agricultural activities with farm-specific income lines and expense categories; the sibling reports rental income from real property and passive activities",
+      "quote": "Farm Income\u2014Cash Method",
+      "rule_id": "CLASS_018.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_023",
+      "text": "Reports business income and expenses from farming operations; the sibling reports employee business expenses and reimbursements for work-related costs",
+      "quote": "Farm Expenses",
+      "rule_id": "CLASS_018.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Dedicated to farming businesses with agricultural activity codes and farm-specific deductions; the sibling reports profit or loss from non-farm self-employment business activities",
+      "quote": "Profit or Loss From Farming",
+      "rule_id": "CLASS_018.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_018",
+  "source_doc": "i1040sf.pdf"
+}

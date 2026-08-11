@@ -1,0 +1,61 @@
+{
+  "document_type": "application",
+  "definition": "A form used to apply for an Employer Identification Number (EIN), a 9-digit number assigned to entities for tax filing and reporting purposes. Collects information about the applicant entity, responsible party, business location, type of entity, reason for applying, and principal business activity.",
+  "includes": [
+    {
+      "text": "Field requesting the legal name of the entity or individual applying for the EIN",
+      "quote": "Legal name of entity (or individual) for whom the EIN is",
+      "rule_id": "CLASS_004.inc.1"
+    },
+    {
+      "text": "Field requesting the type of entity being formed or operated",
+      "quote": "Type of entity. Check the box that best describes the type",
+      "rule_id": "CLASS_004.inc.2"
+    },
+    {
+      "text": "Field requesting the reason the applicant is seeking an EIN",
+      "quote": "Reason for applying. Check only one box. Don't enter",
+      "rule_id": "CLASS_004.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Schedule SE requests self-employment tax calculation information, not EIN application details",
+      "quote": "Self-Employment Tax",
+      "rule_id": "CLASS_004.exc.1"
+    },
+    {
+      "text": "A statement reporting interest income received, not entity identification information",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_004.exc.2"
+    },
+    {
+      "text": "An amended individual income tax return, not an initial EIN application",
+      "quote": "Amended U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_004.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_035",
+      "text": "This form collects entity type and business startup information for EIN assignment; the sibling calculates self-employment tax liability for sole proprietors based on net earnings",
+      "quote": "Type of entity. Check the box that best describes the type",
+      "rule_id": "CLASS_004.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_022",
+      "text": "This form is an application for a business identification number; the sibling is an information return reporting interest income paid to individuals",
+      "quote": "Application for Employer Identification Number",
+      "rule_id": "CLASS_004.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_014",
+      "text": "This form applies for an initial EIN for a new or existing entity; the sibling amends a previously filed individual income tax return",
+      "quote": "Reason for applying. Check only one box. Don't enter",
+      "rule_id": "CLASS_004.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_004",
+  "source_doc": "iss4.pdf"
+}

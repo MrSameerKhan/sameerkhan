@@ -1,0 +1,66 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A form used to report sales and other dispositions of business property, including depreciable tangible property, real property, involuntary conversions, and recapture amounts under sections 179 and 280F(b)(2).",
+  "includes": [
+    {
+      "text": "Contains multiple parts organized by property type and holding period, with sections for depreciation recapture calculations",
+      "quote": "Sales of Business Property",
+      "rule_id": "CLASS_029.inc.1"
+    },
+    {
+      "text": "Includes detailed line items for reporting gains and losses from property dispositions organized by section 1231 treatment",
+      "quote": "Part I",
+      "rule_id": "CLASS_029.inc.2"
+    },
+    {
+      "text": "Contains sections for reporting depreciation recapture on section 1245 and 1250 property",
+      "quote": "Part III (1245)",
+      "rule_id": "CLASS_029.inc.3"
+    },
+    {
+      "text": "Includes a section for recapture of section 179 deductions and listed property depreciation",
+      "quote": "Part IV",
+      "rule_id": "CLASS_029.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report capital asset sales that are reported on a different form",
+      "quote": "Schedule D",
+      "rule_id": "CLASS_029.exc.1"
+    },
+    {
+      "text": "Does not report depreciation and amortization deductions for property still in service",
+      "quote": "Depreciation and Amortization",
+      "rule_id": "CLASS_029.exc.2"
+    },
+    {
+      "text": "Does not report farm income and expenses in the same manner as farming operations",
+      "quote": "Profit or Loss From Farming",
+      "rule_id": "CLASS_029.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_006",
+      "text": "Reports dispositions of business property with depreciation recapture calculations; the sibling reports only capital asset sales and exchanges without recapture provisions",
+      "quote": "Part III (1245)",
+      "rule_id": "CLASS_029.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_008",
+      "text": "Reports gains and losses from property dispositions and recapture amounts; the sibling reports depreciation deductions for property currently in use",
+      "quote": "Recapture of Preproductive Expenses",
+      "rule_id": "CLASS_029.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_018",
+      "text": "Reports this document with multiple parts for different property types and holding periods; the sibling reports farm profit or loss from ongoing farming operations",
+      "quote": "Where To Make First Entry for Certain Items Reported on This Form",
+      "rule_id": "CLASS_029.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_029",
+  "source_doc": "i4797.pdf"
+}

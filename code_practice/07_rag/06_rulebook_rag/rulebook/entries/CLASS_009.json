@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A worksheet used to report nondeductible contributions to traditional IRAs, distributions from traditional IRAs, conversions from traditional IRAs to Roth IRAs, and distributions from Roth IRAs, including basis calculations and special repayment provisions.",
+  "includes": [
+    {
+      "text": "Form contains sections for reporting nondeductible IRA contributions and traditional IRA distributions",
+      "quote": "Nondeductible contributions to a traditional IRA",
+      "rule_id": "CLASS_009.inc.1"
+    },
+    {
+      "text": "Form includes parts for Roth IRA conversions and Roth IRA distributions",
+      "quote": "Conversions from traditional IRAs to Roth IRAs",
+      "rule_id": "CLASS_009.inc.2"
+    },
+    {
+      "text": "Form contains line-by-line instructions for calculating basis in IRAs",
+      "quote": "Basis in Regular Roth IRA Contributions Worksheet",
+      "rule_id": "CLASS_009.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not allocate qualified business income deduction among multiple beneficiaries",
+      "quote": "Qualified Business Income Deduction",
+      "rule_id": "CLASS_009.exc.1"
+    },
+    {
+      "text": "Does not report capital gains and losses from investment transactions",
+      "quote": "Capital Gains and Losses",
+      "rule_id": "CLASS_009.exc.2"
+    },
+    {
+      "text": "Does not report mortgage interest paid by borrowers",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_009.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_010",
+      "text": "Reports IRA contribution basis and distribution taxation rather than computing qualified business income deduction",
+      "quote": "Nondeductible contributions you made to traditional IRAs",
+      "rule_id": "CLASS_009.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_030",
+      "text": "Calculates IRA basis and distribution treatment rather than reporting investment capital gains and losses",
+      "quote": "Distributions from traditional IRAs, if you have a basis in these IRAs",
+      "rule_id": "CLASS_009.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Reports IRA contributions and distributions rather than mortgage interest paid during the tax year",
+      "quote": "Distributions from Roth IRAs",
+      "rule_id": "CLASS_009.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_009",
+  "source_doc": "i8606.pdf"
+}

@@ -1,0 +1,64 @@
+{
+  "document_type": "tax_return",
+  "definition": "The primary annual federal income tax return filed by individual taxpayers to report wages, investment income, deductions, credits, and calculate total tax liability or refund.",
+  "includes": [
+    {
+      "text": "Contains line for total wages from wage and income statements",
+      "quote": "Total Amount From Form(s) W-2, Box 1",
+      "rule_id": "CLASS_020.inc.1"
+    },
+    {
+      "text": "Contains section for reporting tax and credits",
+      "quote": "Tax and Credits",
+      "rule_id": "CLASS_020.inc.2"
+    },
+    {
+      "text": "Contains line for calculating refund or amount owed",
+      "quote": "Refund",
+      "rule_id": "CLASS_020.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Sibling reports mortgage interest paid by taxpayer",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_020.exc.1"
+    },
+    {
+      "text": "Sibling reports dividend and distribution income to taxpayer",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_020.exc.2"
+    },
+    {
+      "text": "Sibling is filed to correct errors on a previously filed return",
+      "quote": "Amended U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_020.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_014",
+      "text": "Original return filed in current year; sibling is specifically for correcting errors on a previously filed return",
+      "quote": "Amended",
+      "rule_id": "CLASS_020.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Reports comprehensive individual income and tax calculation; sibling reports only mortgage interest paid during the year",
+      "quote": "Tax and Credits",
+      "rule_id": "CLASS_020.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "Primary return reporting all income sources and tax liability; sibling reports only dividend and distribution income received",
+      "quote": "Total Income and Adjusted Gross Income",
+      "rule_id": "CLASS_020.disc.3"
+    }
+  ],
+  "aliases": [
+    "individual income tax return",
+    "annual tax return"
+  ],
+  "class_id": "CLASS_020",
+  "source_doc": "i1040.pdf"
+}

@@ -1,0 +1,66 @@
+{
+  "document_type": "tax_return",
+  "definition": "A partnership return reporting the combined income, deductions, credits, and other tax items of a partnership, with each partner receiving a separate statement of their distributive share of partnership items.",
+  "includes": [
+    {
+      "text": "Form includes fields for partnership identification and income/loss reporting",
+      "quote": "Employer Identification Number (EIN)",
+      "rule_id": "CLASS_000.inc.1"
+    },
+    {
+      "text": "Form reports ordinary business income and various categories of partnership income",
+      "quote": "Ordinary Income (Loss) From Other",
+      "rule_id": "CLASS_000.inc.2"
+    },
+    {
+      "text": "Form includes detailed deduction sections for business expenses",
+      "quote": "Salaries and Wages",
+      "rule_id": "CLASS_000.inc.3"
+    },
+    {
+      "text": "Form allocates partnership items to individual partners",
+      "quote": "Information About the Partner",
+      "rule_id": "CLASS_000.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports self-employment business income of a sole proprietor, not allocations among multiple partners",
+      "quote": "Profit or Loss From Business",
+      "rule_id": "CLASS_000.exc.1"
+    },
+    {
+      "text": "Is the partner's individual statement, not the partnership return itself",
+      "quote": "Shareholder's Share of Income",
+      "rule_id": "CLASS_000.exc.2"
+    },
+    {
+      "text": "Individual income tax return reports personal income and tax liability, not partnership items",
+      "quote": "U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_000.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Allocates income among multiple partners through separate statements to each partner; the sibling reports business income of one self-employed individual",
+      "quote": "Information About the Partner",
+      "rule_id": "CLASS_000.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_033",
+      "text": "Partnership return is filed by the partnership entity itself and allocates to all partners; the sibling is a single partner's statement of their share",
+      "quote": "Guaranteed Payments to Partners",
+      "rule_id": "CLASS_000.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_020",
+      "text": "Partnership return reports combined partnership income and deductions allocated to partners; the sibling is an individual's personal income tax return",
+      "quote": "Partner's Capital Account Analysis",
+      "rule_id": "CLASS_000.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_000",
+  "source_doc": "i1065.pdf"
+}

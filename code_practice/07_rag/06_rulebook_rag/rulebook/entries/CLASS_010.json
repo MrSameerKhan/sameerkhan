@@ -1,0 +1,66 @@
+{
+  "document_type": "worksheet",
+  "definition": "A simplified computation worksheet for calculating the qualified business income deduction available to individual taxpayers and certain trusts and estates with qualified business income, qualified REIT dividends, or qualified PTP income below specified taxable income thresholds.",
+  "includes": [
+    {
+      "text": "Computation of qualified business income deduction with income and loss entries",
+      "quote": "Qualified Business Income Deduction Simplified Computation",
+      "rule_id": "CLASS_010.inc.1"
+    },
+    {
+      "text": "Determination of qualified trades or businesses and qualified business income items",
+      "quote": "Determining Your Qualified Trades or Businesses",
+      "rule_id": "CLASS_010.inc.2"
+    },
+    {
+      "text": "Tracking of suspended losses and deductions by code section and year",
+      "quote": "QBI Loss Tracking Worksheet",
+      "rule_id": "CLASS_010.inc.3"
+    },
+    {
+      "text": "Calculation of deduction limited to percentage of taxable income",
+      "quote": "Taxable income limitation adjustments. Taxable income",
+      "rule_id": "CLASS_010.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Detailed phase-in calculations for specified service trades or businesses above threshold",
+      "quote": "Schedule A (Form 8995-A)",
+      "rule_id": "CLASS_010.exc.1"
+    },
+    {
+      "text": "Aggregation elections combining multiple trades or businesses",
+      "quote": "Schedule B (Form 8995-A)",
+      "rule_id": "CLASS_010.exc.2"
+    },
+    {
+      "text": "Wage and property basis limitation computations",
+      "quote": "Form 8995-A",
+      "rule_id": "CLASS_010.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_034",
+      "text": "Computes deduction from business income and REIT/PTP income; does not itemize personal deductions or report charitable contributions, medical expenses, or other itemized deduction categories",
+      "quote": "Qualified Business Income Deduction Simplified Computation",
+      "rule_id": "CLASS_010.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Reports qualified business income from multiple potential sources including pass-through entities and REIT dividends; does not report gross receipts, cost of goods sold, or business expenses in detail",
+      "quote": "Determining Your Qualified Business Income",
+      "rule_id": "CLASS_010.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_018",
+      "text": "Applies to trades or businesses including farming but also partnerships, S corporations, and service businesses; does not limit to agricultural operations or report farm-specific items like crop sales or livestock",
+      "quote": "Your qualified trades and businesses include your domestic trades or businesses",
+      "rule_id": "CLASS_010.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_010",
+  "source_doc": "i8995.pdf"
+}

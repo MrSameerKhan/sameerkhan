@@ -1,0 +1,63 @@
+{
+  "document_type": "information_return",
+  "definition": "A form reporting miscellaneous income payments and nonemployee compensation made in the course of trade or business, including rents, royalties, fishing proceeds, attorney payments, crop insurance, medical payments, and various other income categories, along with federal income tax withheld.",
+  "includes": [
+    {
+      "text": "Reports rents, royalties, and other miscellaneous income from various sources",
+      "quote": "Rents",
+      "rule_id": "CLASS_031.inc.1"
+    },
+    {
+      "text": "Reports nonemployee compensation and independent contractor payments",
+      "quote": "Nonemployee Compensation",
+      "rule_id": "CLASS_031.inc.2"
+    },
+    {
+      "text": "Reports federal income tax withheld on reportable payments",
+      "quote": "Federal Income Tax Withheld",
+      "rule_id": "CLASS_031.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report dividend and distribution payments that are reported on a different form",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_031.exc.1"
+    },
+    {
+      "text": "Does not report mortgage interest statements which appear on a different form",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_031.exc.2"
+    },
+    {
+      "text": "Does not report interest income which is reported on a different form",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_031.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "Reports miscellaneous income including rents, royalties, and other payments; the sibling reports only dividend and distribution payments",
+      "quote": "Rents",
+      "rule_id": "CLASS_031.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Reports various business payments and nonemployee compensation; the sibling reports only mortgage interest paid by borrowers",
+      "quote": "Nonemployee Compensation",
+      "rule_id": "CLASS_031.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_022",
+      "text": "Reports miscellaneous business income and payments; the sibling reports only interest income from savings and investments",
+      "quote": "Royalties",
+      "rule_id": "CLASS_031.disc.3"
+    }
+  ],
+  "aliases": [
+    "nonemployee compensation statement"
+  ],
+  "class_id": "CLASS_031",
+  "source_doc": "i1099mec.pdf"
+}

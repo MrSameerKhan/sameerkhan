@@ -1,0 +1,56 @@
+{
+  "document_type": "tax_return",
+  "definition": "A corporation's annual income tax return reporting total receipts, cost of goods sold, deductions, taxable income, tax liability, credits, and payments for a tax year.",
+  "includes": [
+    {
+      "text": "Form reports gross receipts or sales with returns and allowances, cost of goods sold, and various deductions including compensation of officers, salaries and wages, depreciation, and pension contributions.",
+      "quote": "Gross receipts or sales. Enter on line 1a gross",
+      "rule_id": "CLASS_032.inc.1"
+    },
+    {
+      "text": "Form includes calculation of taxable income before and after net operating loss deduction, followed by tax computation with credits and estimated tax payments.",
+      "quote": "Taxable Income",
+      "rule_id": "CLASS_032.inc.2"
+    },
+    {
+      "text": "Form contains balance sheet information and reconciliation schedules for book income versus tax return income.",
+      "quote": "Balance Sheets per Books",
+      "rule_id": "CLASS_032.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "S corporation return allocates income to shareholders through separate statements rather than computing corporate-level tax.",
+      "quote": "Partner's Share of Income",
+      "rule_id": "CLASS_032.exc.1"
+    },
+    {
+      "text": "Schedule for reporting sales and dispositions of capital assets separately from ordinary business income and deductions.",
+      "quote": "Sales and Other Dispositions of Capital Assets",
+      "rule_id": "CLASS_032.exc.2"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_016",
+      "text": "This form computes tax at the corporate entity level; the sibling allocates all income and deductions to shareholders with no entity-level tax.",
+      "quote": "Income tax. Multiply taxable income (page 1, line 30)",
+      "rule_id": "CLASS_032.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_006",
+      "text": "This form reports ordinary business income, expenses, and gains; the sibling is limited to reporting only capital asset sales and dispositions.",
+      "quote": "Cost of Goods Sold",
+      "rule_id": "CLASS_032.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_011",
+      "text": "This form reports the corporation's own taxable income and tax liability; the sibling reports one partner's allocated share of partnership income.",
+      "quote": "Taxable Income",
+      "rule_id": "CLASS_032.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_032",
+  "source_doc": "i1120.pdf"
+}

@@ -1,0 +1,61 @@
+{
+  "document_type": "worksheet",
+  "definition": "A worksheet for calculating the deductible this document for members of the Armed Forces on active duty who relocate due to a permanent change of station, including household goods transportation and travel costs.",
+  "includes": [
+    {
+      "text": "Calculates moving expense deduction for military personnel",
+      "quote": "Moving Expenses",
+      "rule_id": "CLASS_027.inc.1"
+    },
+    {
+      "text": "Contains line items for household goods and travel expenses",
+      "quote": "Which Moving Expenses Are Deductible and Which Aren't",
+      "rule_id": "CLASS_027.inc.2"
+    },
+    {
+      "text": "Specifies storage and insurance of household goods within transit period",
+      "quote": "Storing and insuring household goods and personal effects",
+      "rule_id": "CLASS_027.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Reports rental property income and losses across multiple properties",
+      "quote": "Supplemental Income and Loss",
+      "rule_id": "CLASS_027.exc.1"
+    },
+    {
+      "text": "Reports farm business income and expenses",
+      "quote": "Profit or Loss From Farming",
+      "rule_id": "CLASS_027.exc.2"
+    },
+    {
+      "text": "Reports employee business expenses for all occupations",
+      "quote": "Employee Business Expenses",
+      "rule_id": "CLASS_027.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "This worksheet calculates a single deduction for military relocation; the sibling reports income and losses from rental real estate and other supplemental sources",
+      "quote": "Moving Expenses",
+      "rule_id": "CLASS_027.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_018",
+      "text": "This worksheet is limited to military this document; the sibling reports comprehensive farm business profit or loss including crops, livestock, and farm operations",
+      "quote": "Moving Expenses",
+      "rule_id": "CLASS_027.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_023",
+      "text": "This worksheet applies only to Armed Forces members relocating due to permanent change of station; the sibling covers employee business expenses for all workers in any occupation",
+      "quote": "Moving Expenses",
+      "rule_id": "CLASS_027.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_027",
+  "source_doc": "i3903.pdf"
+}

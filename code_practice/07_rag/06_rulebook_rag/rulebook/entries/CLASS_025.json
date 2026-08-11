@@ -1,0 +1,64 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A corrected statement issued to report corrections to previously filed wage information for an employee, showing both the originally reported amounts and the corrected amounts across all applicable income and tax boxes.",
+  "includes": [
+    {
+      "text": "Form identifies corrections to previously reported wage data",
+      "quote": "For the items you are changing",
+      "rule_id": "CLASS_025.inc.1"
+    },
+    {
+      "text": "Contains side-by-side comparison of original and corrected amounts",
+      "quote": "Previously reported",
+      "rule_id": "CLASS_025.inc.2"
+    },
+    {
+      "text": "Reports corrected employee and employer tax information",
+      "quote": "Correct information",
+      "rule_id": "CLASS_025.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Original wage statement filed in the same tax year without corrections",
+      "quote": "Wages and tips subject to federal income tax withholding",
+      "rule_id": "CLASS_025.exc.1"
+    },
+    {
+      "text": "Information return reporting third-party payments",
+      "quote": "Dividends and Distributions",
+      "rule_id": "CLASS_025.exc.2"
+    },
+    {
+      "text": "Mortgage interest reporting statement",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_025.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_014",
+      "text": "Reports corrections to wage records for a single employee across multiple boxes; the sibling reports amended individual income tax return with multiple schedules and line items",
+      "quote": "For the items you are changing",
+      "rule_id": "CLASS_025.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "Corrects wage and employment tax information reported to Social Security Administration; the sibling reports dividend and distribution payments from corporations and funds",
+      "quote": "Correct information",
+      "rule_id": "CLASS_025.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Corrects employee wage and payroll tax data; the sibling reports mortgage interest paid by borrowers",
+      "quote": "Previously reported",
+      "rule_id": "CLASS_025.disc.3"
+    }
+  ],
+  "aliases": [
+    "corrected wage statement",
+    "amended wage report"
+  ],
+  "class_id": "CLASS_025",
+  "source_doc": "iw2w3.pdf"
+}

@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_return",
+  "definition": "An annual income tax return filed by a corporation that has elected to be taxed as an S corporation, reporting the corporation's income, deductions, and credits, with income and deductions passed through to shareholders via separate statements.",
+  "includes": [
+    {
+      "text": "Form reports income and deductions for an S corporation with pass-through taxation to shareholders",
+      "quote": "Electing To Be an S",
+      "rule_id": "CLASS_016.inc.1"
+    },
+    {
+      "text": "Form includes detailed schedules for reporting shareholder allocations and basis adjustments",
+      "quote": "Information About the Shareholder",
+      "rule_id": "CLASS_016.inc.2"
+    },
+    {
+      "text": "Form reports ordinary business income or loss from operations",
+      "quote": "Ordinary Business Income (Loss)",
+      "rule_id": "CLASS_016.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "A C corporation return that does not pass income through to shareholders but instead reports corporate-level tax",
+      "quote": "Compensation of Officers and",
+      "rule_id": "CLASS_016.exc.1"
+    },
+    {
+      "text": "An amended individual return filed to correct a prior year's tax liability",
+      "quote": "Final Return, Name Change",
+      "rule_id": "CLASS_016.exc.2"
+    },
+    {
+      "text": "An information return reporting dividends paid to shareholders rather than the corporation's own income",
+      "quote": "Ordinary Dividends",
+      "rule_id": "CLASS_016.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_032",
+      "text": "This form passes through income and deductions to multiple shareholders via separate statements; the sibling is a corporate-level return where the corporation itself pays tax on all income",
+      "quote": "Information About the Shareholder, later",
+      "rule_id": "CLASS_016.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_014",
+      "text": "This is an original return for the current tax year; the sibling is an amended return filed to correct a prior year",
+      "quote": "Electing To Be an S",
+      "rule_id": "CLASS_016.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_001",
+      "text": "This is a tax return reporting the corporation's business operations and income; the sibling is an information return reporting distributions of dividends to recipients",
+      "quote": "Gross Receipts or Sales",
+      "rule_id": "CLASS_016.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_016",
+  "source_doc": "i1120s.pdf"
+}

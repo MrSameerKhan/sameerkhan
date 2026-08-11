@@ -1,0 +1,1583 @@
+{
+  "taxonomy_version": "1.0.0",
+  "categories": [
+    {
+      "category_id": "income_documentation",
+      "category_name": "Income Documentation",
+      "document_types": [
+        {
+          "document_type_id": "tax_return",
+          "document_type_name": "Tax Return",
+          "page_count": {
+            "min": 1,
+            "max": 60
+          },
+          "classes": [
+            {
+              "class_id": "irs_1040",
+              "class_name": "IRS Form 1040",
+              "form_number": "1040",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_a",
+              "class_name": "IRS Form 1040 Schedule A",
+              "form_number": "1040 Schedule A",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_b",
+              "class_name": "IRS Form 1040 Schedule B",
+              "form_number": "1040 Schedule B",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_c",
+              "class_name": "IRS Form 1040 Schedule C",
+              "form_number": "1040 Schedule C",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_d",
+              "class_name": "IRS Form 1040 Schedule D",
+              "form_number": "1040 Schedule D",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_e",
+              "class_name": "IRS Form 1040 Schedule E",
+              "form_number": "1040 Schedule E",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_f",
+              "class_name": "IRS Form 1040 Schedule F",
+              "form_number": "1040 Schedule F",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040_schedule_se",
+              "class_name": "IRS Form 1040 Schedule SE",
+              "form_number": "1040 Schedule SE",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040x",
+              "class_name": "IRS Form 1040-X",
+              "form_number": "1040-X",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040es",
+              "class_name": "IRS Form 1040-ES",
+              "form_number": "1040-ES",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1040nr",
+              "class_name": "IRS Form 1040-NR",
+              "form_number": "1040-NR",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1065",
+              "class_name": "IRS Form 1065",
+              "form_number": "1065",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1065_schedule_k1",
+              "class_name": "IRS Form 1065 Schedule K-1",
+              "form_number": "1065 Schedule K-1",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1120",
+              "class_name": "IRS Form 1120",
+              "form_number": "1120",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1120s",
+              "class_name": "IRS Form 1120-S",
+              "form_number": "1120-S",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1120s_schedule_k1",
+              "class_name": "IRS Form 1120-S Schedule K-1",
+              "form_number": "1120-S Schedule K-1",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1120x",
+              "class_name": "IRS Form 1120-X",
+              "form_number": "1120-X",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_w2",
+              "class_name": "IRS Form W-2",
+              "form_number": "W-2",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_w4",
+              "class_name": "IRS Form W-4",
+              "form_number": "W-4",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_w9",
+              "class_name": "IRS Form W-9",
+              "form_number": "W-9",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_w8ben",
+              "class_name": "IRS Form W-8BEN",
+              "form_number": "W-8BEN",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1098",
+              "class_name": "IRS Form 1098",
+              "form_number": "1098",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1099_misc",
+              "class_name": "IRS Form 1099-MISC",
+              "form_number": "1099-MISC",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1099_int",
+              "class_name": "IRS Form 1099-INT",
+              "form_number": "1099-INT",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1099_div",
+              "class_name": "IRS Form 1099-DIV",
+              "form_number": "1099-DIV",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1099_nec",
+              "class_name": "IRS Form 1099-NEC",
+              "form_number": "1099-NEC",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1099_r",
+              "class_name": "IRS Form 1099-R",
+              "form_number": "1099-R",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1099_g",
+              "class_name": "IRS Form 1099-G",
+              "form_number": "1099-G",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_4506c",
+              "class_name": "IRS Form 4506-C",
+              "form_number": "4506-C",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_2106",
+              "class_name": "IRS Form 2106",
+              "form_number": "2106",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_4562",
+              "class_name": "IRS Form 4562",
+              "form_number": "4562",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_4797",
+              "class_name": "IRS Form 4797",
+              "form_number": "4797",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_4868",
+              "class_name": "IRS Form 4868",
+              "form_number": "4868",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_8879",
+              "class_name": "IRS Form 8879",
+              "form_number": "8879",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_8825",
+              "class_name": "IRS Form 8825",
+              "form_number": "8825",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_8582",
+              "class_name": "IRS Form 8582",
+              "form_number": "8582",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_8606",
+              "class_name": "IRS Form 8606",
+              "form_number": "8606",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_8889",
+              "class_name": "IRS Form 8889",
+              "form_number": "8889",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_2441",
+              "class_name": "IRS Form 2441",
+              "form_number": "2441",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_ss4",
+              "class_name": "IRS Form SS-4",
+              "form_number": "SS-4",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_1041",
+              "class_name": "IRS Form 1041",
+              "form_number": "1041",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_990",
+              "class_name": "IRS Form 990",
+              "form_number": "990",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "irs_5498",
+              "class_name": "IRS Form 5498",
+              "form_number": "5498",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": true,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "paystub",
+          "document_type_name": "Paystub",
+          "page_count": {
+            "min": 1,
+            "max": 3
+          },
+          "classes": [
+            {
+              "class_id": "paystub",
+              "class_name": "Paystub",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "paystub_ytd_summary",
+              "class_name": "Paystub Year-to-Date Summary",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "verification_of_employment",
+          "document_type_name": "Verification of Employment",
+          "page_count": {
+            "min": 1,
+            "max": 2
+          },
+          "classes": [
+            {
+              "class_id": "verification_of_employment",
+              "class_name": "Verification of Employment",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "verbal_verification_of_employment",
+              "class_name": "Verbal Verification of Employment",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "credit_report",
+          "document_type_name": "Credit Report",
+          "page_count": {
+            "min": 1,
+            "max": 30
+          },
+          "classes": [
+            {
+              "class_id": "tri_merge_credit_report",
+              "class_name": "Tri-Merge Credit Report",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "credit_supplement",
+              "class_name": "Credit Supplement",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "gift_letter",
+          "document_type_name": "Gift Letter",
+          "page_count": {
+            "min": 1,
+            "max": 2
+          },
+          "classes": [
+            {
+              "class_id": "gift_letter",
+              "class_name": "Gift Letter",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "self_employment_documentation",
+          "document_type_name": "Self-Employment Documentation",
+          "page_count": {
+            "min": 1,
+            "max": 10
+          },
+          "classes": [
+            {
+              "class_id": "profit_and_loss_statement",
+              "class_name": "Profit and Loss Statement",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "business_license",
+              "class_name": "Business License",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "asset_and_income_letters",
+          "document_type_name": "Asset and Income Letters",
+          "page_count": {
+            "min": 1,
+            "max": 2
+          },
+          "classes": [
+            {
+              "class_id": "letter_of_explanation",
+              "class_name": "Letter of Explanation (Income)",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": true,
+              "pair_with": "credit_explanation_letter"
+            },
+            {
+              "class_id": "employment_offer_letter",
+              "class_name": "Employment Offer Letter",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "bank_and_asset_documentation",
+      "category_name": "Bank and Asset Documentation",
+      "document_types": [
+        {
+          "document_type_id": "bank_and_deposit_verification",
+          "document_type_name": "Bank and Deposit Verification",
+          "page_count": {
+            "min": 1,
+            "max": 10
+          },
+          "classes": [
+            {
+              "class_id": "bank_statement",
+              "class_name": "Bank Statement",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": true,
+              "pair_with": "verification_of_deposit"
+            },
+            {
+              "class_id": "verification_of_deposit",
+              "class_name": "Verification of Deposit",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": true,
+              "pair_with": "bank_statement"
+            }
+          ]
+        },
+        {
+          "document_type_id": "retirement_and_investment_accounts",
+          "document_type_name": "Retirement and Investment Accounts",
+          "page_count": {
+            "min": 1,
+            "max": 15
+          },
+          "classes": [
+            {
+              "class_id": "retirement_account_statement",
+              "class_name": "Retirement Account Statement",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "brokerage_statement",
+              "class_name": "Brokerage Statement",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "gift_and_grant_funds",
+          "document_type_name": "Gift and Grant Funds",
+          "page_count": {
+            "min": 1,
+            "max": 3
+          },
+          "classes": [
+            {
+              "class_id": "gift_fund_transfer_receipt",
+              "class_name": "Gift Fund Transfer Receipt",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "down_payment_assistance_grant_letter",
+              "class_name": "Down Payment Assistance Grant Letter",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "asset_depletion_documentation",
+          "document_type_name": "Asset Depletion Documentation",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "asset_depletion_worksheet",
+              "class_name": "Asset Depletion Worksheet",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "appraisal",
+      "category_name": "Appraisal",
+      "document_types": [
+        {
+          "document_type_id": "residential_appraisal_report",
+          "document_type_name": "Residential Appraisal Report",
+          "page_count": {
+            "min": 5,
+            "max": 40
+          },
+          "classes": [
+            {
+              "class_id": "fannie_1004",
+              "class_name": "Uniform Residential Appraisal Report (1004)",
+              "form_number": "1004",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1004c",
+              "class_name": "Manufactured Home Appraisal Report (1004C)",
+              "form_number": "1004C",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1004d",
+              "class_name": "Appraisal Update and/or Completion Report (1004D)",
+              "form_number": "1004D",
+              "structured": true,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1073",
+              "class_name": "Individual Condominium Unit Appraisal Report (1073)",
+              "form_number": "1073",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_2055",
+              "class_name": "Exterior-Only Inspection Residential Appraisal Report (2055)",
+              "form_number": "2055",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "appraisal_supporting_documents",
+          "document_type_name": "Appraisal Supporting Documents",
+          "page_count": {
+            "min": 1,
+            "max": 10
+          },
+          "classes": [
+            {
+              "class_id": "fannie_1004mc",
+              "class_name": "Market Conditions Addendum (1004MC)",
+              "form_number": "1004MC",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1007",
+              "class_name": "Single-Family Comparable Rent Schedule (1007)",
+              "form_number": "1007",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1025",
+              "class_name": "Small Residential Income Property Appraisal Report (1025)",
+              "form_number": "1025",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1008",
+              "class_name": "Transmittal Summary (1008)",
+              "form_number": "1008",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "fannie_1077",
+              "class_name": "Manufactured Home Appraisal Report Addendum (1077)",
+              "form_number": "1077",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "freddie_appraisal_forms",
+          "document_type_name": "Freddie Mac Appraisal Forms",
+          "page_count": {
+            "min": 1,
+            "max": 10
+          },
+          "classes": [
+            {
+              "class_id": "freddie_form_70",
+              "class_name": "Uniform Residential Appraisal Report (Freddie Form 70)",
+              "form_number": "70",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "freddie_form_70b",
+              "class_name": "Freddie Mac Form 70B",
+              "form_number": "70B",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "freddie_form_91",
+              "class_name": "Freddie Mac Form 91",
+              "form_number": "91",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "freddie_form_92",
+              "class_name": "Freddie Mac Form 92",
+              "form_number": "92",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "freddie_form_998",
+              "class_name": "Freddie Mac Form 998",
+              "form_number": "998",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "appraisal_review_forms",
+          "document_type_name": "Appraisal Review Forms",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "appraisal_field_review_report",
+              "class_name": "Appraisal Field Review Report",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "appraisal_desk_review_report",
+              "class_name": "Appraisal Desk Review Report",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "title",
+      "category_name": "Title",
+      "document_types": [
+        {
+          "document_type_id": "title_evidence",
+          "document_type_name": "Title Evidence",
+          "page_count": {
+            "min": 1,
+            "max": 20
+          },
+          "classes": [
+            {
+              "class_id": "title_commitment",
+              "class_name": "Title Commitment",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "title_policy",
+              "class_name": "Title Policy",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "deed_documents",
+          "document_type_name": "Deed Documents",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "warranty_deed",
+              "class_name": "Warranty Deed",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "quitclaim_deed",
+              "class_name": "Quitclaim Deed",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "special_warranty_deed",
+              "class_name": "Special Warranty Deed",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "survey_and_encumbrance_documents",
+          "document_type_name": "Survey and Encumbrance Documents",
+          "page_count": {
+            "min": 1,
+            "max": 10
+          },
+          "classes": [
+            {
+              "class_id": "property_survey",
+              "class_name": "Property Survey",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "plat_map",
+              "class_name": "Plat Map",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "hoa_certification",
+              "class_name": "HOA Certification",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "closing",
+      "category_name": "Closing",
+      "document_types": [
+        {
+          "document_type_id": "trid_disclosures",
+          "document_type_name": "TRID Disclosures",
+          "page_count": {
+            "min": 3,
+            "max": 6
+          },
+          "classes": [
+            {
+              "class_id": "loan_estimate",
+              "class_name": "Loan Estimate",
+              "form_number": null,
+              "structured": true,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "closing_disclosure",
+              "class_name": "Closing Disclosure",
+              "form_number": null,
+              "structured": true,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "hud_settlement_forms",
+          "document_type_name": "HUD Settlement Forms",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "hud_1_settlement_statement",
+              "class_name": "HUD-1 Settlement Statement",
+              "form_number": "HUD-1",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "hud_92900a",
+              "class_name": "HUD Form 92900-A",
+              "form_number": "HUD-92900-A",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "hud_92800_5b",
+              "class_name": "HUD Form 92800.5B",
+              "form_number": "HUD-92800.5B",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "escrow_and_settlement_documents",
+          "document_type_name": "Escrow and Settlement Documents",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "escrow_instructions",
+              "class_name": "Escrow Instructions",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "settlement_statement_addendum",
+              "class_name": "Settlement Statement Addendum",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "final_closing_documents",
+          "document_type_name": "Final Closing Documents",
+          "page_count": {
+            "min": 1,
+            "max": 3
+          },
+          "classes": [
+            {
+              "class_id": "final_verification_of_employment",
+              "class_name": "Final Verification of Employment",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "initial_escrow_disclosure_statement",
+              "class_name": "Initial Escrow Disclosure Statement",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "loan_application",
+      "category_name": "Loan Application",
+      "document_types": [
+        {
+          "document_type_id": "uniform_residential_loan_application",
+          "document_type_name": "Uniform Residential Loan Application",
+          "page_count": {
+            "min": 1,
+            "max": 9
+          },
+          "classes": [
+            {
+              "class_id": "urla_1003",
+              "class_name": "Uniform Residential Loan Application (1003)",
+              "form_number": "1003",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "urla_1003_continuation_sheet",
+              "class_name": "URLA Continuation Sheet",
+              "form_number": "1003 Continuation",
+              "structured": true,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "application_disclosures",
+          "document_type_name": "Application Disclosures",
+          "page_count": {
+            "min": 1,
+            "max": 4
+          },
+          "classes": [
+            {
+              "class_id": "borrower_intent_to_proceed",
+              "class_name": "Borrower Intent to Proceed",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "ecoa_disclosure",
+              "class_name": "ECOA Disclosure",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "underwriting_forms",
+          "document_type_name": "Underwriting Forms",
+          "page_count": {
+            "min": 1,
+            "max": 6
+          },
+          "classes": [
+            {
+              "class_id": "automated_underwriting_findings",
+              "class_name": "Automated Underwriting Findings",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "mortgage_insurance_certificate",
+              "class_name": "Mortgage Insurance Certificate",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "legal_and_security_instruments",
+      "category_name": "Legal and Security Instruments",
+      "document_types": [
+        {
+          "document_type_id": "promissory_notes",
+          "document_type_name": "Promissory Notes",
+          "page_count": {
+            "min": 1,
+            "max": 6
+          },
+          "classes": [
+            {
+              "class_id": "promissory_note",
+              "class_name": "Promissory Note",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "subordinate_promissory_note",
+              "class_name": "Subordinate Promissory Note",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "adjustable_rate_note",
+              "class_name": "Adjustable Rate Note",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "security_instruments",
+          "document_type_name": "Security Instruments",
+          "page_count": {
+            "min": 5,
+            "max": 25
+          },
+          "classes": [
+            {
+              "class_id": "deed_of_trust",
+              "class_name": "Deed of Trust",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "mortgage_security_instrument",
+              "class_name": "Mortgage (Security Instrument)",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "subordination_agreement",
+              "class_name": "Subordination Agreement",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "borrower_authorizations",
+          "document_type_name": "Borrower Authorizations",
+          "page_count": {
+            "min": 1,
+            "max": 3
+          },
+          "classes": [
+            {
+              "class_id": "power_of_attorney",
+              "class_name": "Power of Attorney",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "trust_agreement",
+              "class_name": "Trust Agreement",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "borrower_certification_authorization",
+              "class_name": "Borrower Certification and Authorization",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "name_and_identity_documents",
+          "document_type_name": "Name and Identity Documents",
+          "page_count": {
+            "min": 1,
+            "max": 3
+          },
+          "classes": [
+            {
+              "class_id": "name_affidavit",
+              "class_name": "Name Affidavit",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "occupancy_affidavit",
+              "class_name": "Occupancy Affidavit",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "signature_affidavit",
+              "class_name": "Signature Affidavit",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "credit_explanation_letter",
+              "class_name": "Letter of Explanation (Credit)",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": true,
+              "pair_with": "letter_of_explanation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_id": "insurance",
+      "category_name": "Insurance",
+      "document_types": [
+        {
+          "document_type_id": "property_insurance",
+          "document_type_name": "Property Insurance",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "hazard_insurance_policy",
+              "class_name": "Hazard Insurance Policy",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": true,
+              "pair_with": "flood_insurance_policy"
+            },
+            {
+              "class_id": "homeowners_insurance_declaration",
+              "class_name": "Homeowners Insurance Declaration",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "flood_insurance_policy",
+              "class_name": "Flood Insurance Policy",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": true,
+              "pair_with": "hazard_insurance_policy"
+            }
+          ]
+        },
+        {
+          "document_type_id": "flood_and_hazard_determination",
+          "document_type_name": "Flood and Hazard Determination",
+          "page_count": {
+            "min": 1,
+            "max": 2
+          },
+          "classes": [
+            {
+              "class_id": "flood_determination",
+              "class_name": "Flood Determination",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "life_of_loan_flood_determination",
+              "class_name": "Life-of-Loan Flood Determination",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        },
+        {
+          "document_type_id": "mortgage_and_title_insurance",
+          "document_type_name": "Mortgage and Title Insurance",
+          "page_count": {
+            "min": 1,
+            "max": 5
+          },
+          "classes": [
+            {
+              "class_id": "private_mortgage_insurance_certificate",
+              "class_name": "Private Mortgage Insurance Certificate",
+              "form_number": null,
+              "structured": false,
+              "held_back": false,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            },
+            {
+              "class_id": "lenders_title_insurance_binder",
+              "class_name": "Lender's Title Insurance Binder",
+              "form_number": null,
+              "structured": false,
+              "held_back": true,
+              "real_text_available": false,
+              "context_dependent": false,
+              "pair_with": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

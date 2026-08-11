@@ -1,0 +1,69 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A statement provided by an S corporation to each shareholder reporting the shareholder's pro rata share of the corporation's income, deductions, credits, and other tax items for the tax year.",
+  "includes": [
+    {
+      "text": "Reports shareholder's allocable share of business income and losses",
+      "quote": "Shareholder's Share of",
+      "rule_id": "CLASS_033.inc.1"
+    },
+    {
+      "text": "Contains multiple categories of income items including ordinary business income, rental income, capital gains, and dividends",
+      "quote": "Ordinary Business Income (Loss)",
+      "rule_id": "CLASS_033.inc.2"
+    },
+    {
+      "text": "Includes deduction and credit information for shareholder use",
+      "quote": "Section 179 Deduction",
+      "rule_id": "CLASS_033.inc.3"
+    },
+    {
+      "text": "Provides basis and passive activity limitation information",
+      "quote": "Items Affecting Shareholder Basis",
+      "rule_id": "CLASS_033.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Return that allocates income to partners via separate statements",
+      "quote": "Partner's Share of Income",
+      "rule_id": "CLASS_033.exc.1"
+    },
+    {
+      "text": "Entity-level return reporting total partnership income and deductions",
+      "quote": "U.S. Return of Partnership Income",
+      "rule_id": "CLASS_033.exc.2"
+    },
+    {
+      "text": "Individual self-employed business income reported on sole proprietor return",
+      "quote": "Profit or Loss From Business",
+      "rule_id": "CLASS_033.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_011",
+      "text": "Reports S corporation shareholder's share with multiple income and deduction categories; the sibling reports partner's share from a partnership with different allocation structure",
+      "quote": "Shareholder's Share of",
+      "rule_id": "CLASS_033.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_000",
+      "text": "Shareholder statement of allocated items; the sibling is the entity-level return showing aggregate corporate income and deductions",
+      "quote": "Ordinary Business Income (Loss)",
+      "rule_id": "CLASS_033.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_028",
+      "text": "Allocates S corporation income among shareholders with basis and passive activity tracking; the sibling reports self-employed individual business income on a single return",
+      "quote": "Items Affecting Shareholder Basis",
+      "rule_id": "CLASS_033.disc.3"
+    }
+  ],
+  "aliases": [
+    "S corporation shareholder allocation statement",
+    "shareholder income allocation schedule"
+  ],
+  "class_id": "CLASS_033",
+  "source_doc": "i1120ssk.pdf"
+}

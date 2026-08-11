@@ -1,0 +1,70 @@
+{
+  "document_type": "information_return",
+  "definition": "A statement reporting this document paid to shareholders by corporations, mutual funds, regulated investment companies, and real estate investment trusts, including ordinary dividends, capital gain distributions, and various categories of investment income.",
+  "includes": [
+    {
+      "text": "Reports multiple categories of dividend and distribution income including ordinary dividends, qualified dividends, and capital gain distributions",
+      "quote": "Total Ordinary Dividends",
+      "rule_id": "CLASS_001.inc.1"
+    },
+    {
+      "text": "Distinguishes qualified dividends eligible for preferential tax rates",
+      "quote": "Qualified Dividends",
+      "rule_id": "CLASS_001.inc.2"
+    },
+    {
+      "text": "Reports capital gain distributions from investment companies",
+      "quote": "Total Capital Gain Distr",
+      "rule_id": "CLASS_001.inc.3"
+    },
+    {
+      "text": "Includes federal income tax withheld on distributions",
+      "quote": "Federal Income Tax Withheld",
+      "rule_id": "CLASS_001.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report miscellaneous income such as substitute dividend payments, broker fees, or other non-dividend payments",
+      "quote": "Substitute payments in lieu of dividends",
+      "rule_id": "CLASS_001.exc.1"
+    },
+    {
+      "text": "Does not report mortgage interest paid by borrowers",
+      "quote": "Mortgage Interest Statement",
+      "rule_id": "CLASS_001.exc.2"
+    },
+    {
+      "text": "Does not report simple interest income from savings accounts or bonds",
+      "quote": "Interest Income",
+      "rule_id": "CLASS_001.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_031",
+      "text": "Reports dividend and distribution income with multiple tax-rate categories; the sibling reports miscellaneous income from various non-dividend sources including rents, royalties, and other payments",
+      "quote": "Total Ordinary Dividends",
+      "rule_id": "CLASS_001.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_012",
+      "text": "Reports investment distributions and capital gains; the sibling reports only mortgage interest paid by individual borrowers",
+      "quote": "Total Capital Gain Distr",
+      "rule_id": "CLASS_001.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_022",
+      "text": "Reports dividends and capital gain distributions from corporations and investment companies; the sibling reports only interest income from savings and debt instruments",
+      "quote": "Qualified Dividends",
+      "rule_id": "CLASS_001.disc.3"
+    }
+  ],
+  "aliases": [
+    "dividend statement",
+    "distribution statement",
+    "investment income report"
+  ],
+  "class_id": "CLASS_001",
+  "source_doc": "i1099div.pdf"
+}

@@ -1,0 +1,61 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A schedule used to calculate this document liability for individuals with net earnings from self-employment, including self-employed persons, church employees, partners, and those using optional methods to determine taxable self-employment income.",
+  "includes": [
+    {
+      "text": "Contains line items for calculating net earnings from self-employment income",
+      "quote": "Net Earnings From Self-Employment",
+      "rule_id": "CLASS_035.inc.1"
+    },
+    {
+      "text": "Includes sections for reporting this document calculations",
+      "quote": "Subject to SE Tax",
+      "rule_id": "CLASS_035.inc.2"
+    },
+    {
+      "text": "Contains instructions for determining this document obligations",
+      "quote": "Self-Employed Persons",
+      "rule_id": "CLASS_035.inc.3"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not report itemized personal deductions or standard deduction amounts",
+      "quote": "Itemized Deductions",
+      "rule_id": "CLASS_035.exc.1"
+    },
+    {
+      "text": "Does not report overall individual income tax return information or filing status",
+      "quote": "U.S. Individual Income Tax Return",
+      "rule_id": "CLASS_035.exc.2"
+    },
+    {
+      "text": "Does not report rental real estate income or supplemental income from partnerships and S corporations",
+      "quote": "Supplemental Income and Loss",
+      "rule_id": "CLASS_035.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_034",
+      "text": "Reports this document on net earnings from business and farm activities, whereas the sibling reports itemized personal deductions used to reduce taxable income",
+      "quote": "Self-Employment (SE) Tax",
+      "rule_id": "CLASS_035.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_020",
+      "text": "Calculates this document on business earnings as a supplemental schedule, whereas the sibling is the primary individual income tax return reporting total income and tax liability",
+      "quote": "Schedule SE (Form 1040)",
+      "rule_id": "CLASS_035.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_002",
+      "text": "Focuses exclusively on this document calculations from business and farm earnings, whereas the sibling reports rental real estate income, partnership income, and other supplemental income sources",
+      "quote": "Income or Loss, later",
+      "rule_id": "CLASS_035.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_035",
+  "source_doc": "i1040sse.pdf"
+}

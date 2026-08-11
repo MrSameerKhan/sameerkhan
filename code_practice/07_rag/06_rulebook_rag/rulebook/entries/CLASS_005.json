@@ -1,0 +1,66 @@
+{
+  "document_type": "tax_schedule",
+  "definition": "A form used to report this document paid to enable the taxpayer or spouse to work, calculate the credit for such expenses, and report dependent care benefits received from an employer plan.",
+  "includes": [
+    {
+      "text": "Form contains sections for reporting care providers and their identification information",
+      "quote": "Persons or Organizations Who Provided the Care",
+      "rule_id": "CLASS_005.inc.1"
+    },
+    {
+      "text": "Form includes a section for listing qualifying persons who received care",
+      "quote": "Qualifying Person(s)",
+      "rule_id": "CLASS_005.inc.2"
+    },
+    {
+      "text": "Form contains a section for calculating the credit based on qualified expenses",
+      "quote": "Credit for Child and Dependent Care",
+      "rule_id": "CLASS_005.inc.3"
+    },
+    {
+      "text": "Form includes a section for reporting dependent care benefits from employer plans",
+      "quote": "Dependent Care Benefits",
+      "rule_id": "CLASS_005.inc.4"
+    }
+  ],
+  "excludes": [
+    {
+      "text": "Does not contain fields for computing qualified business income deduction or pass-through entity information",
+      "quote": "Qualified Business Income Deduction",
+      "rule_id": "CLASS_005.exc.1"
+    },
+    {
+      "text": "Does not contain fields for foreign earned income exclusion or housing costs abroad",
+      "quote": "Foreign Earned Income",
+      "rule_id": "CLASS_005.exc.2"
+    },
+    {
+      "text": "Does not contain fields for education credits or qualified education expenses",
+      "quote": "Education Credits",
+      "rule_id": "CLASS_005.exc.3"
+    }
+  ],
+  "discriminators": [
+    {
+      "vs_class_id": "CLASS_010",
+      "text": "Reports dependent care expenses and credits for childcare; the sibling computes deductions related to business income from pass-through entities",
+      "quote": "Child and Dependent Care Expenses",
+      "rule_id": "CLASS_005.disc.1"
+    },
+    {
+      "vs_class_id": "CLASS_015",
+      "text": "Reports domestic dependent care expenses and benefits; the sibling reports income earned outside the United States and foreign housing costs",
+      "quote": "Dependent Care Benefits",
+      "rule_id": "CLASS_005.disc.2"
+    },
+    {
+      "vs_class_id": "CLASS_013",
+      "text": "Reports dependent care expenses and credits; the sibling reports education-related credits and qualified tuition expenses",
+      "quote": "Care Expenses",
+      "rule_id": "CLASS_005.disc.3"
+    }
+  ],
+  "aliases": [],
+  "class_id": "CLASS_005",
+  "source_doc": "i2441.pdf"
+}

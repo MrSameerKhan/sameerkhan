@@ -1,0 +1,222 @@
+{
+  "seed": 42,
+  "n_classes": 36,
+  "classes": [
+    {
+      "class_id": "CLASS_000",
+      "real_name": "Form 1065 - U.S. Return of Partnership Income",
+      "slug": "f1065",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_001",
+      "real_name": "Form 1099-DIV - Dividends and Distributions",
+      "slug": "f1099div",
+      "held_back": true
+    },
+    {
+      "class_id": "CLASS_002",
+      "real_name": "Schedule E (Form 1040) - Supplemental Income and Loss",
+      "slug": "f1040se",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_003",
+      "real_name": "Form 8825 - Rental Real Estate Income and Expenses of a Partnership or S Corp",
+      "slug": "f8825",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_004",
+      "real_name": "Form SS-4 - Application for Employer Identification Number",
+      "slug": "fss4",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_005",
+      "real_name": "Form 2441 - Child and Dependent Care Expenses",
+      "slug": "f2441",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_006",
+      "real_name": "Form 8949 - Sales and Other Dispositions of Capital Assets",
+      "slug": "f8949",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_007",
+      "real_name": "Form 8582 - Passive Activity Loss Limitations",
+      "slug": "f8582",
+      "held_back": true
+    },
+    {
+      "class_id": "CLASS_008",
+      "real_name": "Form 4562 - Depreciation and Amortization",
+      "slug": "f4562",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_009",
+      "real_name": "Form 8606 - Nondeductible IRAs",
+      "slug": "f8606",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_010",
+      "real_name": "Form 8995 - Qualified Business Income Deduction Simplified Computation",
+      "slug": "f8995",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_011",
+      "real_name": "Schedule K-1 (Form 1065) - Partner's Share of Income",
+      "slug": "f1065sk1",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_012",
+      "real_name": "Form 1098 - Mortgage Interest Statement",
+      "slug": "f1098",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_013",
+      "real_name": "Form 8863 - Education Credits",
+      "slug": "f8863",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_014",
+      "real_name": "Form 1040-X - Amended U.S. Individual Income Tax Return",
+      "slug": "f1040x",
+      "held_back": true
+    },
+    {
+      "class_id": "CLASS_015",
+      "real_name": "Form 2555 - Foreign Earned Income",
+      "slug": "f2555",
+      "held_back": true
+    },
+    {
+      "class_id": "CLASS_016",
+      "real_name": "Form 1120-S - U.S. Income Tax Return for an S Corporation",
+      "slug": "f1120s",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_017",
+      "real_name": "Form W-9 - Request for Taxpayer Identification Number",
+      "slug": "fw9",
+      "held_back": true
+    },
+    {
+      "class_id": "CLASS_018",
+      "real_name": "Schedule F (Form 1040) - Profit or Loss From Farming",
+      "slug": "f1040sf",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_019",
+      "real_name": "Form 5695 - Residential Energy Credits",
+      "slug": "f5695",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_020",
+      "real_name": "Form 1040 - U.S. Individual Income Tax Return",
+      "slug": "f1040",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_021",
+      "real_name": "Form W-8BEN - Certificate of Foreign Status of Beneficial Owner",
+      "slug": "fw8ben",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_022",
+      "real_name": "Form 1099-INT - Interest Income",
+      "slug": "f1099int",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_023",
+      "real_name": "Form 2106 - Employee Business Expenses",
+      "slug": "f2106",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_024",
+      "real_name": "Schedule B (Form 1040) - Interest and Ordinary Dividends",
+      "slug": "f1040sb",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_025",
+      "real_name": "Form W-2 - Wage and Tax Statement",
+      "slug": "fw2",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_026",
+      "real_name": "Form 8889 - Health Savings Accounts",
+      "slug": "f8889",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_027",
+      "real_name": "Form 3903 - Moving Expenses",
+      "slug": "f3903",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_028",
+      "real_name": "Schedule C (Form 1040) - Profit or Loss From Business",
+      "slug": "f1040sc",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_029",
+      "real_name": "Form 4797 - Sales of Business Property",
+      "slug": "f4797",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_030",
+      "real_name": "Schedule D (Form 1040) - Capital Gains and Losses",
+      "slug": "f1040sd",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_031",
+      "real_name": "Form 1099-MISC - Miscellaneous Information",
+      "slug": "f1099msc",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_032",
+      "real_name": "Form 1120 - U.S. Corporation Income Tax Return",
+      "slug": "f1120",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_033",
+      "real_name": "Schedule K-1 (Form 1120-S) - Shareholder's Share of Income",
+      "slug": "f1120ssk",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_034",
+      "real_name": "Schedule A (Form 1040) - Itemized Deductions",
+      "slug": "f1040sa",
+      "held_back": false
+    },
+    {
+      "class_id": "CLASS_035",
+      "real_name": "Schedule SE (Form 1040) - Self-Employment Tax",
+      "slug": "f1040sse",
+      "held_back": false
+    }
+  ]
+}
