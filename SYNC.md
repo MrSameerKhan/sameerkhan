@@ -9,20 +9,70 @@
 
 | Field | Value |
 |-------|-------|
-| **Machine** | Windows |
-| **Date** | 25 June 2026 |
-| **What I did** | Ran all 4 Phase 08 Agent sessions (S01–S04 all ✅ Run). Installed langchain-openai, langgraph. Fixed ReAct quote-stripping + policy aliases bug. LangGraph multi-turn memory + HITL confirmed. |
-| **Files changed** | `code_practice/08_agents/` all `_details.md` files, `01_react_agent.py`, `03_langgraph_agent/tools.py` |
+| **Machine** | Mac |
+| **Date** | 14 August 2026 |
+| **What I did** | Started interview prep arc. Resume finalised (`resume/resume_sameer_khan_sr_ML.pdf`). Audited `02_INTERVIEW_PACK.md` against it — it is STALE (written against an older resume). Created `code_practice/11_interview_drills/` + Drill 01 (multi-head attention from scratch, 13-check harness, validated against a reference solution). |
+| **Files changed** | `code_practice/11_interview_drills/01_multihead_attention.py` (new), `SYNC.md` |
 
 ---
 
 ## Next Task
 
 ```
-What:   Run Phase 10 Document AI sessions (S01–S04) — all 🔧 Code-built
-File:   code_practice/10_document_ai/
-Note:   Phase 09 parked — torch 2.6 not available for cu121; resume when cu124 wheel releases
+What:   Drill 01 — fill in the 5 NotImplementedError bodies, 20 min, no reference
+File:   code_practice/11_interview_drills/01_multihead_attention.py
+Run:    python code_practice/11_interview_drills/01_multihead_attention.py
+Goal:   13/13 PASS
+Then:   Paste implementation into Claude for interviewer-style review
+Note:   Code practice Phase 10 is PAUSED — interview prep takes priority (interviews in 1-2 weeks)
 ```
+
+---
+
+## ACTIVE ARC — Interview Prep (started 14 Aug 2026)
+
+**Context:** interviewing in 1–2 weeks. Self-assessed weak in all four areas: resume defence, LLM/GenAI theory, ML system design, behavioural/STAR. Format chosen: **coding drills as the spine**, other three folded in around them.
+
+### Drill Schedule
+
+| Day | Drill | File | Status |
+|-----|-------|------|--------|
+| 1 | Multi-head attention from scratch | `11_interview_drills/01_multihead_attention.py` | 🔧 Built — awaiting attempt |
+| 2 | BM25 + RRF from scratch | not yet built | ⬜ |
+| 3 | FAISS cosine / IndexFlatIP | not yet built | ⬜ |
+| 4 | Union-Find duplicate collapse | not yet built | ⬜ |
+| 5 | Per-class threshold calibration | not yet built | ⬜ |
+| 6 | Weighted F1 by hand | not yet built | ⬜ |
+| 7 | Cross-encoder reranking | not yet built | ⬜ |
+| 8 | DDP / gradient all-reduce | not yet built | ⬜ |
+| 9–11 | System design: 643-class @ 1.7M req/day · OCR-free migration · dedup @ 7.1M pages | discussion, no file | ⬜ |
+| 12–14 | STAR rewrite vs real resume numbers + full mock loop | updates `02_INTERVIEW_PACK.md` | ⬜ |
+
+Every drill is a literal "I hand-wrote / I built from scratch" claim on the resume — drilling them **is** resume defence.
+
+### Open Finding — 02_INTERVIEW_PACK.md is stale
+
+Written against an older resume. Must be rewritten before any interview. Confirmed mismatches:
+
+| Pack says | Final resume says |
+|-----------|-------------------|
+| "8 years", "94% accuracy", "60% RCA reduction" | 9 years; weighted F1 0.959–0.972 and 0.975; P1 RCA = 5 services / 21,096 pages / 2.3% true failure rate |
+| RAG project = FAISS + Streamlit + `llama3.2:1b` | **Rulebook-RAG**: 36 classes, hand-written BM25 + RRF (+5.2 pts), cross-encoder (+3.9 pts), 0 invalid of 775 |
+| "You have done QLoRA with Mistral-7B" | Not on the resume — **and Phase 09 is parked, so it cannot be defended. Do not claim this.** |
+
+Zero coverage in the pack for: Rulebook-RAG, ONNX export, 643 classes, dedup pipeline, Union-Find, per-class thresholds, Textract, L40S. Scheduled for days 12–14.
+
+---
+
+## Machine Differences (matters for drills)
+
+| | Mac (here) | Windows |
+|---|---|---|
+| **torch** | 2.12.0, CPU | 2.5.1 + cu121, GTX 1650 Ti |
+| **Good for** | Drills 1–8 (all CPU, tiny tensors, seconds to run) | GPU sessions, Phase 05/10 |
+| **Known block** | — | Phase 09 fine-tuning parked: torch 2.6 not on cu121, trl 1.6 meta-tensor bug |
+
+All interview drills are **deliberately CPU-only and seed-fixed** — they run identically on both machines. No GPU needed, no environment drift.
 
 ---
 
@@ -59,10 +109,14 @@ Note:   Phase 09 parked — torch 2.6 not available for cu121; resume when cu124
 
 ## How to Update This File
 
-After any work session, before `git push`, update only these two blocks:
+After any work session, before `git push`, update only these blocks:
 
 **Last Session** — overwrite machine, date, what you did, files changed.
 
 **Next Task** — overwrite with exactly what to do next (be specific: file name, command, topic).
 
+**Drill Schedule status column** — while the interview arc is active. Use `🔧 Built` → `✅ Passed` (record your time and score, e.g. `✅ 13/13 in 24 min`).
+
 That's it. Keep everything else as-is until it changes.
+
+**On the other machine:** `git pull`, open this file, read **Next Task**, go. Nothing else to reconstruct.
