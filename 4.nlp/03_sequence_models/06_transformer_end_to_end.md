@@ -35,8 +35,8 @@
 | Architecture | Key State     | Gate Count | Gradient to "cat" | Parallelizable? |
 |--------------|---------------|------------|-------------------|-----------------|
 | RNN          | h (overwrite) | 0          | 9%                | No              |
-| LSTM         | C + h (two)   | 4          | 69%               | No              |
-| GRU          | h (selective) | 2          | 66%               | No              |
+| LSTM         | C + h (two)   | 4          | 79.2%             | No              |
+| GRU          | h (selective) | 2          | 71.4%             | No              |
 | Attention    | none (direct) | —          | direct (A[4,1]=0.275) | YES         |
 | Transformer  | none (stacked)| —          | direct + FFN      | YES             |
 
@@ -1078,8 +1078,8 @@ L' = 0.431  (after one update)
 | Architecture | Gradient path to first position ("cat") | Magnitude         |
 |--------------|------------------------------------------|-------------------|
 | RNN          | L + h_t → h_t via h                    | 9%                |
-| LSTM         | L + C_t → C_t via forget gate          | ~69%              |
-| GRU          | L + h_t → h_t via update gate          | ~66%              |
+| LSTM         | L + C_t → C_t via forget gate          | ~79.2%            |
+| GRU          | L + h_t → h_t via update gate          | ~71.4%            |
 | Attention    | L + C → V[1] via A[4,1]=0.275          | 27.5% (raw X)     |
 | Transformer  | L + C → V[1] via A[4,1]=0.239 + residual highway to x_pe | direct +100% |
 
@@ -1091,7 +1091,7 @@ L' = 0.431  (after one update)
 
 **For sequence length n=100:**
 ```
-RNN: 9%, LSTM: 69%, GRU: 66%, Attn: 23-27%, Tfmr: ~100%
+RNN: 9%, LSTM: 79.2%, GRU: 71.4%, Attn: 23-27%, Tfmr: ~100%
 
 n=100:
 RNN, LSTM, GRU: ≈ 0% (gate still accumulates)
@@ -1825,8 +1825,8 @@ Transformer: Attention + PE + FFN + Residual   → learnable gradient routing
 
 Same "cat sat on mat" sentence. Same embeddings. Different gradient delivery:
   RNN    → 9% of "cat" gradient reaches position 1
-  LSTM   → 69% via forget gate
-  GRU    → 66% via update gate
+  LSTM   → 79.2% via forget gate
+  GRU    → 71.4% via update gate
   Attn   → 27.5% raw X (A[4,1]=0.275)
   Tfmr   → direct (residual always 1) + learned attention weight
 ```

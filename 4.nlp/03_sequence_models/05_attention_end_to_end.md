@@ -25,7 +25,7 @@
 
 ## 1. Why Attention — GRU/LSTM's Remaining Limit
 
-LSTM and GRU solved the vanishing gradient problem. "cat" at position 1 now reaches position 4 with 66-69% of its signal intact.
+LSTM and GRU solved the vanishing gradient problem. "cat" at position 1 now reaches position 4 with 71-79% of its signal intact (verified in `03_lstm_end_to_end.md` and `04_gru_end_to_end.md`).
 
 But both still share one constraint: **ALL information must flow through a single vector.** RNN/LSTM/GRU produce one hidden state per step and pass it forward. The final hidden state h (or C_t) must summarize the ENTIRE sentence.
 
@@ -76,8 +76,8 @@ Gradient flows from the output directly to position 1 in **ONE step**. No sequen
 | Architecture | Gradient to "cat" | Mechanism |
 |---|---|---|
 | RNN | 9% | 3 sequential W' × tanh' multiplications |
-| LSTM | 69% | 3 sequential f multiplications (highway) |
-| GRU | 66% | 3 sequential (1-z) multiplications (highway) |
+| LSTM | 79.2% | 3 sequential f multiplications (highway) |
+| GRU | 71.4% | 3 sequential (1-z) multiplications (highway) |
 | Attention | DIRECT | 1 step: ∂L/∂V[1] = A[4,1] × ∂L/∂c |
 
 Key difference: RNN/LSTM/GRU degrade over sequence length. Attention does NOT — the same 1-step path exists for 4 or 4000 words.
@@ -365,11 +365,12 @@ All 4 context vectors carry strong animal signal (0.404-0.457 in dim 0). EVERY t
 
 **Compare c₄ to final states in sequential models:**
 ```
-RNN:  h₄[dim 0] = 0.308   "cat" at 0.537 decayed to 0.308 over 3 steps
-GRU:  h₄[dim 0] = 0.414   "cat" preserved via highway (70%)
-LSTM: C₄[dim 0] = 0.417   "cat" accumulated in cell state (protected)
+RNN:  h₄[dim 0] = 0.301   "cat" at 0.537 decayed to 0.301 over 3 steps
+GRU:  h₄[dim 0] = 0.607   "cat" preserved via highway (73%)
+LSTM: C₄[dim 0] = 1.886   "cat" accumulated in an unbounded, protected cell state
 Attn: c₄[dim 0] = 0.417   "cat" contributes 62.6% directly via attention
 ```
+Note: LSTM's `C₄` is not on the same scale as the others — it's an unprotected-from-growth accumulator, not a bounded output like `h` or `c`. Compare gradient *percentages*, not raw magnitudes, across architectures.
 
 **Output layer:**
 ```
@@ -384,9 +385,9 @@ Attn: c₄[dim 0] = 0.417   "cat" contributes 62.6% directly via attention
 **Architecture comparison — same sentence, same embeddings:**
 ```
 Architecture   ŷ      L      c/h dim 0   Gradient to "cat"
-RNN           0.365  0.201   0.308        9%  (3 chained steps)
-GRU           0.383  0.190   0.414        66% (highway)
-LSTM          0.411  0.173   0.417        69% (highway)
+RNN           0.329  0.225   0.301        9%  (3 chained steps)
+GRU           0.501  0.124   0.607        71.4% (highway)
+LSTM          0.718  0.040   1.886        79.2% (highway)
 Attention     0.593  0.083   0.417        DIRECT
 ```
 
@@ -407,10 +408,10 @@ L = ½(y - ŷ)²
 Error = 0.407. Lowest of all four architectures.
 
 ```
-RNN:       L = 0.201   63.5% error
-GRU:       L = 0.190   61.7% error
-LSTM:      L = 0.173   58.9% error
-Attention: L = 0.083   40.7% error  ← much closer already
+RNN:       L = 0.225   67.1% error
+GRU:       L = 0.124   49.9% error
+LSTM:      L = 0.040   28.2% error
+Attention: L = 0.083   40.7% error  ← already close, though LSTM's highway does better here
 ```
 
 Why does attention start with lower loss? "cat" at position 1 contributes directly to c₄ — no information lost. The gradient highway in GRU/LSTM preserved gradient flow but couldn't prevent h being diluted by subsequent words. Attention bypasses dilution entirely: c₄ = direct weighted sum of all values.
@@ -463,7 +464,7 @@ In RNN: ∂L/∂h₁ = W'×(1-h²) × W'×(1-h²) × W'×(1-h²) × ∂L/∂h₄
                  3 sequential multiplications × 0.44 per step = 9% reaches "cat"
 
 In GRU: ∂L/∂h₁ = (1-z₃) × (1-z₂) × (1-z₁) × ∂L/∂h₄
-                 3 highway multiplications = 66% reaches "cat"
+                 3 highway multiplications = 71.4% reaches "cat"
 
 In Attention: ∂L/∂V[1] = A[4,1] × ∂L/∂c₄
                           = 0.275 × ∂L/∂c₄   ← ONE direct multiplication
@@ -501,9 +502,9 @@ cat and mat get **essentially the same gradient**. Even with random (uniform) at
 **Gradient reaching "cat" across all architectures:**
 ```
 Architecture  Path to "cat"         Formula                      % reaches cat
-RNN           3 sequential steps    (W'×tanh')³ = 0.44 per step  9%
-LSTM          3 highway steps       f³ = 0.88 per step           69%
-GRU           3 highway steps       (1-z)³ = 0.88 per step       66%
+RNN           3 sequential steps    (W'×tanh')³ ≈ 0.44 per step  9%
+LSTM          3 highway steps       f³ ≈ 0.92 per step           79.2%
+GRU           3 highway steps       (1-z)³ ≈ 0.89 per step       71.4%
 Attention     1 direct step         A[4,1] × ∂L/∂c              27.5%
 
 For sequence length 1000:
@@ -1063,9 +1064,9 @@ with torch.no_grad():
 
 | Architecture | Core mechanism | Gradient path to "cat" |
 |---|---|---|
-| RNN | h = tanh(Wx·x + Wh·h_{t-1}) | 3× (W'×tanh') = 0.44/step → 9% |
-| LSTM | C = f⊙C_{t-1} + i⊙g | 3× f multiplications → 69% |
-| GRU | h = (1-z)⊙h_{t-1} + z⊙h̃ | 3× (1-z) multiplications → 66% |
+| RNN | h = tanh(Wx·x + Wh·h_{t-1}) | 3× (W'×tanh') ≈ 0.44/step → 9% |
+| LSTM | C = f⊙C_{t-1} + i⊙g | 3× f multiplications → 79.2% |
+| GRU | h = (1-z)⊙h_{t-1} + z⊙h̃ | 3× (1-z) multiplications → 71.4% |
 | Attention | c = Σ A[last,i] × v_i | 1× A[last,1] × ∂L/∂c → direct |
 
 ↑ all previous architectures ↑ attention breaks the sequential chain
