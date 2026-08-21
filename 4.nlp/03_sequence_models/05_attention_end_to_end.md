@@ -181,13 +181,26 @@ Attention: C   = softmax(QKᵀ/√d) @ V      ALL positions simultaneously
 
 ### Step 1: Compute Q, K, V Matrices
 
-**Q = X @ Wq (4×2):**
+**Q = X @ Wq (4×2)** — each row of X times the Wq matrix, both output dims shown for every row:
 ```
-q₁ = [1.00, 0.50] @ Wq:  dim 0: 1.00×0.60 + 0.50×0.20 = 0.700
-                           dim 1: 1.00×0.40 + 0.50×0.50 = 0.650
-q₂ = [0.20, 0.30] @ Wq:  [0.180, 0.230]
-q₃ = [0.10, 0.10] @ Wq:  [0.080, 0.090]
-q₄ = [0.20, 0.40] @ Wq:  [0.200, 0.280]
+Wq = [[0.60, 0.40],
+      [0.20, 0.50]]
+
+q₁ = [1.00, 0.50] @ Wq:  dim 0: 1.00×0.60 + 0.50×0.20 = 0.600 + 0.100 = 0.700
+                         dim 1: 1.00×0.40 + 0.50×0.50 = 0.400 + 0.250 = 0.650
+                         q₁ = [0.700, 0.650]
+
+q₂ = [0.20, 0.30] @ Wq:  dim 0: 0.20×0.60 + 0.30×0.20 = 0.120 + 0.060 = 0.180
+                         dim 1: 0.20×0.40 + 0.30×0.50 = 0.080 + 0.150 = 0.230
+                         q₂ = [0.180, 0.230]
+
+q₃ = [0.10, 0.10] @ Wq:  dim 0: 0.10×0.60 + 0.10×0.20 = 0.060 + 0.020 = 0.080
+                         dim 1: 0.10×0.40 + 0.10×0.50 = 0.040 + 0.050 = 0.090
+                         q₃ = [0.080, 0.090]
+
+q₄ = [0.20, 0.40] @ Wq:  dim 0: 0.20×0.60 + 0.40×0.20 = 0.120 + 0.080 = 0.200
+                         dim 1: 0.20×0.40 + 0.40×0.50 = 0.080 + 0.200 = 0.280
+                         q₄ = [0.200, 0.280]
 
 Q = [[0.700, 0.650],   ← "cat" query: Large (strong embedding → large query)
      [0.180, 0.230],
@@ -197,11 +210,24 @@ Q = [[0.700, 0.650],   ← "cat" query: Large (strong embedding → large query)
 
 **K = X @ Wk (4×2):**
 ```
-k₁ = [1.00, 0.50] @ Wk:  dim 0: 1.00×0.50 + 0.50×0.10 = 0.550
-                           dim 1: 1.00×0.30 + 0.50×0.40 = 0.500
-k₂ = [0.20, 0.30] @ Wk:  [0.130, 0.180]
-k₃ = [0.10, 0.10] @ Wk:  [0.060, 0.070]
-k₄ = [0.20, 0.40] @ Wk:  [0.140, 0.220]
+Wk = [[0.50, 0.30],
+      [0.10, 0.40]]
+
+k₁ = [1.00, 0.50] @ Wk:  dim 0: 1.00×0.50 + 0.50×0.10 = 0.500 + 0.050 = 0.550
+                         dim 1: 1.00×0.30 + 0.50×0.40 = 0.300 + 0.200 = 0.500
+                         k₁ = [0.550, 0.500]
+
+k₂ = [0.20, 0.30] @ Wk:  dim 0: 0.20×0.50 + 0.30×0.10 = 0.100 + 0.030 = 0.130
+                         dim 1: 0.20×0.30 + 0.30×0.40 = 0.060 + 0.120 = 0.180
+                         k₂ = [0.130, 0.180]
+
+k₃ = [0.10, 0.10] @ Wk:  dim 0: 0.10×0.50 + 0.10×0.10 = 0.050 + 0.010 = 0.060
+                         dim 1: 0.10×0.30 + 0.10×0.40 = 0.030 + 0.040 = 0.070
+                         k₃ = [0.060, 0.070]
+
+k₄ = [0.20, 0.40] @ Wk:  dim 0: 0.20×0.50 + 0.40×0.10 = 0.100 + 0.040 = 0.140
+                         dim 1: 0.20×0.30 + 0.40×0.40 = 0.060 + 0.160 = 0.220
+                         k₄ = [0.140, 0.220]
 
 K = [[0.550, 0.500],   ← "cat" key: Large (cat's key is the most prominent)
      [0.130, 0.180],
@@ -211,11 +237,24 @@ K = [[0.550, 0.500],   ← "cat" key: Large (cat's key is the most prominent)
 
 **V = X @ Wv (4×2):**
 ```
-v₁ = [1.00, 0.50] @ Wv:  dim 0: 1.00×0.80 + 0.50×0.30 = 0.950
-                           dim 1: 1.00×0.20 + 0.50×0.70 = 0.550
-v₂ = [0.20, 0.30] @ Wv:  [0.250, 0.250]
-v₃ = [0.10, 0.10] @ Wv:  [0.110, 0.090]
-v₄ = [0.20, 0.40] @ Wv:  [0.280, 0.320]
+Wv = [[0.80, 0.20],
+      [0.30, 0.70]]
+
+v₁ = [1.00, 0.50] @ Wv:  dim 0: 1.00×0.80 + 0.50×0.30 = 0.800 + 0.150 = 0.950
+                         dim 1: 1.00×0.20 + 0.50×0.70 = 0.200 + 0.350 = 0.550
+                         v₁ = [0.950, 0.550]
+
+v₂ = [0.20, 0.30] @ Wv:  dim 0: 0.20×0.80 + 0.30×0.30 = 0.160 + 0.090 = 0.250
+                         dim 1: 0.20×0.20 + 0.30×0.70 = 0.040 + 0.210 = 0.250
+                         v₂ = [0.250, 0.250]
+
+v₃ = [0.10, 0.10] @ Wv:  dim 0: 0.10×0.80 + 0.10×0.30 = 0.080 + 0.030 = 0.110
+                         dim 1: 0.10×0.20 + 0.10×0.70 = 0.020 + 0.070 = 0.090
+                         v₃ = [0.110, 0.090]
+
+v₄ = [0.20, 0.40] @ Wv:  dim 0: 0.20×0.80 + 0.40×0.30 = 0.160 + 0.120 = 0.280
+                         dim 1: 0.20×0.20 + 0.40×0.70 = 0.040 + 0.280 = 0.320
+                         v₄ = [0.280, 0.320]
 
 V = [[0.950, 0.550],   ← "cat" value: HIGH — cat carries strong animal information
      [0.250, 0.250],
@@ -231,75 +270,139 @@ Why is v₁ so much larger? x₁ = [1.00, 0.50] — cat has the largest embeddin
 
 **S_raw = Q @ Kᵀ (4×4):**
 
-Each element S_raw[i,j] = q_i · k_j = "how much does position i's query match position j's key?"
+Each element S_raw[i,j] = q_i · k_j — a 2D dot product, so 2 multiplications + 1 addition, for EVERY one of the 16 cells. No cell is skipped below.
 
 ```
-               k₁=[.55,.50]  k₂=[.13,.18]  k₃=[.06,.07]  k₄=[.14,.22]
-q₁=[.70,.65]:    0.710          0.208          0.088          0.241
-q₂=[.18,.23]:    0.214          0.065          0.027          0.079
-q₃=[.08,.09]:    0.089          0.027          0.011          0.031
-q₄=[.20,.28]:    0.250          0.076          0.032          0.090
+Q = [[0.70,0.65],[0.18,0.23],[0.08,0.09],[0.20,0.28]]   (rows: cat, sat, on, mat)
+K = [[0.55,0.50],[0.13,0.18],[0.06,0.07],[0.14,0.22]]   (rows: cat, sat, on, mat)
+
+Row 1 — q_cat=[0.70,0.65]:
+  S[1,1] = 0.70×0.55 + 0.65×0.50 = 0.385 + 0.325 = 0.710   (cat · cat)
+  S[1,2] = 0.70×0.13 + 0.65×0.18 = 0.091 + 0.117 = 0.208   (cat · sat)
+  S[1,3] = 0.70×0.06 + 0.65×0.07 = 0.042 + 0.0455 = 0.0875 (cat · on)
+  S[1,4] = 0.70×0.14 + 0.65×0.22 = 0.098 + 0.143 = 0.241   (cat · mat)
+
+Row 2 — q_sat=[0.18,0.23]:
+  S[2,1] = 0.18×0.55 + 0.23×0.50 = 0.099 + 0.115 = 0.214   (sat · cat)
+  S[2,2] = 0.18×0.13 + 0.23×0.18 = 0.0234 + 0.0414 = 0.0648 (sat · sat)
+  S[2,3] = 0.18×0.06 + 0.23×0.07 = 0.0108 + 0.0161 = 0.0269 (sat · on)
+  S[2,4] = 0.18×0.14 + 0.23×0.22 = 0.0252 + 0.0506 = 0.0758 (sat · mat)
+
+Row 3 — q_on=[0.08,0.09]:
+  S[3,1] = 0.08×0.55 + 0.09×0.50 = 0.044 + 0.045 = 0.089    (on · cat)
+  S[3,2] = 0.08×0.13 + 0.09×0.18 = 0.0104 + 0.0162 = 0.0266 (on · sat)
+  S[3,3] = 0.08×0.06 + 0.09×0.07 = 0.0048 + 0.0063 = 0.0111 (on · on)
+  S[3,4] = 0.08×0.14 + 0.09×0.22 = 0.0112 + 0.0198 = 0.0310 (on · mat)
+
+Row 4 — q_mat=[0.20,0.28]:
+  S[4,1] = 0.20×0.55 + 0.28×0.50 = 0.110 + 0.140 = 0.250    (mat · cat)
+  S[4,2] = 0.20×0.13 + 0.28×0.18 = 0.026 + 0.0504 = 0.0764  (mat · sat)
+  S[4,3] = 0.20×0.06 + 0.28×0.07 = 0.012 + 0.0196 = 0.0316  (mat · on)
+  S[4,4] = 0.20×0.14 + 0.28×0.22 = 0.028 + 0.0616 = 0.0896  (mat · mat)
 ```
 
-Key entries:
+**Full S_raw table:**
 ```
-S[1,1] = 0.700×0.550 + 0.650×0.500 = 0.385+0.325 = 0.710  ← "cat" queries cat
-S[4,1] = 0.200×0.550 + 0.280×0.500 = 0.110+0.140 = 0.250  ← "mat" queries cat
-S[4,4] = 0.200×0.140 + 0.280×0.220 = 0.028+0.062 = 0.090  ← "mat" queries itself
+               k₁=cat  k₂=sat  k₃=on   k₄=mat
+q₁=cat:        0.7100  0.2080  0.0875  0.2410
+q₂=sat:        0.2140  0.0648  0.0269  0.0758
+q₃=on:         0.0890  0.0266  0.0111  0.0310
+q₄=mat:        0.2500  0.0764  0.0316  0.0896
 ```
 
-S[1,1] = 0.710 is the LARGEST entry. "cat" has the highest self-similarity. "mat" querying "cat" (0.250) is higher than "mat" querying itself (0.090) — "mat" finds "cat" more relevant than itself. Correct for animal detection.
+S[1,1] = 0.710 is the LARGEST entry. "cat" has the highest self-similarity. "mat" querying "cat" (0.250) is higher than "mat" querying itself (0.0896) — "mat" finds "cat" more relevant than itself. Correct for animal detection.
 
-**Scaling by √d_k = √2 = 1.414:**
+**Scaling by √d_k = √2 = 1.41421:** every cell in S_raw divided by the same constant — this doesn't change which entries are largest, only compresses the range so softmax doesn't saturate.
+
 ```
-S = S_raw / 1.414:
+Row 1: 0.7100/1.41421=0.5020  0.2080/1.41421=0.1471  0.0875/1.41421=0.0619  0.2410/1.41421=0.1704
+Row 2: 0.2140/1.41421=0.1513  0.0648/1.41421=0.0458  0.0269/1.41421=0.0190  0.0758/1.41421=0.0536
+Row 3: 0.0890/1.41421=0.0629  0.0266/1.41421=0.0188  0.0111/1.41421=0.0078  0.0310/1.41421=0.0219
+Row 4: 0.2500/1.41421=0.1768  0.0764/1.41421=0.0540  0.0316/1.41421=0.0223  0.0896/1.41421=0.0634
+```
+
+**Full scaled S table:**
+```
                k₁      k₂      k₃      k₄
-q₁:          0.502   0.147   0.062   0.170
-q₂:          0.151   0.046   0.019   0.056
-q₃:          0.063   0.019   0.008   0.022
-q₄:          0.177   0.054   0.023   0.064
+q₁ (cat):    0.5020  0.1471  0.0619  0.1704
+q₂ (sat):    0.1513  0.0458  0.0190  0.0536
+q₃ (on):     0.0629  0.0188  0.0078  0.0219
+q₄ (mat):    0.1768  0.0540  0.0223  0.0634
 ```
 
 ---
 
 ### Step 3: Attention Weights (Softmax Row-wise)
 
-**A = softmax(S, axis=1)** — each row is an independent attention distribution.
+**A = softmax(S, axis=1)** — each row is an independent distribution: exponentiate every entry, divide by the row's sum. All 4 rows shown in full, no shortcuts.
 
 **Row 1 — "cat" queries all positions:**
 ```
-s₁ = [0.502, 0.147, 0.062, 0.170]
-e^s = [1.652, 1.158, 1.064, 1.185],  sum = 5.059
-A₁  = [0.327, 0.229, 0.210, 0.234]
+s₁ = [0.5020, 0.1471, 0.0619, 0.1704]
+e^s₁ = [e^0.5020, e^0.1471, e^0.0619, e^0.1704] = [1.6521, 1.1584, 1.0638, 1.1858]
+sum  = 1.6521+1.1584+1.0638+1.1858 = 5.0601
+
+A[1,1] = 1.6521 / 5.0601 = 0.3265
+A[1,2] = 1.1584 / 5.0601 = 0.2289
+A[1,3] = 1.0638 / 5.0601 = 0.2102
+A[1,4] = 1.1858 / 5.0601 = 0.2343
+
+A₁ = [0.3265, 0.2289, 0.2102, 0.2343]   (check: sum = 0.9999 ≈ 1.0 ✓)
 ```
 "cat" attends to: itself 32.7%, sat 22.9%, on 21.0%, mat 23.4%. Cat attends mostly to ITSELF — it knows it's the animal.
 
 **Row 2 — "sat" queries all positions:**
 ```
-A₂ = [0.271, 0.206, 0.238, 0.246]   (moderate spread)
+s₂ = [0.1513, 0.0458, 0.0190, 0.0536]
+e^s₂ = [e^0.1513, e^0.0458, e^0.0190, e^0.0536] = [1.1634, 1.0469, 1.0192, 1.0551]
+sum  = 1.1634+1.0469+1.0192+1.0551 = 4.2846
+
+A[2,1] = 1.1634 / 4.2846 = 0.2716
+A[2,2] = 1.0469 / 4.2846 = 0.2443
+A[2,3] = 1.0192 / 4.2846 = 0.2379
+A[2,4] = 1.0551 / 4.2846 = 0.2463
+
+A₂ = [0.2716, 0.2443, 0.2379, 0.2463]   (check: sum = 1.0001 ≈ 1.0 ✓)
 ```
+Moderate spread, cat still leads slightly.
 
 **Row 3 — "on" queries all positions:**
 ```
-s₃ = [0.063, 0.019, 0.008, 0.022]   (very small values — "on" is a function word)
-A₃ = [0.259, 0.248, 0.245, 0.248]   (almost uniform — no preference)
+s₃ = [0.0629, 0.0188, 0.0078, 0.0219]
+e^s₃ = [e^0.0629, e^0.0188, e^0.0078, e^0.0219] = [1.0650, 1.0190, 1.0079, 1.0222]
+sum  = 1.0650+1.0190+1.0079+1.0222 = 4.1141
+
+A[3,1] = 1.0650 / 4.1141 = 0.2589
+A[3,2] = 1.0190 / 4.1141 = 0.2477
+A[3,3] = 1.0079 / 4.1141 = 0.2450
+A[3,4] = 1.0222 / 4.1141 = 0.2485
+
+A₃ = [0.2589, 0.2477, 0.2450, 0.2485]   (check: sum = 1.0001 ≈ 1.0 ✓)
 ```
-"on" is nearly the average of all value vectors.
+"on" is nearly the average of all value vectors — attention almost uniform (scores were all tiny, so softmax barely differentiates).
 
 **Row 4 — "mat" queries all positions:**
 ```
-s₄ = [0.177, 0.054, 0.023, 0.064]
-A₄ = [0.275, 0.243, 0.236, 0.246]
+s₄ = [0.1768, 0.0540, 0.0223, 0.0634]
+e^s₄ = [e^0.1768, e^0.0540, e^0.0223, e^0.0634] = [1.1934, 1.0555, 1.0226, 1.0654]
+sum  = 1.1934+1.0555+1.0226+1.0654 = 4.3369
+
+A[4,1] = 1.1934 / 4.3369 = 0.2752
+A[4,2] = 1.0555 / 4.3369 = 0.2434
+A[4,3] = 1.0226 / 4.3369 = 0.2358
+A[4,4] = 1.0654 / 4.3369 = 0.2457
+
+A₄ = [0.2752, 0.2434, 0.2358, 0.2457]   (check: sum = 1.0001 ≈ 1.0 ✓)
 ```
 "mat" attends to: cat **27.5%**, sat 24.3%, on 23.6%, mat 24.6%. "cat" gets the highest attention weight from "mat" — correct! "mat" finds "cat" more relevant than any other word.
 
 **Full attention matrix A:**
 ```
-           "cat"  "sat"  "on"   "mat"
-"cat":   [0.327, 0.229, 0.210, 0.234]  ← cat looks mostly at itself
-"sat":   [0.271, 0.206, 0.238, 0.246]
-"on":    [0.259, 0.248, 0.245, 0.248]
-"mat":   [0.275, 0.243, 0.236, 0.246]  ← mat attends most to cat
+           "cat"   "sat"   "on"    "mat"
+"cat":   [0.3265, 0.2289, 0.2102, 0.2343]  ← cat looks mostly at itself
+"sat":   [0.2716, 0.2443, 0.2379, 0.2463]
+"on":    [0.2589, 0.2477, 0.2450, 0.2485]
+"mat":   [0.2752, 0.2434, 0.2358, 0.2457]  ← mat attends most to cat
 ```
 
 All rows sum to 1.00. "cat" has the highest key magnitude → receives highest attention from ALL queries. With trained weights, row 4 would peak sharply: [0.90, 0.03, 0.03, 0.04].
@@ -310,43 +413,56 @@ All rows sum to 1.00. "cat" has the highest key magnitude → receives highest a
 
 **C = A @ V (4×4 @ 4×2 = 4×2)**
 
-All 4 context vectors computed SIMULTANEOUSLY. In RNN/LSTM/GRU we computed h₁, h₂, h₃, h₄ one at a time in a loop.
+All 4 context vectors computed SIMULTANEOUSLY. In RNN/LSTM/GRU we computed h₁, h₂, h₃, h₄ one at a time in a loop. Each context vector is a **4-term weighted sum** — every one of the 4 attention weights times its matching value vector, both dimensions. All 4 positions shown in full below.
 
-**c₁ — "cat"'s context:**
 ```
-c₁ = 0.327×v₁ + 0.229×v₂ + 0.210×v₃ + 0.234×v₄
-dim 0: 0.327×0.950 + 0.229×0.250 + 0.210×0.110 + 0.234×0.280 = 0.311+0.057+0.023+0.066 = 0.457
-dim 1: 0.327×0.550 + 0.229×0.250 + 0.210×0.090 + 0.234×0.320 = 0.180+0.057+0.019+0.075 = 0.331
-c₁ = [0.457, 0.331]
+V = [[0.95,0.55],[0.25,0.25],[0.11,0.09],[0.28,0.32]]   (rows: v_cat, v_sat, v_on, v_mat)
 ```
-c₁[dim 0] = 0.457 is the HIGHEST of all 4. Cat's view is dominated by its own animal content (A₁₁=0.327).
 
-**c₂ — "sat"'s context:**
+**c₁ — "cat"'s context** (weights A₁ = [0.3265, 0.2289, 0.2102, 0.2343]):
 ```
-c₂ = 0.271×v₁ + 0.206×v₂ + 0.238×v₃ + 0.246×v₄
-dim 0: 0.271×0.950 + 0.206×0.250 + 0.238×0.110 + 0.246×0.280 ≈ 0.413
-dim 1: ≈ 0.318
-c₂ = [0.413, 0.318]
+dim 0: 0.3265×0.95 + 0.2289×0.25 + 0.2102×0.11 + 0.2343×0.28
+     = 0.3102 + 0.0572 + 0.0231 + 0.0656 = 0.4561
+dim 1: 0.3265×0.55 + 0.2289×0.25 + 0.2102×0.09 + 0.2343×0.32
+     = 0.1796 + 0.0572 + 0.0189 + 0.0750 = 0.3307
+
+c₁ = [0.456, 0.331]
+```
+c₁[dim 0] = 0.456 is the HIGHEST of all 4. Cat's view is dominated by its own animal content (A[1,1]=0.327).
+
+**c₂ — "sat"'s context** (weights A₂ = [0.2716, 0.2443, 0.2379, 0.2463]):
+```
+dim 0: 0.2716×0.95 + 0.2443×0.25 + 0.2379×0.11 + 0.2463×0.28
+     = 0.2580 + 0.0611 + 0.0262 + 0.0690 = 0.4142
+dim 1: 0.2716×0.55 + 0.2443×0.25 + 0.2379×0.09 + 0.2463×0.32
+     = 0.1494 + 0.0611 + 0.0214 + 0.0788 = 0.3106
+
+c₂ = [0.414, 0.311]
 ```
 "sat" still has cat-dominated context — it needs to know WHO sat (animal context helps prediction).
 
-**c₃ — "on"'s context:**
+**c₃ — "on"'s context** (weights A₃ = [0.2589, 0.2477, 0.2450, 0.2485]):
 ```
-c₃ = 0.259×v₁ + 0.248×v₂ + 0.245×v₃ + 0.248×v₄ ≈ [0.404, 0.385]
+dim 0: 0.2589×0.95 + 0.2477×0.25 + 0.2450×0.11 + 0.2485×0.28
+     = 0.2459 + 0.0619 + 0.0270 + 0.0696 = 0.4044
+dim 1: 0.2589×0.55 + 0.2477×0.25 + 0.2450×0.09 + 0.2485×0.32
+     = 0.1424 + 0.0619 + 0.0220 + 0.0795 = 0.3059
+
+c₃ = [0.404, 0.306]
 ```
 "on" is a function word — attention is almost uniform, so c₃ is nearly the average of all value vectors.
 
-**c₄ — "mat"'s context (used for prediction):**
+**c₄ — "mat"'s context (used for prediction)** (weights A₄ = [0.2752, 0.2434, 0.2358, 0.2457]):
 ```
-c₄ = 0.275×v₁ + 0.243×v₂ + 0.236×v₃ + 0.246×v₄
-dim 0: 0.275×0.950 + 0.243×0.250 + 0.236×0.110 + 0.246×0.280
-     = 0.261+0.061+0.026+0.069 = 0.417
-dim 1: 0.275×0.550 + 0.243×0.250 + 0.236×0.090 + 0.246×0.320
-     = 0.151+0.061+0.021+0.079 = 0.312
+dim 0: 0.2752×0.95 + 0.2434×0.25 + 0.2358×0.11 + 0.2457×0.28
+     = 0.2614 + 0.0609 + 0.0259 + 0.0688 = 0.4170
+dim 1: 0.2752×0.55 + 0.2434×0.25 + 0.2358×0.09 + 0.2457×0.32
+     = 0.1513 + 0.0609 + 0.0212 + 0.0786 = 0.3120
+
 c₄ = [0.417, 0.312]
 ```
 
-"cat" contributes 0.261/0.417 = **62.6% of c₄'s first dimension**. Despite being at position 1 (3 positions away), cat dominates c₄. No sequential processing. No bottleneck. Direct access.
+"cat" contributes 0.2614/0.4170 = **62.7% of c₄'s first dimension**. Despite being at position 1 (3 positions away), cat dominates c₄. No sequential processing. No bottleneck. Direct access.
 
 ---
 
@@ -356,9 +472,9 @@ c₄ = [0.417, 0.312]
 
 | Position | Context vector | dim 0 (Animal signal) | Attention to "cat" |
 |----------|---------------|----------------------|---------------------|
-| c₁ "cat" | [0.457, 0.331] | 0.457 — highest | A₁₁ = 0.327 (self) |
-| c₂ "sat" | [0.413, 0.318] | 0.413 | A₂₁ = 0.271 |
-| c₃ "on"  | [0.404, 0.385] | 0.404 | A₃₁ = 0.259 |
+| c₁ "cat" | [0.456, 0.331] | 0.456 — highest | A₁₁ = 0.327 (self) |
+| c₂ "sat" | [0.414, 0.311] | 0.414 | A₂₁ = 0.272 |
+| c₃ "on"  | [0.404, 0.306] | 0.404 | A₃₁ = 0.259 |
 | c₄ "mat" | [0.417, 0.312] | 0.417 | A₄₁ = 0.275 |
 
 All 4 context vectors carry strong animal signal (0.404-0.457 in dim 0). EVERY token knows about "cat" after one attention operation. In RNN, only h₄ had direct access to "cat" — by h₄, it had decayed to 0.388.
@@ -552,15 +668,37 @@ Interpretation: s₁[cat] = -0.011 → NEGATIVE: increasing cat's score HELPS. A
 S[4,j] = q₄ · k_j / √d_k
 
 ∂L/∂q₄ = Σ_j ∂L/∂S[4,j] × k_j / √d_k
-dim 0: (-0.011×0.550 + 0.003×0.130 + 0.006×0.060 + 0.002×0.140) / 1.414 ≈ -0.004
-dim 1: (-0.011×0.500 + 0.003×0.180 + 0.006×0.070 + 0.002×0.220) / 1.414 ≈ -0.003
-∂L/∂q₄ = [-0.004, -0.003]   ← "mat"'s query shifts to better align with "cat"'s key
 
-∂L/∂k_j = ∂L/∂S[4,j] × q₄ / √d_k
-k=1 (cat): -0.011 × [0.200, 0.280] / 1.414 = [-0.002, -0.002]
-k=2 (sat): +0.003 × [0.200, 0.280] / 1.414 = [+0.001, +0.001]
-k=3 (on):  +0.006 × ... = [+0.001, +0.001]
-k=4 (mat): +0.002 × ... = [+0.000, +0.000]
+Sum before dividing by √2:
+  dim 0: -0.011×0.550 + 0.003×0.130 + 0.006×0.060 + 0.002×0.140
+       = -0.00605 + 0.00039 + 0.00036 + 0.00028 = -0.00502
+  dim 1: -0.011×0.500 + 0.003×0.180 + 0.006×0.070 + 0.002×0.220
+       = -0.00550 + 0.00054 + 0.00042 + 0.00044 = -0.00410
+
+Divide by √2 = 1.41421:
+  dim 0: -0.00502 / 1.41421 = -0.00355
+  dim 1: -0.00410 / 1.41421 = -0.00290
+
+∂L/∂q₄ = [-0.0036, -0.0029]   ← "mat"'s query shifts to better align with "cat"'s key
+```
+
+**∂L/∂k_j** — each row of K gets `∂L/∂S[4,j] × q₄ / √d_k`, a scalar times a 2D vector, all 4 rows shown:
+```
+q₄ = [0.200, 0.280]
+
+k=1 (cat): -0.011 × [0.200, 0.280] / 1.41421
+         = [-0.0022, -0.00308] / 1.41421 = [-0.0016, -0.0022]
+
+k=2 (sat): +0.003 × [0.200, 0.280] / 1.41421
+         = [0.0006, 0.00084] / 1.41421 = [+0.0004, +0.0006]
+
+k=3 (on):  +0.006 × [0.200, 0.280] / 1.41421
+         = [0.0012, 0.00168] / 1.41421 = [+0.0008, +0.0012]
+
+k=4 (mat): +0.002 × [0.200, 0.280] / 1.41421
+         = [0.0004, 0.00056] / 1.41421 = [+0.0003, +0.0004]
+
+∂L/∂K = [[-0.0016,-0.0022], [0.0004,0.0006], [0.0008,0.0012], [0.0003,0.0004]]
 ```
 
 **Gradient highway comparison — explicit proof:**
@@ -592,21 +730,44 @@ Xᵀ = [[1.00, 0.20, 0.10, 0.20],
 
 ∂L/∂Wv[0,0] = 1.00×(-0.016) + 0.20×(-0.014) + 0.10×(-0.014) + 0.20×(-0.015) = -0.023
 ∂L/∂Wv[0,1] = 1.00×(-0.011) + 0.20×(-0.009) + 0.10×(-0.009) + 0.20×(-0.010) = -0.016
-∂L/∂Wv[1,0] ≈ -0.019,  ∂L/∂Wv[1,1] ≈ -0.014
+∂L/∂Wv[1,0] = 0.50×(-0.016) + 0.30×(-0.014) + 0.10×(-0.014) + 0.40×(-0.015)
+            = -0.0080 - 0.0042 - 0.0014 - 0.0060 = -0.0196
+∂L/∂Wv[1,1] = 0.50×(-0.011) + 0.30×(-0.009) + 0.10×(-0.009) + 0.40×(-0.010)
+            = -0.0055 - 0.0027 - 0.0009 - 0.0040 = -0.0131
 
-∂L/∂Wv ≈ [[-0.023, -0.016],
-            [-0.019, -0.014]]
+∂L/∂Wv = [[-0.023, -0.016],
+          [-0.020, -0.013]]
 ```
 
-**∂L/∂Wq:** Only row 4 (q₄) contributed to c₄ — rows 1,2,3 are zero.
+**∂L/∂Wq:** Only row 4 (q₄) contributed to c₄ — rows 1,2,3 are zero. This is an outer product: `∂L/∂Wq = x_mat ⊗ ∂L/∂q₄`, 4 multiplications total.
 ```
-∂L/∂Wq = X[3]ᵀ ⊗ ∂L/∂q₄ = [0.20, 0.40]ᵀ ⊗ [-0.004, -0.003]
-         ≈ [[-0.001, -0.001],
-             [-0.002, -0.001]]
+x_mat = [0.20, 0.40],  ∂L/∂q₄ = [-0.0036, -0.0029]   (computed in Step F below)
+
+∂L/∂Wq[0,0] = 0.20 × (-0.0036) = -0.00072
+∂L/∂Wq[0,1] = 0.20 × (-0.0029) = -0.00058
+∂L/∂Wq[1,0] = 0.40 × (-0.0036) = -0.00144
+∂L/∂Wq[1,1] = 0.40 × (-0.0029) = -0.00116
+
+∂L/∂Wq = [[-0.001, -0.001],
+          [-0.001, -0.001]]
 ```
 
-**∂L/∂Wk:** All positions' keys get small gradients from ∂L/∂S[4,:].
-`∂L/∂Wk ≈ [[-0.001, -0.001], [-0.001, -0.001]]`
+**∂L/∂Wk:** All 4 positions' keys get a gradient from ∂L/∂S[4,:], via `∂L/∂K[j] = ∂L/∂S[4,j] × q₄ / √d_k` (computed per-row in Step F below), then `∂L/∂Wk = Xᵀ @ ∂L/∂K` — 8 terms total, 4 per output cell.
+```
+∂L/∂K (all 4 rows, from Step F): [[-0.0016,-0.0022],[0.0004,0.0006],[0.0008,0.0012],[0.0003,0.0004]]
+
+∂L/∂Wk[0,0] = 1.00×(-0.0016) + 0.20×0.0004 + 0.10×0.0008 + 0.20×0.0003
+            = -0.0016 + 0.00008 + 0.00008 + 0.00006 = -0.0014
+∂L/∂Wk[0,1] = 1.00×(-0.0022) + 0.20×0.0006 + 0.10×0.0012 + 0.20×0.0004
+            = -0.0022 + 0.00012 + 0.00012 + 0.00008 = -0.0019
+∂L/∂Wk[1,0] = 0.50×(-0.0016) + 0.30×0.0004 + 0.10×0.0008 + 0.40×0.0003
+            = -0.0008 + 0.00012 + 0.00008 + 0.00012 = -0.0005
+∂L/∂Wk[1,1] = 0.50×(-0.0022) + 0.30×0.0006 + 0.10×0.0012 + 0.40×0.0004
+            = -0.0011 + 0.00018 + 0.00012 + 0.00016 = -0.0006
+
+∂L/∂Wk = [[-0.001, -0.002],
+          [-0.001, -0.001]]
+```
 
 **Gradient summary:**
 
@@ -626,15 +787,27 @@ Why is Wv gradient larger? Wv receives full ∂L/∂c₄ signal scaled by attent
 **Learning rate:** lr = 0.1
 
 ```
-W_out_new = [0.6, 0.4] - 0.1×[-0.041, -0.031] = [0.604, 0.403]
+W_out_new = W_out - lr × ∂L/∂W_out
+          = [0.6, 0.4] - 0.1×[-0.041, -0.031]
+          = [0.604, 0.403]
 
-Wv_new = [[0.80, 0.20],  -  0.1×[[-0.023, -0.016],
-           [0.30, 0.70]]           [-0.019, -0.014]]
-        = [[0.802, 0.202],
-           [0.302, 0.701]]
+Wv_new = Wv - lr × ∂L/∂Wv
+       = [[0.80, 0.20],  -  0.1×[[-0.023, -0.016],
+          [0.30, 0.70]]           [-0.020, -0.013]]
+       = [[0.802, 0.202],
+          [0.302, 0.701]]
 
-Wq_new ≈ Wq   (change < 0.001 per element — essentially unchanged)
-Wk_new ≈ Wk   (change < 0.001 per element — essentially unchanged)
+Wq_new = Wq - lr × ∂L/∂Wq
+       = [[0.60, 0.40],  -  0.1×[[-0.001, -0.001],
+          [0.20, 0.50]]           [-0.001, -0.001]]
+       = [[0.6001, 0.4001],
+          [0.2001, 0.5001]]
+
+Wk_new = Wk - lr × ∂L/∂Wk
+       = [[0.50, 0.30],  -  0.1×[[-0.001, -0.002],
+          [0.10, 0.40]]           [-0.001, -0.001]]
+       = [[0.5001, 0.3002],
+          [0.1001, 0.4001]]
 ```
 
 **Why are Wq, Wk changes tiny while Wv, W_out are larger?**
@@ -643,8 +816,8 @@ Wk_new ≈ Wk   (change < 0.001 per element — essentially unchanged)
 |--------|--------------------|--------|
 | W_out | 0.004 | Closest to loss — largest gradient |
 | Wv | 0.002 | One step back via attention weights |
-| Wq | <0.001 | Two steps back: loss→softmax→scores→Q |
-| Wk | <0.001 | Two steps back: loss→softmax→scores→K |
+| Wq | ~0.0001 | Two steps back: loss→softmax→scores→Q |
+| Wk | ~0.0001-0.0002 | Two steps back: loss→softmax→scores→K |
 
 After many training steps: Wv adjusts to send the right information. Wq, Wk adjust to learn the right matching pattern. The combination produces sharp, meaningful attention.
 
@@ -654,22 +827,39 @@ After many training steps: Wv adjusts to send the right information. Wq, Wk adju
 
 Updated: Wv=[[0.802,0.202],[0.302,0.701]], W_out=[0.604,0.403]. Wq, Wk unchanged.
 
-**Recompute V with new Wv:**
+**Recompute V with new Wv** (Wv_new = [[0.802,0.202],[0.302,0.701]]):
 ```
-v₁_new = [1.00, 0.50] @ Wv_new = [0.953, 0.553]   (was [0.950, 0.550] — change ≈ +0.003)
-v₂_new ≈ [0.251, 0.250]  (essentially unchanged)
-v₃_new ≈ [0.110, 0.090]  (unchanged to 3 decimal places)
-v₄_new ≈ [0.281, 0.320]
+v₁_new = [1.00,0.50]@Wv_new:
+  dim 0: 1.00×0.802 + 0.50×0.302 = 0.802 + 0.151 = 0.953
+  dim 1: 1.00×0.202 + 0.50×0.701 = 0.202 + 0.351 = 0.552
+  v₁_new = [0.953, 0.552]   (was [0.950, 0.550] — change ≈ +0.003, +0.002)
+
+v₂_new = [0.20,0.30]@Wv_new:
+  dim 0: 0.20×0.802 + 0.30×0.302 = 0.1604 + 0.0906 = 0.251
+  dim 1: 0.20×0.202 + 0.30×0.701 = 0.0404 + 0.2103 = 0.251
+  v₂_new = [0.251, 0.251]
+
+v₃_new = [0.10,0.10]@Wv_new:
+  dim 0: 0.10×0.802 + 0.10×0.302 = 0.0802 + 0.0302 = 0.110
+  dim 1: 0.10×0.202 + 0.10×0.701 = 0.0202 + 0.0701 = 0.090
+  v₃_new = [0.110, 0.090]   (unchanged to 3 decimal places)
+
+v₄_new = [0.20,0.40]@Wv_new:
+  dim 0: 0.20×0.802 + 0.40×0.302 = 0.1604 + 0.1208 = 0.281
+  dim 1: 0.20×0.202 + 0.40×0.701 = 0.0404 + 0.2804 = 0.321
+  v₄_new = [0.281, 0.321]
 ```
 
 Why did v₁ change more? x₁=[1.00, 0.50] is larger than other embeddings. The value vector for the most important word gets the largest change.
 
 **Q, K unchanged → attention weights A unchanged:** A₄ = [0.275, 0.243, 0.236, 0.246] (same)
 
-**Recompute c₄:**
+**Recompute c₄** (weights A₄=[0.275,0.243,0.236,0.246] unchanged, new V):
 ```
-c₄_new[0] = 0.275×0.953 + 0.243×0.251 + 0.236×0.110 + 0.246×0.281 = 0.418
-c₄_new[1] = 0.275×0.553 + 0.243×0.250 + 0.236×0.090 + 0.246×0.320 = 0.313
+c₄_new[0] = 0.275×0.953 + 0.243×0.251 + 0.236×0.110 + 0.246×0.281
+          = 0.2621 + 0.0610 + 0.0260 + 0.0691 = 0.418
+c₄_new[1] = 0.275×0.552 + 0.243×0.251 + 0.236×0.090 + 0.246×0.321
+          = 0.1518 + 0.0610 + 0.0212 + 0.0790 = 0.313
 c₄_new = [0.418, 0.313]   (essentially unchanged)
 ```
 
@@ -709,7 +899,7 @@ S = QKᵀ/√2   (4×4 score matrix — every pair computes a score simultaneous
 A = softmax(S, axis=1)   (4×4 attention weights — each row sums to 1)
 
 A = | 0.327  0.229  0.210  0.234 |  ← cat looks mostly at itself
-    | 0.271  0.206  0.238  0.246 |
+    | 0.272  0.244  0.238  0.246 |
     | 0.259  0.248  0.245  0.248 |
     | 0.275  0.243  0.236  0.246 |  ← mat attends most to cat (0.275)
          ↓

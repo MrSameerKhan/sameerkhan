@@ -139,25 +139,65 @@ PE(pos, 2i+1) = cos(pos / 10000^(2i/d))
 
 Where:
   pos = position index (0-based)
-  i   = dimension pair index (0-based)
+  i   = dimension pair index (0-based) — which PAIR of dimensions this is (dims 0&1 → i=0, dims 2&3 → i=1, ...)
   d   = d_model
-
-For d=2, only one dimension pair exists: i=0
-PE(pos, 0) = sin(pos / 10000^0) = sin(pos)
-PE(pos, 1) = cos(pos / 10000^0) = cos(pos)
 ```
 
-**Computing PE for each position:**
+**Reducing the formula for our case, step by step.** We have `d=2`, so there's only ONE dimension pair: `i=0` (dims 0 and 1). Substitute `i=0, d=2` into the exponent:
+```
+exponent = 2i/d = 2×0/2 = 0/2 = 0
+
+10000^0 = 1        (any nonzero number raised to the power 0 is 1 — this is not an approximation, it's exact)
+
+So the denominator collapses entirely:
+  PE(pos, 0) = sin(pos / 10000^0) = sin(pos / 1) = sin(pos)
+  PE(pos, 1) = cos(pos / 10000^0) = cos(pos / 1) = cos(pos)
+```
+This is a special property of `d=2` — with only one dimension pair, the `10000^(2i/d)` scaling term has nothing to do (it only matters when `i` ranges over multiple pairs, see the note at the end of this section). That's why the formula reduces to plain `sin(pos)` / `cos(pos)` here.
+
+**Computing `sin(pos)` and `cos(pos)` on a calculator — the one thing to get right is units.**
+
+`pos` here is used directly as **radians**, not degrees. This is the single most common way to get this wrong: most phone calculators default to **degrees** mode. `sin(1°) = 0.0175`, but the formula needs `sin(1 radian) = 0.8415` — a completely different number. Before computing anything, make sure your calculator is switched to **Rad** mode (on iPhone's scientific calculator, there's a "Rad"/"Deg" toggle near the trig buttons — tap it until it shows "Rad").
 
 ```
-pos=0 (cat):  PE = [sin(0), cos(0)] = [0.000, 1.000]
-pos=1 (sat):  PE = [sin(1), cos(1)] = [0.841, 0.540]
-pos=2 (on):   PE = [sin(2), cos(2)] = [0.909,-0.416]
-pos=3 (mat):  PE = [sin(3), cos(3)] = [0.141,-0.990]
-
-Recall: sin(1)=0.841, cos(1)=0.540, sin(2)=0.909, cos(2)=-0.416
-        sin(3)=0.141, cos(3)=-0.990
+1. Rotate iPhone Calculator to landscape (scientific mode)
+2. Tap the Rad/Deg toggle until it reads "Rad"
+3. Type the position number, tap "sin" → that's sin(pos) in radians
+4. Type the position number, tap "cos" → that's cos(pos) in radians
 ```
+Or just search Google/Wolfram Alpha for `sin(1 radian)` and `cos(1 radian)` directly — typing the unit avoids the ambiguity entirely.
+
+**All 4 positions, computed:**
+```
+pos=0 (cat):
+  sin(0) = 0.000   (sin of zero is always zero, no calculator needed)
+  cos(0) = 1.000   (cos of zero is always one)
+  PE = [0.000, 1.000]
+
+pos=1 (sat):
+  sin(1) = 0.8415  → 0.841
+  cos(1) = 0.5403  → 0.540
+  PE = [0.841, 0.540]
+
+pos=2 (on):
+  sin(2) = 0.9093  → 0.909
+  cos(2) = -0.4161 → -0.416
+  PE = [0.909, -0.416]
+
+pos=3 (mat):
+  sin(3) = 0.1411  → 0.141
+  cos(3) = -0.9900 → -0.990
+  PE = [0.141, -0.990]
+```
+
+**What changes at real `d_model` (e.g. 512)?** With `d=2` there's only `i=0`, so every position uses the exact same `sin(pos)`/`cos(pos)` pair — one "frequency." At `d=512` there are 256 dimension pairs, `i=0..255`, each with a *different* exponent `2i/512`, so each pair oscillates at a different rate:
+```
+i=0:   exponent=0/512=0        → 10000^0=1        → sin(pos/1)        = fastest-changing (changes a lot per position)
+i=1:   exponent=2/512=0.0039   → 10000^0.0039≈1.04 → sin(pos/1.04)    → slightly slower
+...
+i=255: exponent=510/512≈0.996  → 10000^0.996≈9647  → sin(pos/9647)    = nearly constant across any realistic sequence
+```
+So a real position encoding is a mix of fast-oscillating dimensions (distinguish *nearby* positions sharply) and slow-oscillating ones (distinguish *far-apart* positions) — the toy `d=2` example only shows you the fastest one, `i=0`.
 
 **Why sinusoidal?** Three properties:
 1. Bounded: sin/cos always in [-1,1] → no scale explosion
@@ -308,7 +348,7 @@ With W_out=[0.5,0.3], x_final_mat=[1.183,-0.121]:
   z = σ(0.556) = 0.635
   L = -log(0.635) = 0.454
 
-After one update: L' = 0.431  (verified in Section 11)
+After one update: L' = 0.428  (verified in Section 11)
 ```
 
 ---
@@ -460,8 +500,10 @@ Scaled score matrix S / √2:
 |--------|---------|---------|--------|---------|
 | q_cat  | 1.146   | 0.912   | 0.446  | -0.037  |
 | q_sat  | 0.896   | 0.723   | 0.370  | -0.016  |
-| q_on   | 0.485   | 0.344   | 0.212  | 0.020   |
+| q_on   | 0.406   | 0.345   | 0.212  | 0.020   |
 | q_mat  | -0.061  | -0.035  | 0.009  | 0.022   |
+
+(Check the "on" row against its own raw score above: `s_3,1 = 0.573`, and `0.573 / 1.414 = 0.406` — not 0.485. That earlier value was a transcription slip; recomputing it directly from the raw score fixes it.)
 
 **Softmax row-by-row — attention matrix A:**
 
@@ -479,11 +521,18 @@ A_sat = [0.353, 0.297, 0.209, 0.142]
 Interpretation: sat attends most to cat (0.353), then itself (0.297)
 ```
 
-Row 3 (on): softmax([0.485, 0.344, 0.212, 0.020])
+Row 3 (on): softmax([0.406, 0.345, 0.212, 0.020])
 ```
-exp: [1.624, 1.411, 1.236, 1.020]  sum=5.291
-A_on = [0.307, 0.267, 0.234, 0.193]
-Interpretation: on attends almost uniformly (range 0.193-0.307)
+exp: [e^0.406, e^0.345, e^0.212, e^0.020] = [1.501, 1.411, 1.236, 1.020]
+sum = 1.501+1.411+1.236+1.020 = 5.168
+
+A[3,1] = 1.501/5.168 = 0.290
+A[3,2] = 1.411/5.168 = 0.273
+A[3,3] = 1.236/5.168 = 0.239
+A[3,4] = 1.020/5.168 = 0.197
+
+A_on = [0.290, 0.273, 0.239, 0.197]   (check: sum = 0.999 ≈ 1.0 ✓)
+Interpretation: on attends almost uniformly (range 0.197-0.290)
 ```
 
 Row 4 (mat): softmax([-0.061, -0.035, 0.009, 0.022])
@@ -499,7 +548,7 @@ Interpretation: mat attends MOST to itself (0.260), then on (0.256)
 |--------|---------|---------|--------|---------|-----|
 | q_cat  | 0.385   | 0.305   | 0.191  | 0.118   | 1.0 |
 | q_sat  | 0.353   | 0.297   | 0.209  | 0.142   | 1.0 |
-| q_on   | 0.307   | 0.267   | 0.234  | 0.193   | 1.0 |
+| q_on   | 0.290   | 0.273   | 0.239  | 0.197   | 1.0 |
 | q_mat  | 0.239   | 0.245   | 0.256  | 0.260   | 1.0 |
 
 **PE's effect on attention patterns:**
@@ -531,11 +580,11 @@ c_sat (A_sat=[0.353, 0.297, 0.209, 0.142]):
        = 0.441 + 0.236 - 0.004 - 0.049 = 0.624
   c_sat = [0.926, 0.624]
 
-c_on (A_on=[0.307, 0.267, 0.234, 0.193]):
-  dim0: 0.307*1.250 + 0.267*1.085 + 0.234*0.712 + 0.193*0.096
-       = 0.384 + 0.290 + 0.167 + 0.019 = 0.860     (≈ 0.848 shown)
-  dim1: 0.307*1.250 + 0.267*0.796 + 0.234*(-0.019) + 0.193*(-0.345)
-       = 0.384 + 0.213 - 0.004 - 0.067 = 0.526     (≈ 0.507 shown)
+c_on (A_on=[0.290, 0.273, 0.239, 0.197]):
+  dim0: 0.290*1.250 + 0.273*1.085 + 0.239*0.712 + 0.197*0.096
+       = 0.3625 + 0.2962 + 0.1702 + 0.0189 = 0.848
+  dim1: 0.290*1.250 + 0.273*0.796 + 0.239*(-0.019) + 0.197*(-0.345)
+       = 0.3625 + 0.2173 - 0.0045 - 0.0680 = 0.507
   c_on = [0.848, 0.507]
 
 c_mat (A_mat=[0.239, 0.245, 0.256, 0.260]):
@@ -584,7 +633,12 @@ sat: x=[1.967, 1.464]
 LN(sat) = [(1.967-1.716)/0.252, (1.464-1.716)/0.252] = [1.000, -1.000]
 ```
 
-on: x=[1.857, 0.191]  → LN(on) = [1.000, -1.000]
+on: x=[1.857, 0.191]
+```
+μ = (1.857+0.191)/2 = 1.024
+σ = √(((1.857-1.024)² + (0.191-1.024)²) / 2) = √((0.694+0.694)/2) = 0.833
+LN(on) = [(1.857-1.024)/0.833, (0.191-1.024)/0.833] = [1.000, -1.000]
+```
 
 mat: x=[1.113, -0.191]
 ```
@@ -782,7 +836,7 @@ FFN_out = h @ W2 + b2,  h = [0.1, 0.1, 0.0, 0.0]  (mat's hidden, same as sat)
 ∂L/∂h = ∂L/∂FFN_out @ W2^T  (shape 4)
 W2^T = [[0.5,0.2,0.3,0.1],[0.3,0.4,0.2,0.5]]
 h[0]: -0.183*0.5 + (-0.110)*0.3 = -0.092 - 0.033 = -0.125
-h[1]: -0.183*0.5 + (-0.110)*0.3 = -0.125   (same row)
+h[1]: -0.183*0.2 + (-0.110)*0.4 = -0.037 - 0.044 = -0.081
 h[2]: -0.183*0.3 + (-0.110)*0.2 = -0.055 - 0.022 = -0.077
 h[3]: -0.183*0.1 + (-0.110)*0.5 = -0.018 - 0.055 = -0.073
 ∂L/∂h = [-0.125, -0.081, -0.077, -0.073]
@@ -866,41 +920,112 @@ In plain attention (no PE, each input x gets gradient from THREE independent pat
 In the Transformer (with residual): each x gets gradient from FOUR paths (residual + Q + K + V).
 Richer gradient signal per parameter, more efficient learning.
 
-### Step H: Attention Weight Gradients (Focus on Wv)
+### Step H: Attention Weight Gradients (Wv, Wq, Wk — fully computed)
 
-From ∂L/∂c_mat = [-0.183, -0.110] (same structure as attention file):
+From ∂L/∂c_mat = [-0.183, -0.110] (same structure as the attention file, but built on `X_pe` here instead of raw `X`).
+
+**Getting `∂L/∂V` right — this is the step that's easy to get backwards.** `C = A @ V`, and only `C[mat]` (row 4) feeds the loss (nothing else uses `C[cat]`, `C[sat]`, `C[on]`). So `C[mat] = Σ_j A[mat,j] × V[j]`, which means `∂L/∂V[j] = A[mat,j] × ∂L/∂c_mat` — you need **row 4 of A** (how much "mat" attends to each key), not a column of A. Row 4 was already computed above: `A_mat = [0.239, 0.245, 0.256, 0.260]`.
 
 ```
-C = A @ V
-Only position 4 (mat) contributes to loss via x_final_mat.
-∂L/∂C = [[0,0],[0,0],[0,0],[-0.183,-0.110]]  (only row 4 has gradient)
-
-∂L/∂V = A^T @ ∂L/∂C
-Only the 4th column of A^T: [A[:,4]] = [A[1,4], A[2,4], A[3,4], A[4,4]]
-                                      = [0.118, 0.142, 0.193, 0.260]
-
-∂L/∂V[1] = A[4,1] × ∂L/∂c_mat = 0.118 × [-0.183,-0.110] = [-0.022,-0.013]
-∂L/∂V[2] = A[4,2] × ∂L/∂c_mat = 0.245 × [-0.183,-0.110] = [-0.045,-0.027]
-∂L/∂V[3] = A[4,3] × ∂L/∂c_mat = 0.256 × [-0.183,-0.110] = [-0.047,-0.028]
-∂L/∂V[4] = A[4,4] × ∂L/∂c_mat = 0.260 × [-0.183,-0.110] = [-0.048,-0.029]
+∂L/∂V[cat] = A[mat,cat] × ∂L/∂c_mat = 0.239 × [-0.183,-0.110] = [-0.044,-0.026]
+∂L/∂V[sat] = A[mat,sat] × ∂L/∂c_mat = 0.245 × [-0.183,-0.110] = [-0.045,-0.027]
+∂L/∂V[on]  = A[mat,on]  × ∂L/∂c_mat = 0.256 × [-0.183,-0.110] = [-0.047,-0.028]
+∂L/∂V[mat] = A[mat,mat] × ∂L/∂c_mat = 0.260 × [-0.183,-0.110] = [-0.048,-0.029]
 ```
 
-**∂L/∂Wv = X_pe^T @ ∂L/∂V:**
+**∂L/∂A[mat,j] = ∂L/∂c_mat · V[j]** (dot product, one scalar per key — same Step D as the attention file):
 ```
-X_pe_mat = [0.341, -0.590]  (2×1)
-∂L/∂V_mat = [-0.181, -0.062]  (2-element, simplified to mat row)
+V: v_cat=[1.250,1.250], v_sat=[1.085,0.796], v_on=[0.712,-0.019], v_mat=[0.096,-0.345]
 
-∂L/∂Wv[0,0] = 1.000 × (-0.022) + ... (summed over all 4 positions)
-             ≈ [-0.181, -0.062]  (dominant from cat's x_pe having largest magnitude)
-             ≈ [[-0.181, -0.062],
-                [-0.016,-0.009]]  (approximate)
+∂L/∂A[mat,cat] = -0.183×1.250 + -0.110×1.250 = -0.229 - 0.138 = -0.366
+∂L/∂A[mat,sat] = -0.183×1.085 + -0.110×0.796 = -0.199 - 0.088 = -0.286
+∂L/∂A[mat,on]  = -0.183×0.712 + -0.110×(-0.019) = -0.130 + 0.002 = -0.128
+∂L/∂A[mat,mat] = -0.183×0.096 + -0.110×(-0.345) = -0.018 + 0.038 = 0.020
+
+∂L/∂A[mat,:] = [-0.366, -0.286, -0.128, 0.020]
 ```
 
-**∂L/∂Wq, ∂L/∂Wk (brief — same chain rule pattern):**
+**Softmax backward** (same compact formula as the attention file — `g` is the attention-weighted average of the upstream gradient, then each score gets `A×(grad - g)`):
+```
+g = Σ_j A[mat,j] × ∂L/∂A[mat,j]
+  = 0.239×(-0.366) + 0.245×(-0.286) + 0.256×(-0.128) + 0.260×0.020
+  = -0.0875 - 0.0701 - 0.0328 + 0.0052 = -0.1852
 
-These require backpropagating through softmax → score matrix Q@K. The gradient is much smaller because it flows through A (bounded 0-1) AND through the softmax Jacobian (sum-zero constraint).
+∂L/∂S[mat,cat] = 0.239 × (-0.366 - (-0.185)) = 0.239 × (-0.181) = -0.043
+∂L/∂S[mat,sat] = 0.245 × (-0.286 - (-0.185)) = 0.245 × (-0.101) = -0.025
+∂L/∂S[mat,on]  = 0.256 × (-0.128 - (-0.185)) = 0.256 × ( 0.057) = +0.015
+∂L/∂S[mat,mat] = 0.260 × ( 0.020 - (-0.185)) = 0.260 × ( 0.205) = +0.053
 
-Rough magnitudes: |∂L/∂Wq| ≈ 0.001-0.003, |∂L/∂Wk| ≈ 0.001-0.003
+∂L/∂S[mat,:] = [-0.043, -0.025, +0.015, +0.053]   (check: sum = 0.000 ✓)
+```
+
+**Gradient into `q_mat` and into each row of `K`** (dividing by √d_k=1.41421 as usual):
+```
+q_mat = [0.087, -0.159]
+
+∂L/∂q_mat = Σ_j ∂L/∂S[mat,j] × K[j] / √2
+  dim0: (-0.043×0.650 + -0.025×0.605 + 0.015×0.473 + 0.053×0.112) / 1.41421
+      = (-0.0280 - 0.0151 + 0.0071 + 0.0059) / 1.41421 = -0.0300 / 1.41421 = -0.0213
+  dim1: (-0.043×0.900 + -0.025×0.648 + 0.015×0.177 + 0.053×(-0.134)) / 1.41421
+      = (-0.0387 - 0.0162 + 0.0027 - 0.0071) / 1.41421 = -0.0594 / 1.41421 = -0.0420
+∂L/∂q_mat = [-0.0213, -0.0420]
+
+∂L/∂K[j] = ∂L/∂S[mat,j] × q_mat / √2, all 4 rows:
+  k=cat: -0.043×[0.087,-0.159]/1.41421 = [-0.0037,0.0068]/1.41421 = [-0.0026,0.0048]
+  k=sat: -0.025×[0.087,-0.159]/1.41421 = [-0.0022,0.0040]/1.41421 = [-0.0015,0.0028]
+  k=on:  +0.015×[0.087,-0.159]/1.41421 = [0.0013,-0.0024]/1.41421 = [0.0009,-0.0017]
+  k=mat: +0.053×[0.087,-0.159]/1.41421 = [0.0046,-0.0084]/1.41421 = [0.0033,-0.0060]
+```
+
+**∂L/∂Wv = X_peᵀ @ ∂L/∂V** (2×4 @ 4×2 = 2×2, every cell a 4-term sum over all positions):
+```
+X_pe (by position): cat=[1.000,1.500], sat=[1.041,0.840], on=[1.009,-0.316], mat=[0.341,-0.590]
+∂L/∂V (by position): cat=[-0.044,-0.026], sat=[-0.045,-0.027], on=[-0.047,-0.028], mat=[-0.048,-0.029]
+
+∂L/∂Wv[0,0] = 1.000×(-0.044) + 1.041×(-0.045) + 1.009×(-0.047) + 0.341×(-0.048)
+            = -0.0440 - 0.0468 - 0.0474 - 0.0164 = -0.1546
+∂L/∂Wv[0,1] = 1.000×(-0.026) + 1.041×(-0.027) + 1.009×(-0.028) + 0.341×(-0.029)
+            = -0.0260 - 0.0281 - 0.0283 - 0.0099 = -0.0923
+∂L/∂Wv[1,0] = 1.500×(-0.044) + 0.840×(-0.045) + (-0.316)×(-0.047) + (-0.590)×(-0.048)
+            = -0.0660 - 0.0378 + 0.0149 + 0.0283 = -0.0606
+∂L/∂Wv[1,1] = 1.500×(-0.026) + 0.840×(-0.027) + (-0.316)×(-0.028) + (-0.590)×(-0.029)
+            = -0.0390 - 0.0227 + 0.0088 + 0.0171 = -0.0358
+
+∂L/∂Wv = [[-0.153, -0.092],
+          [-0.061, -0.036]]
+```
+
+**∂L/∂Wq — only "mat" contributed a query** (q_cat, q_sat, q_on never entered the loss chain, so their gradient rows are exactly zero). This is a simple outer product:
+```
+x_pe_mat = [0.341, -0.590],  ∂L/∂q_mat = [-0.0213, -0.0420]
+
+∂L/∂Wq[0,0] = 0.341×(-0.0213) = -0.0073
+∂L/∂Wq[0,1] = 0.341×(-0.0420) = -0.0143
+∂L/∂Wq[1,0] = -0.590×(-0.0213) = 0.0126
+∂L/∂Wq[1,1] = -0.590×(-0.0420) = 0.0248
+
+∂L/∂Wq = [[-0.007, -0.014],
+          [ 0.013,  0.025]]
+```
+
+**∂L/∂Wk = X_peᵀ @ ∂L/∂K** — all 4 positions contribute here (every key participated in scoring against `q_mat`):
+```
+∂L/∂K (by position): cat=[-0.0026,0.0048], sat=[-0.0015,0.0028], on=[0.0009,-0.0017], mat=[0.0033,-0.0060]
+
+∂L/∂Wk[0,0] = 1.000×(-0.0026) + 1.041×(-0.0015) + 1.009×0.0009 + 0.341×0.0033
+            = -0.0026 - 0.0016 + 0.0009 + 0.0011 = -0.0021
+∂L/∂Wk[0,1] = 1.000×0.0048 + 1.041×0.0028 + 1.009×(-0.0017) + 0.341×(-0.0060)
+            = 0.0048 + 0.0029 - 0.0017 - 0.0020 = 0.0040
+∂L/∂Wk[1,0] = 1.500×(-0.0026) + 0.840×(-0.0015) + (-0.316)×0.0009 + (-0.590)×0.0033
+            = -0.0039 - 0.0013 - 0.0003 - 0.0019 = -0.0074
+∂L/∂Wk[1,1] = 1.500×0.0048 + 0.840×0.0028 + (-0.316)×(-0.0017) + (-0.590)×(-0.0060)
+            = 0.0072 + 0.0024 + 0.0005 + 0.0035 = 0.0136
+
+∂L/∂Wk = [[-0.002, 0.004],
+          [-0.007, 0.014]]
+```
+
+These are larger than the file previously estimated (it had guessed "0.001-0.003" without actually computing them) — Wq and Wk do learn meaningfully in this first step, not just Wv and W_out.
 
 ### Step I: Summary — The Transformer Gradient Highway
 
@@ -921,8 +1046,8 @@ Loss
   [Residual 1 ↑]
       ├── DIRECT (highway)              Attention path
       │   ∂L/∂x_pe_mat=[-0.183,-0.110] ∂L/∂c_mat=[-0.183,-0.110]
-      │   Reaches embedding+PE direct   ∂L/∂V≈[[-0.181,-0.062],...]
-      │   in ONE step                   ∂L/∂Wq,∂L/∂Wk tiny
+      │   Reaches embedding+PE direct   ∂L/∂Wv=[[-0.153,-0.092],[-0.061,-0.036]]
+      │   in ONE step                   ∂L/∂Wq,∂L/∂Wk smaller but not tiny (~0.01)
 
 KEY INSIGHT: Two residual connections = TWO gradient highways.
 At each +, gradient flows directly to BOTH inputs without any
@@ -985,13 +1110,29 @@ Cols 2,3 unchanged (neurons 3,4 were OFF in forward → no gradient via ReLU)
 
 ```
 Wv_new = Wv - η × ∂L/∂Wv
-       ≈ [[0.800, 0.200],   - 0.1 × [[-0.181, -0.062],
-           [0.300, 0.700]]              [-0.016, -0.009]]
+       = [[0.800, 0.200],   - 0.1 × [[-0.153, -0.092],
+          [0.300, 0.700]]              [-0.061, -0.036]]
 
-       = [[0.800+0.018, 0.200+0.006],
-          [0.300+0.002, 0.700+0.001]]
-       = [[0.818, 0.206],
-          [0.302, 0.701]]
+       = [[0.800+0.015, 0.200+0.009],
+          [0.300+0.006, 0.700+0.004]]
+       = [[0.815, 0.209],
+          [0.306, 0.704]]
+```
+
+### Wq and Wk Update
+
+```
+Wq_new = Wq - η × ∂L/∂Wq
+       = [[0.600, 0.400],   - 0.1 × [[-0.007, -0.014],
+          [0.200, 0.500]]              [ 0.013,  0.025]]
+       = [[0.6007, 0.4014],
+          [0.1987, 0.4975]]
+
+Wk_new = Wk - η × ∂L/∂Wk
+       = [[0.500, 0.300],   - 0.1 × [[-0.002, 0.004],
+          [0.100, 0.400]]              [-0.007, 0.014]]
+       = [[0.5002, 0.2996],
+          [0.1007, 0.3986]]
 ```
 
 ### All Weight Changes Summary
@@ -1001,75 +1142,104 @@ Wv_new = Wv - η × ∂L/∂Wv
 | W_out[0] | 0.500  | 0.543  | 0.043  | largest  |
 | W_out[1] | 0.300  | 0.296  | 0.004  |          |
 | W2[0,0]  | 0.500  | 0.502  | 0.002  |          |
-| W1[0,0]  | 0.500  | 0.513  | 0.013  |          |
-| W1[1,0]  | 0.400  | 0.387  | 0.013  |          |
-| Wv[0,0]  | 0.800  | 0.818  | 0.018  |          |
-| Wv[0,1]  | 0.200  | 0.206  | 0.006  |          |
-| Wq, Wk   | —      | —      | tiny updates, <0.001 each |
+| W1[0,0]  | 0.500  | 0.512  | 0.012  |          |
+| W1[1,0]  | 0.400  | 0.388  | 0.012  |          |
+| Wv[0,0]  | 0.800  | 0.815  | 0.015  |          |
+| Wv[0,1]  | 0.200  | 0.209  | 0.009  |          |
+| Wq[1,0]  | 0.200  | 0.199  | 0.001  |          |
+| Wk[1,1]  | 0.400  | 0.399  | 0.001  | smallest |
 
 ```
 Largest change: W_out (direct path to loss)
-Second: W1 (through FFN, close to residual highway)
-Smallest: Wq, Wk (through softmax Jacobian, sum-zero constraint)
+Second: W1 (through FFN, close to residual highway), Wv (direct attention path)
+Smallest: Wq, Wk (through softmax Jacobian, sum-zero constraint — but not negligible, ~0.001-0.003 per element)
 ```
 
 ---
 
 ## 11. Second Forward Verify
 
-Run the model with updated weights to confirm loss decreased.
+Run the model with **all** updated weights (Wq_new, Wk_new, Wv_new, W1_new, W2_new, W_out_new) to confirm loss decreased. Every value below is recomputed from scratch with the new weights — nothing is estimated.
 
-With Wv_new ≈ [[0.818,0.206],[0.302,0.701]], new V:
-```
-v_new values change by ~0.015 in each dim.
-V_mat_new ≈ [0.096+0.008, -0.345+0.003] (barely changed)
-```
+**Updated weights** (from Section 10): `Wq_new=[[0.6007,0.4014],[0.1987,0.4975]]`, `Wk_new=[[0.5002,0.2996],[0.1007,0.3986]]`, `Wv_new=[[0.815,0.209],[0.306,0.704]]`, `W_out_new=[0.543,0.296]`. `W1_new`, `W2_new` from Section 10.
 
-Attention weights A_new unchanged (Q,K barely updated — same softmax output):
+**Recompute q_mat, k_mat, v_mat with new weights** (X_pe unchanged — PE and embeddings aren't learned here):
 ```
-A_mat ≈ [0.239, 0.245, 0.256, 0.260]  (same as before)
-```
+q_mat_new = [0.341,-0.590]@Wq_new:
+  dim0: 0.341×0.6007 + (-0.590)×0.1987 = 0.2048 - 0.1172 = 0.0876
+  dim1: 0.341×0.4014 + (-0.590)×0.4975 = 0.1369 - 0.2935 = -0.1566
+  q_mat_new = [0.088, -0.157]   (was [0.087,-0.159] — barely moved, Wq changed little)
 
-New context vector c_mat:
-```
-c_mat_new ≈ [0.772 + ε, 0.399 + ε]  where ε ≈ 0.002
-c_mat_new ≈ [0.773, 0.400]
-```
+k_mat_new = [0.341,-0.590]@Wk_new:
+  dim0: 0.341×0.5002 + (-0.590)×0.1007 = 0.1706 - 0.0594 = 0.1112
+  dim1: 0.341×0.2996 + (-0.590)×0.3986 = 0.1022 - 0.2352 = -0.1330
+  k_mat_new = [0.111, -0.133]   (was [0.112,-0.134])
 
-New x_attn_mat:
-```
-x_attn_new_mat = [0.341,-0.590] + [0.773,0.400] = [1.114,-0.190]
-                (vs [1.113,-0.191] before — nearly identical)
+v_mat_new = [0.341,-0.590]@Wv_new:
+  dim0: 0.341×0.815 + (-0.590)×0.306 = 0.2779 - 0.1805 = 0.0974
+  dim1: 0.341×0.209 + (-0.590)×0.704 = 0.0713 - 0.4154 = -0.3441
+  v_mat_new = [0.098, -0.344]   (was [0.096,-0.345] — small move, Wv changed the most)
 ```
 
-New LN output (still [1.000,-1.000] due to d=2 degeneracy).
+The other 3 positions' Q/K/V shift by similarly small amounts (Wq/Wk/Wv only moved by ~0.001-0.015 per element) — recomputing them the same way gives `A_mat_new ≈ [0.239, 0.245, 0.256, 0.259]`, essentially unchanged from before (attention pattern hasn't had time to sharpen in one step).
 
-New FFN output with W1_new, W2_new:
+**New context vector c_mat** (using A_mat_new and the new V row, but since only Wv moved meaningfully, the dominant shift comes from V, not A):
 ```
-pre_act ≈ [0.126, 0.116, -0.100, 0.000]
-h = ReLU ≈ [0.126, 0.116, 0.000, 0.000]
-FFN_out_new = [0.126,0.116,0,0] @ W2_new ≈ [0.086, 0.085]
+c_mat_new[0] = 0.239×1.274 + 0.245×1.106 + 0.256×0.726 + 0.259×0.098
+             = 0.3045 + 0.2710 + 0.1859 + 0.0254 = 0.787
+c_mat_new[1] = 0.239×1.265 + 0.245×0.809 + 0.256×(-0.011) + 0.259×(-0.344)
+             = 0.3023 + 0.1982 - 0.0028 - 0.0891 = 0.409
+c_mat_new = [0.787, 0.409]   (was [0.772, 0.399] — moved because V shifted for every position, not just mat)
 ```
 
-New x_final_mat:
+**New x_attn_mat:**
+```
+x_attn_new_mat = x_pe_mat + c_mat_new = [0.341,-0.590] + [0.787,0.409] = [1.128, -0.181]
+                (was [1.113,-0.191])
+```
+
+**New LN output** — still `[1.000,-1.000]` (d=2 degeneracy: any 2-value vector with dim0>dim1 normalizes to exactly this, regardless of magnitude — see the note in Step 3 above).
+
+**New FFN output with W1_new, W2_new:**
+```
+pre_act_new = [1.000,-1.000]@W1_new + b1
+  W1_new ≈ [[0.512,0.308,0.200,0.100],[0.388,0.192,0.300,0.100]]
+  dim0: 1.000×0.512 + (-1.000)×0.388 = 0.512 - 0.388 = 0.124
+  dim1: 1.000×0.308 + (-1.000)×0.192 = 0.308 - 0.192 = 0.116
+  dim2: 1.000×0.200 + (-1.000)×0.300 = 0.200 - 0.300 = -0.100
+  dim3: 1.000×0.100 + (-1.000)×0.100 = 0.100 - 0.100 = 0.000
+  pre_act_new = [0.124, 0.116, -0.100, 0.000]
+
+h_new = ReLU(pre_act_new) = [0.124, 0.116, 0.000, 0.000]   (neurons 3,4 still dead — same pattern as before)
+
+FFN_out_new = [0.124,0.116,0,0] @ W2_new
+  dim0: 0.124×0.502 + 0.116×0.202 = 0.0622 + 0.0234 = 0.086
+  dim1: 0.124×0.301 + 0.116×0.401 = 0.0373 + 0.0465 = 0.084
+  FFN_out_new = [0.086, 0.084]
+```
+
+**New x_final_mat:**
 ```
 x_final_new_mat = x_attn_new_mat + FFN_out_new
-                = [1.114,-0.190] + [0.086,0.085]
-                = [1.200,-0.105]
+                = [1.128,-0.181] + [0.086,0.084]
+                = [1.214, -0.097]
 ```
 
-New prediction with W_out_new = [0.543, 0.296]:
+**New prediction with W_out_new = [0.543, 0.296]:**
 ```
-z' = 0.543×1.200 + 0.296×(-0.105) = 0.652 - 0.031 = 0.621
-ŷ' = σ(0.621) = 1/(1+e^(-0.621)) = 1/1.538 = 0.650
+z' = 0.543×1.214 + 0.296×(-0.097) = 0.659 - 0.029 = 0.630
+ŷ' = σ(0.630) = 1/(1+e^(-0.630)) = 1/1.533 = 0.652
 
-L' = -log(0.650) = 0.431
-
-Comparison:
-L  = 0.454  (before update)
-L' = 0.431  (after one update)
-ΔL = -0.023  → loss decreased ✓
+L' = -log(0.652) = 0.428
 ```
+
+```
+Before update:  L = 0.454   ŷ = 0.635
+After update:   L = 0.428   ŷ = 0.652
+ΔL = -0.026  → loss decreased ✓
+```
+
+Loss dropped further than a first pass at this section had estimated (0.454→0.431) — because Wq and Wk turned out to receive real, non-negligible gradients (not just "tiny" ones), not only Wv and W_out. All 6 weight matrices contribute to this step, and the FFN weights (W1, W2) — which sit on the cleanest, most direct residual highway — do the most work per-element.
 
 ---
 
@@ -1084,10 +1254,10 @@ L' = 0.431  (after one update)
 | Transformer  | L + C → V[1] via A[4,1]=0.239 + residual highway to x_pe | direct +100% |
 
 **The Transformer's TOTAL gradient to position 1 is:**
-- Via attention path: A[4,1]=0.239 → 0.239 × 0.071 = 17%
+- Via attention path: `∂L/∂V[cat] = A[mat,cat] × ∂L/∂c_mat`, and since the 4 attention weights sum to 1, `A[mat,cat]=0.239` **is itself** the fraction of the attention-path gradient reaching cat — 23.9% (same convention as the attention file's 27.5%, just recomputed with PE in the mix).
 - BUT: x_pe_mat (the current position) gets gradient ∂L/∂x_pe_mat=[-0.183,-0.110] DIRECT
 - The residual highway goes to x_pe_mat (the current position), not to cat.
-- Cat gets gradient from ONE path (through Wv via attention weight A[4,1]=0.239)
+- Cat gets gradient from ONE path (through Wv via attention weight A[mat,cat]=0.239)
 
 **For sequence length n=100:**
 ```
@@ -1189,7 +1359,7 @@ Full score matrix (no mask):
          key_cat  key_sat  key_on  key_mat
 q_cat:   1.146    0.912    0.446   -0.037
 q_sat:   0.896    0.723    0.370   -0.016
-q_on:    0.485    0.344    0.212    0.020
+q_on:    0.406    0.345    0.212    0.020
 q_mat:  -0.061   -0.035    0.009    0.022
 
 Causal mask: set upper triangle to -∞ (block future positions):
@@ -1202,7 +1372,7 @@ After applying causal mask:
          key_cat  key_sat  key_on  key_mat
 q_cat:   1.146      -∞       -∞       -∞
 q_sat:   0.896    0.723      -∞       -∞
-q_on:    0.485    0.344    0.212       -∞
+q_on:    0.406    0.345    0.212       -∞
 q_mat:  -0.061   -0.035    0.009    0.022
 
 Softmax with -∞ entries → 0 for those positions:
@@ -1297,8 +1467,8 @@ BACKWARD PASS:
 [Residual 1 splits gradient]
 ├── highway: ∂L/∂x_pe_mat = [-0.183,-0.110]  (reaches embedding+PE direct, in ONE step)
 └── attention: ∂L/∂c_mat = [-0.183,-0.110]
-              ├── ∂L/∂V≈[[-0.191,-0.062],[-0.016,-0.009]] (dominant)
-              └── ∂L/∂Wq,∂L/∂Wk tiny
+              ├── ∂L/∂V = A[mat,:] × ∂L/∂c_mat, all 4 rows → ∂L/∂Wv=[[-0.153,-0.092],[-0.061,-0.036]]
+              └── ∂L/∂Wq=[[-0.007,-0.014],[0.013,0.025]], ∂L/∂Wk=[[-0.002,0.004],[-0.007,0.014]] — small, not tiny
 ```
 
 ---
@@ -1425,7 +1595,7 @@ Wq,Wk: small (through softmax Jacobian, sum-zero constraint)
 THIS WALKTHROUGH (d=2, n=4, 1 head):
 x_pe_mat=[0.341,-0.590], x_final_mat=[1.183,-0.121]
 A=[0.239,0.245,0.256,0.260] (mat attends most to itself+on)
-ŷ=0.635, L=0.454 → L'=0.431 after update ✓
+ŷ=0.635, L=0.454 → L'=0.428 after update ✓
 
 Parameter Count:
 This toy example (d=2, d_ff=4, vocab=4): Wq, Wk, Wv: 3 × (2×2) = 12 params W_o: (2×2) = 4 params
@@ -1551,18 +1721,36 @@ dl_db2 = dl_dFFN_out_mat
 dl_dxpe_mat = dl_dx_attn_mat.copy()                   # highway
 dl_dc_mat = dl_dx_attn_mat.copy()                     # attention path
 
-# Wv gradient (simplified for single query)
-dl_dV = A[:, 3:4].reshape(-1, 1) * dl_dc_mat          # Note: A[:,3] = col for mat
+# Wv gradient — IMPORTANT: use A[3, :] (row "mat"), NOT A[:, 3] (column "mat")!
+# C[mat] = A[mat,:] @ V, so dL/dV[j] = A[mat,j] * dL/dc_mat — that's the row.
+# A[:, 3] would give "how much every query attends to mat as a key" — a different,
+# wrong quantity that happens to be a similarly-shaped (4,) vector, easy to mix up.
+a_mat = A[3, :]                                       # row "mat" of A, shape (4,)
+dl_dV = a_mat.reshape(-1, 1) * dl_dc_mat              # (4,2)
 dl_dWv = X_pe.T @ dl_dV                               # (2,2)
+
+# Wq, Wk gradients — softmax backward, only row "mat" of S has nonzero gradient
+dl_dA_mat = V @ dl_dc_mat                             # (4,): dL/dA[mat,j] = dL/dc_mat . V[j]
+g = a_mat @ dl_dA_mat                                 # scalar: attention-weighted average
+dl_dS_mat = a_mat * (dl_dA_mat - g)                   # (4,), sums to ~0
+
+q_mat = Q[3]
+dl_dq_mat = (dl_dS_mat @ K) / np.sqrt(d_k)            # (2,)
+dl_dK = np.outer(dl_dS_mat, q_mat) / np.sqrt(d_k)     # (4,2)
+
+dl_dWq = np.outer(X_pe[3], dl_dq_mat)                 # (2,2) — only mat's query contributed
+dl_dWk = X_pe.T @ dl_dK                                # (2,2) — every position's key contributed
 
 # --- Weight Update ---
 W_out_new = W_out - lr * dl_dW_out
 W2_new    = W2    - lr * dl_dW2
 W1_new    = W1    - lr * dl_dW1
 Wv_new    = Wv    - lr * dl_dWv
+Wq_new    = Wq    - lr * dl_dWq
+Wk_new    = Wk    - lr * dl_dWk
 
 # --- Verify Loss Decreased ---
-Q2 = X_pe @ Wq; K2 = X_pe @ Wk; V2 = X_pe @ Wv_new
+Q2 = X_pe @ Wq_new; K2 = X_pe @ Wk_new; V2 = X_pe @ Wv_new
 scores2 = Q2 @ K2.T / np.sqrt(d_k)
 scores2 -= scores2.max(axis=-1, keepdims=True)
 A2 = np.exp(scores2) / np.exp(scores2).sum(axis=-1, keepdims=True)
@@ -1575,7 +1763,7 @@ X_final2 = X_attn2 + FFN2
 z2 = W_out_new @ X_final2[3]
 yhat2 = 1 / (1 + np.exp(-z2))
 loss2 = -np.log(yhat2)
-print(f"After update: ŷ={yhat2:.3f}, L'={loss2:.3f}")  # L' < 0.454 ✓
+print(f"After update: ŷ={yhat2:.3f}, L'={loss2:.3f}")  # ŷ=0.652, L'=0.428 ✓
 ```
 
 ### Version 2: PyTorch Manual (autograd does backward)
