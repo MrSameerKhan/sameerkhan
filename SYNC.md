@@ -9,10 +9,12 @@
 
 | Field | Value |
 |-------|-------|
-| **Machine** | Mac |
-| **Date** | 14 August 2026 |
-| **What I did** | Started interview prep arc. Resume finalised (`resume/resume_sameer_khan_sr_ML.pdf`). Audited `02_INTERVIEW_PACK.md` against it — it is STALE (written against an older resume). Created `code_practice/11_interview_drills/` + Drill 01 (multi-head attention from scratch, 13-check harness, validated against a reference solution). |
-| **Files changed** | `code_practice/11_interview_drills/01_multihead_attention.py` (new), `SYNC.md` |
+| **Machine** | Windows |
+| **Date** | 22 August 2026 |
+| **What I did** | Wrote the `4.nlp/03_sequence_models/` end-to-end theory arc: RNN → LSTM → GRU → Attention → Transformer, all hand-computed with real numbers on one shared sentence. 3,366 new lines across attention + transformer alone. Commits `60f3b96 nlp`, `feb91ca gru`, `9b98b92 transformer`. **Did not touch Drill 01.** |
+| **Files changed** | `4.nlp/03_sequence_models/` 02_rnn, 03_lstm, 04_gru, 05_attention, 06_transformer `_end_to_end.md` |
+
+> ⚠️ Those three commits did not update this file. Caught on the 22 Aug Mac pull — SYNC.md still described the 14 Aug state. **Update this file in the same commit as the work, not later.**
 
 ---
 
@@ -24,20 +26,25 @@ File:   code_practice/11_interview_drills/01_multihead_attention.py
 Run:    python code_practice/11_interview_drills/01_multihead_attention.py
 Goal:   13/13 PASS
 Then:   Paste implementation into Claude for interviewer-style review
-Note:   Code practice Phase 10 is PAUSED — interview prep takes priority (interviews in 1-2 weeks)
+Why now: 05_attention + 06_transformer_end_to_end.md just covered this by hand
+         with real numbers. The drill is the same content as code. Do it while
+         the arithmetic is fresh — it should be FASTER than the 20 min budget.
+Note:   Code practice Phase 10 still PAUSED.
 ```
 
 ---
 
 ## ACTIVE ARC — Interview Prep (started 14 Aug 2026)
 
-**Context:** interviewing in 1–2 weeks. Self-assessed weak in all four areas: resume defence, LLM/GenAI theory, ML system design, behavioural/STAR. Format chosen: **coding drills as the spine**, other three folded in around them.
+**Context:** self-assessed weak in all four areas: resume defence, LLM/GenAI theory, ML system design, behavioural/STAR. Format chosen: **coding drills as the spine**, other three folded in around them.
+
+**Timeline (rev. 22 Aug):** nothing scheduled yet. The original "1–2 weeks" clock is off. Days below are an *order*, not dates — runway is intact, so depth over speed. But drills have slipped 8 days with zero attempted; theory is not a substitute for saying it out loud or typing it cold.
 
 ### Drill Schedule
 
 | Day | Drill | File | Status |
 |-----|-------|------|--------|
-| 1 | Multi-head attention from scratch | `11_interview_drills/01_multihead_attention.py` | 🔧 Built — awaiting attempt |
+| 1 | Multi-head attention from scratch | `11_interview_drills/01_multihead_attention.py` | 🔧 Built — **not attempted, 8 days open** |
 | 2 | BM25 + RRF from scratch | not yet built | ⬜ |
 | 3 | FAISS cosine / IndexFlatIP | not yet built | ⬜ |
 | 4 | Union-Find duplicate collapse | not yet built | ⬜ |
@@ -80,7 +87,7 @@ All interview drills are **deliberately CPU-only and seed-fixed** — they run i
 
 | Layer | Current Focus | Status |
 |-------|--------------|--------|
-| Theory | All 11 folders complete | ✅ Done |
+| Theory | All 11 folders complete · `4.nlp/03_sequence_models/` end-to-end arc added 22 Aug (RNN→LSTM→GRU→Attention→Transformer, hand-computed) | ✅ Done |
 | Code Practice | Phase 05 Transformers (S1-S7 exist) → Phase 06-10 also exist | 🔧 Need to run sessions |
 | Root Packs | 00_HUB, 01_CAREER, 02_INTERVIEW, 03_LEARNING | ✅ Done |
 
