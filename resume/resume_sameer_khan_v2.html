@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sameer Khan — Senior ML Engineer</title>
+<style>
+@page { size:A4; margin:0; }
+:root{
+  --navy:#123A63; --blue:#2A6CB0; --tint:#EDF3F9; --tint2:#DCE7F2;
+  --ink:#1B2026; --body:#2E353D; --mute:#636E7A; --rule:#C6D3E0; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{background:#7d8894;}
+body{
+  font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  color:var(--body); font-size:8.5pt; line-height:1.32;
+  -webkit-font-smoothing:antialiased;
+}
+.page{
+  width:210mm; height:297mm; background:var(--white);
+  margin:0 auto 8mm; position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  page-break-after:always; break-after:page;
+}
+.page:last-child{page-break-after:auto;break-after:auto;margin-bottom:0;}
+
+/* ============ HEADER BAND ============ */
+.band{ flex:0 0 auto; background:var(--navy); color:var(--white); padding:8.5mm 12mm 7mm; position:relative; }
+.band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.2mm;background:var(--blue);}
+.band h1{ font-size:26pt; font-weight:700; letter-spacing:.6px; line-height:1; }
+.band .tag{ margin-top:2.4mm; font-size:9.6pt; font-weight:600; color:#B9D3EE; letter-spacing:.9px; text-transform:uppercase; }
+.band .ct{ margin-top:4mm; font-size:8pt; color:#D7E5F4; display:flex; flex-wrap:wrap; gap:1.5mm 4mm; }
+.band .ct span{ white-space:nowrap; }
+.band .ct b{ color:var(--white); font-weight:600; }
+
+/* ============ GRID ============ */
+.grid{ display:grid; grid-template-columns:58mm 1fr; flex:1 1 auto; min-height:0; }
+.page.cont .grid{ grid-template-columns:14mm 1fr; }
+.page.cont .side{ padding:0; }
+.page.cont .main{ padding:8mm 12mm 7mm 8mm; }
+.stripe{ height:100%; background:var(--navy); position:relative; }
+.stripe::after{content:"";position:absolute;left:0;right:0;top:0;height:34mm;background:var(--blue);}
+.contnote{ font-size:7.8pt; font-weight:700; border-bottom:.8pt solid var(--rule); padding-bottom:1.2mm; color:var(--mute); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:4mm; }
+.mstrip{ display:grid; grid-template-columns:repeat(6,1fr); gap:1.8mm; margin-bottom:4mm; }
+.mstrip div{ background:var(--tint); border-top:2.4pt solid var(--blue); padding:1.8mm 1.2mm; text-align:center; }
+.mstrip .n{ font-size:11pt; font-weight:700; color:var(--navy); line-height:1; }
+.mstrip .l{ font-size:6.4pt; color:var(--mute); text-transform:uppercase; letter-spacing:.3px; margin-top:1.2mm; line-height:1.25; }
+.side{ grid-column:1; grid-row:1; background:var(--tint); padding:7mm 5.5mm; }
+.main{ grid-column:2; grid-row:1; min-width:0; padding:7mm 12mm 7mm 7mm; }
+
+/* ============ HEADINGS ============ */
+.main h2{
+  font-size:9.4pt; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--navy); padding-bottom:1.5mm; margin-bottom:3mm;
+  border-bottom:1.2pt solid var(--navy); position:relative;
+}
+.main h2::after{content:"";position:absolute;left:0;bottom:-1.2pt;width:14mm;height:2.4pt;background:var(--blue);}
+.main h2+h2, .blk+.blk{margin-top:0;}
+.blk{margin-bottom:4mm;}
+.side h3{
+  font-size:8.2pt; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--white); background:var(--navy); padding:1.4mm 2.5mm; margin-bottom:2.6mm;
+}
+.side h3:not(:first-child){margin-top:4mm;}
+
+/* ============ MAIN CONTENT ============ */
+.summary{text-align:justify;}
+.summary b{color:var(--navy);}
+.job{margin-bottom:2.8mm;}
+.job:last-child{margin-bottom:0;}
+.jh{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;margin-bottom:1.6mm;}
+.jh .co{font-size:9.6pt;font-weight:700;color:var(--ink);line-height:1.2;}
+.jh .co em{font-style:normal;font-weight:400;color:var(--mute);}
+.jh .co .rl{display:block;font-size:8.6pt;font-weight:600;color:var(--blue);margin-top:.5mm;}
+.jh .dt{font-size:8pt;color:var(--white);background:var(--blue);padding:.9mm 2.2mm;white-space:nowrap;flex:0 0 auto;font-weight:600;}
+ul{list-style:none;}
+li{position:relative;padding-left:3.2mm;margin-bottom:1.1mm;text-align:justify;}
+li::before{content:"";position:absolute;left:0;top:1.35mm;width:1.5mm;height:1.5mm;background:var(--blue);}
+li b{color:var(--navy);}
+.pj{margin-bottom:3mm;}
+.pj .ph{font-size:9.4pt;font-weight:700;color:var(--ink);margin-bottom:1.5mm;border-left:2.4pt solid var(--blue);padding-left:2.4mm;}
+.pj .ph em{font-style:normal;font-weight:400;color:var(--mute);font-size:8.4pt;}
+
+/* ============ SIDEBAR ============ */
+.comp{font-size:8pt;line-height:1.3;}
+.comp div{background:var(--white);border-left:2.2pt solid var(--blue);padding:1.2mm 2mm;margin-bottom:1.2mm;font-weight:600;color:var(--navy);}
+.sk{font-size:7.2pt;line-height:1.28;margin-bottom:2mm;}
+.sk b{display:block;color:var(--navy);font-size:7.9pt;margin-bottom:.5mm;letter-spacing:.2px;}
+.edu{font-size:8pt;}
+.edu b{color:var(--navy);display:block;margin-bottom:.6mm;}
+.edu span{color:var(--mute);}
+
+/* metrics */
+.met{display:grid;grid-template-columns:1fr 1fr;gap:1.8mm;}
+.met div{background:var(--white);border-top:2.2pt solid var(--blue);padding:2mm 1.6mm;text-align:center;}
+.met .n{font-size:11.5pt;font-weight:700;color:var(--navy);line-height:1;}
+.met .l{font-size:6.6pt;color:var(--mute);text-transform:uppercase;letter-spacing:.4px;margin-top:1mm;line-height:1.25;}
+
+/* timeline */
+.tl{position:relative;padding-left:4.5mm;font-size:7.9pt;}
+.tl::before{content:"";position:absolute;left:1.35mm;top:1.5mm;bottom:1.5mm;width:.7mm;background:var(--tint2);}
+.tl .it{position:relative;margin-bottom:3.2mm;}
+.tl .it:last-child{margin-bottom:0;}
+.tl .it::before{content:"";position:absolute;left:-3.9mm;top:1mm;width:2.4mm;height:2.4mm;border-radius:50%;background:var(--blue);border:.6mm solid var(--white);}
+.tl .c{font-weight:700;color:var(--navy);display:block;line-height:1.2;}
+.tl .y{color:var(--mute);font-size:7.3pt;}
+
+/* page-1 breathes into its spare vertical space; page-2 stays tight */
+.page:not(.cont) .main li{ margin-bottom:2.9mm; }
+.page:not(.cont) .main .summary{ line-height:1.48; }
+.page:not(.cont) .main .blk{ margin-bottom:6.5mm; }
+.page:not(.cont) .main .jh{ margin-bottom:2.6mm; }
+.page:not(.cont) .main{ padding-top:8mm; }
+
+@media print{
+  html{background:#fff;}
+  .page{margin:0;box-shadow:none;}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1 ================= -->
+<div class="page">
+  <div class="band">
+    <h1>Sameer Khan</h1>
+    <div class="tag">Senior ML Engineer &nbsp;·&nbsp; Document AI &amp; Multimodal &nbsp;·&nbsp; LLM / RAG &nbsp;·&nbsp; MLOps on AWS</div>
+    <div class="ct">
+      <span><b>P</b> +91-8096796963</span>
+      <span><b>E</b> sameerkhanofficial9@gmail.com</span>
+      <span><b>in</b> linkedin.com/in/mrsameerkhan3</span>
+      <span><b>gh</b> github.com/MrSameerKhan</span>
+      <span><b>@</b> Hyderabad, India</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="main">
+      <div class="blk">
+        <h2>Profile</h2>
+        <p class="summary">Senior Machine Learning Engineer with <b>9 years in Document AI</b> &mdash; computer vision, NLP and multimodal deep learning applied to one problem across three roles, turning scanned documents into structured, reliable data. Currently own ICE's production mortgage page classifier: <b>643 classes at ~1.7M requests/day</b> on SageMaker with <b>99.99% success</b>, and I proposed and built its <b>OCR-free transformer successor</b>. Also built near-duplicate detection across a 7.1M-page corpus, and a bank's document-digitisation platform as its first ML engineer. Hands-on across the full lifecycle &mdash; architecture, distributed training, the serving path, and production incident response. Targeting senior individual-contributor roles with architecture ownership.</p>
+      </div>
+
+      <div class="blk">
+        <h2>Experience</h2>
+        <div class="job">
+          <div class="jh">
+            <div class="co">ICE Data Services <em>&mdash; Hyderabad</em><span class="rl">Senior ML Engineer</span></div>
+            <div class="dt">Nov 2023 &ndash; Present</div>
+          </div>
+          <ul>
+            <li>Own ICE's production mortgage document classifier end to end. <b>643 classes</b>, trained on <b>2.8M pages</b> from 49 encrypted lender sources. It serves <b>1.7M requests/day (45M/month)</b> on SageMaker at <b>p95 1.8s</b> with <b>99.99% success</b>, and cut loan-file document verification from about 4 days down to 4&ndash;5 hours.</li>
+            <li>Designed the <b>five-branch multimodal architecture</b>: ResNet50 plus CNN, BiLSTM, and a <b>multi-head-attention Transformer I wrote from scratch</b> over frozen GloVe. Trained it on <b>Horovod across 20&times; A10G GPUs</b>, after fixing the host-RAM OOM and all-reduce failures that were blocking runs. It gets <b>weighted F1 0.959 to 0.972</b> across five lender benchmarks.</li>
+            <li><b>Proposed and built the OCR-free successor</b> to get OCR out of the inference path: <b>Donut / Swin encoder, 75M parameters fully fine-tuned</b>, PyTorch Lightning DDP on <b>20&times; L40S</b> at bf16. It hit <b>weighted F1 0.975</b> on 528,574 pages against the OCR-based production ensemble's 0.974. I exported it to <b>ONNX</b>, benchmarked 9 SageMaker instance types and picked one <b>~20% cheaper per hour</b>.</li>
+            <li><b>Led the P1 root-cause analysis that cleared the model.</b> 21,096 pages were reported failed in a 260K-page regression. I traced 5 services in CloudWatch Logs Insights and ruled out both the model and the outage hypotheses. The real cause was in the platform Java path: an input validator was rejecting whole documents before inference, so <b>one dropped page could null a 530-page file</b>. True failure rate was <b>2.3%</b>, and the platform team shipped the fix I recommended.</li>
+            <li>Recovered a production accuracy regression across <b>946,355 pages</b>. Fixed a train/benchmark taxonomy mismatch that <b>took F1 from 0.62 to 0.92</b>, then found 64% of what was left was correct predictions being thrown away by one confidence threshold. I own the per-class threshold config &mdash; <b>calibrated selective prediction</b> across all 643 classes.</li>
+            <li>Shipped <b>four consecutive production model releases</b> through the Jenkins-to-SageMaker pipeline: cross-account artifact promotion, model registration, previous-version teardown, and one rollback. Handled autoscaling from <b>20 to 118 instances</b> under burst, and took every release from staging to production through change control. Also migrated the serving export from <b>TF1 to TF2</b>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <h3>Domain Expertise</h3>
+      <div class="comp">
+        <div>Mortgage &amp; Loan File Documents</div>
+        <div>Retail Banking &mdash; Arabic / English</div>
+        <div>Identity Verification &amp; KYC</div>
+      </div>
+
+      <h3>Technical Skills</h3>
+      <div class="sk"><b>ML / Deep Learning</b>PyTorch · PyTorch Lightning · TensorFlow / Keras · HuggingFace Transformers · CNN · ResNet50 · Swin / ViT · Donut · Multimodal Fusion · BiLSTM · NER · LoRA / QLoRA / PEFT · SFT · Instruction Tuning · RLHF-DPO · fp16 / bf16</div>
+      <div class="sk"><b>Distributed Training</b>Horovod · DDP · TorchDistributor · NCCL · Multi-GPU · Spark / PySpark · Databricks</div>
+      <div class="sk"><b>Document AI / CV</b>Document Classification · Information Extraction · OCR &amp; OCR-Free · Deduplication · Signature Verification · Object Detection · Tesseract · AWS Textract · TF Object Detection · OpenCV</div>
+      <div class="sk"><b>LLM / RAG</b>RAG · FAISS · Dense Retrieval · Okapi BM25 · Hybrid Retrieval · RRF · Cross-Encoder Reranking · JSON Schema Outputs · Selective Prediction · Confidence Calibration · Llama 3 · Claude API</div>
+      <div class="sk"><b>Serving / MLOps</b>AWS SageMaker · Real-Time Endpoints · Autoscaling · Model Registry · TF Serving · ONNX · Jenkins CI/CD · Docker · MLflow · CloudWatch</div>
+      <div class="sk"><b>Production Practices</b>Distributed Training · Mixed Precision · Model Export &amp; Optimisation · Selective Prediction · Threshold Calibration · Incident RCA · Release Governance · Change Control · Cross-Account Promotion · Rollback</div>
+      <div class="sk"><b>Languages / Tools</b>Python · SQL · Git · Linux / bash</div>
+
+      <h3>Education</h3>
+      <div class="edu"><b>B.Tech, Computer Science Engineering</b><span>TKR Engineering College (JNTU)<br>Hyderabad &nbsp;·&nbsp; 2016</span></div>
+      <div class="edu" style="margin-top:3mm;"><b>Languages</b><span>English &nbsp;·&nbsp; Hindi</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PAGE 2 ================= -->
+<div class="page cont">
+  <div class="grid">
+    <div class="main">
+      <div class="mstrip">
+        <div><div class="n">643</div><div class="l">Classes in production</div></div>
+        <div><div class="n">1.7M</div><div class="l">Requests / day</div></div>
+        <div><div class="n">0.975</div><div class="l">Weighted F1, OCR-free</div></div>
+        <div><div class="n">99.99%</div><div class="l">Success rate</div></div>
+        <div><div class="n">7.1M</div><div class="l">Pages deduplicated</div></div>
+        <div><div class="n">9 yrs</div><div class="l">Document AI</div></div>
+      </div>
+
+      <div class="blk">
+        <div class="contnote">Experience &mdash; continued</div>
+
+        <div class="job">
+          <div class="jh">
+            <div class="co">Persistent Systems <em>&mdash; Client: ICE Data Services</em><span class="rl">Senior ML Engineer</span></div>
+            <div class="dt">Aug 2021 &ndash; Nov 2023</div>
+          </div>
+          <ul>
+            <li>Built the data-ingestion and OCR layer that the production classifier still runs on. Decrypted lender image sets, extracted text at scale with <b>Tesseract</b>, and normalised <b>27+ source schemas</b> into one labelled corpus using PySpark UDFs.</li>
+            <li>Added the <b>OpenCV preprocessing stage</b> &mdash; thresholding, denoising, skew correction, normalisation &mdash; that raised OCR quality for every downstream model.</li>
+            <li>Built the first multimodal <b>CNN + BiLSTM</b> training pipeline on Databricks, including the BiLSTM encoder-decoder that produces the sequence representations the text branches consume. The production 643-class ensemble was scaled up from this.</li>
+            <li>Set up the initial <b>SageMaker</b> deployment and monitoring path plus <b>MLflow</b> experiment tracking. The current Jenkins-to-SageMaker release pipeline was built on top of that.</li>
+          </ul>
+        </div>
+
+        <div class="job">
+          <div class="jh">
+            <div class="co">Zyclyx <em>&mdash; Client: Al Rajhi Bank, Riyadh</em><span class="rl">Data Scientist</span></div>
+            <div class="dt">Aug 2019 &ndash; Mar 2021</div>
+          </div>
+          <ul>
+            <li>Designed and built the bank's document-digitisation pipeline <b>as its first ML engineer</b>, running over <b>~100,000 bilingual Arabic and English documents</b> end to end &mdash; classification, field detection, OCR and entity extraction.</li>
+            <li>Built the model chain: a <b>ResNet50</b> classifier over <b>~65 document types (~88% accuracy)</b>, TensorFlow Object Detection to localise the required fields, then region cropping, Tesseract OCR, and a <b>GRU-based NER</b> to pull out entity values (name, country, ID number). Also built a deep-learning <b>signature-verification model</b> to flag forged signatures.</li>
+            <li>Traced the pipeline's largest error source upstream to the branches, each scanning at different settings &mdash; colour distortion, rotation and skew. I audited scanner configurations on-site across the bank's major branches and derived a standard profile, and <b>the bank issued it as a circular mandating those settings bank-wide</b>. That fixed the problem at the source instead of in preprocessing.</li>
+            <li>Integrated extraction into the bank's RPA (BluePrism) workflow behind a <b>human-in-the-loop review gate</b> &mdash; every page checked before commit, corrections fed back as training signal. Shipped <b>on-premise</b> as Flask + Gunicorn microservices, so no document left the bank's network.</li>
+            <li><b>Mentored 5+ engineers</b> as the team grew around the pipeline I had built.</li>
+          </ul>
+        </div>
+
+        <div class="job">
+          <div class="jh">
+            <div class="co">VISSINDIA <em>&mdash; Hyderabad</em><span class="rl">Python &amp; Computer Vision Engineer</span></div>
+            <div class="dt">Feb 2017 &ndash; Aug 2019</div>
+          </div>
+          <ul>
+            <li>Built real-time computer-vision pipelines for identity verification and multi-object tracking: face detection (Haar cascades, HOG, CNN), keypoint matching (SIFT / SURF / FLANN), and TensorFlow object detection across video frames. Also built the OpenCV preprocessing layer that made noisy imagery usable by the detection models.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="blk">
+        <h2>Key Projects</h2>
+        <div class="pj">
+          <div class="ph">Rulebook-RAG &mdash; Retrieval-Grounded Document Classification <em>· personal project, 2026</em></div>
+          <ul>
+            <li>Built a <b>36-class</b> document classification system with <b>no trained model in the loop and no labelled training data</b>. Class knowledge sits in a written rulebook generated from official instruction documents, retrieved per query. To add a class I write one rule and rebuild the index: <b>0.83 accuracy</b> on 5 classes added after the index was built, with no retraining.</li>
+            <li><b>Hand-wrote Okapi BM25</b> and fused it with dense embeddings using reciprocal rank fusion (<b>+5.2 pts</b>), then added cross-encoder reranking (<b>+3.9 pts</b>). Every prediction cites a rule id, resolved against the live index before the answer returns: <b>0 invalid of 775</b>.</li>
+          </ul>
+        </div>
+        <div class="pj">
+          <div class="ph">Document Deduplication Pipeline <em>· ICE Data Services</em></div>
+          <ul>
+            <li>Built near-duplicate detection across a <b>7.1M-page</b> mortgage corpus. Generated DonutSwin page embeddings with <b>TorchDistributor across 40 GPU nodes</b>, then ran a two-tier <b>FAISS IndexFlatIP</b> cosine search &mdash; one pass at page level, one on mean-pooled document embeddings.</li>
+            <li>Ran the searches inside label and page-count groups <b>so I could use many small exact searches instead of one approximate index</b>, and used <b>Union-Find</b> to collapse transitive duplicate chains. Flagged <b>67% of pages / 69% of documents</b> as near-duplicates.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="side"><div class="stripe"></div></div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sameer Khan — Senior ML Engineer</title>
+<style>
+  @page { size: A4; margin: 13mm 14mm; }
+
+  :root{
+    --ink:#15191e;
+    --muted:#4a5259;
+    --rule:#c9d1d8;
+    --accent:#1a3d6d;
+    --bg:#ffffff;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ background:#e9edf1; }
+  body{
+    margin:0; padding:0;
+    background:var(--bg); color:var(--ink);
+    font-family:"Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+    font-size:10.1pt; line-height:1.36;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .sheet{
+    background:var(--bg);
+    max-width:196mm; margin:0 auto; padding:14mm 15mm;
+  }
+
+  /* ---------- header ---------- */
+  header{ text-align:center; margin-bottom:9px; }
+  h1{
+    margin:0; font-size:23pt; line-height:1.05;
+    letter-spacing:.3px; font-weight:700; color:var(--ink);
+  }
+  .role{
+    margin:4px 0 5px; font-size:10.4pt; font-weight:600;
+    color:var(--accent); letter-spacing:.15px;
+  }
+  .contact{ font-size:9.1pt; color:var(--muted); }
+  .contact a{ color:var(--muted); text-decoration:none; }
+  .contact .sep{ color:var(--rule); padding:0 4px; }
+
+  /* ---------- sections ---------- */
+  h2{
+    margin:13px 0 6px;
+    font-size:9.7pt; font-weight:700; letter-spacing:1.3px;
+    text-transform:uppercase; color:var(--accent);
+    border-bottom:1.4px solid var(--accent); padding-bottom:2.5px;
+  }
+
+  p.summary{ margin:0; text-align:justify; }
+
+  /* ---------- skills ---------- */
+  .skill{ margin:0 0 3.5px; padding-left:0; }
+  .skill b{ color:var(--ink); }
+
+  /* ---------- jobs ---------- */
+  .job{ margin-top:9px; break-inside:avoid; page-break-inside:avoid; }
+  .job:first-of-type{ margin-top:2px; }
+  .jobhead{
+    display:flex; justify-content:space-between; align-items:baseline;
+    gap:10px; margin-bottom:3px;
+  }
+  .jobhead .who{ font-size:10.4pt; font-weight:700; }
+  .jobhead .who .client{ font-weight:400; color:var(--muted); }
+  .jobhead .when{
+    font-size:9pt; color:var(--muted); font-style:italic;
+    white-space:nowrap; flex:0 0 auto;
+  }
+
+  ul{ margin:0; padding-left:15px; }
+  li{ margin-bottom:3.5px; text-align:justify; }
+  li::marker{ color:var(--accent); }
+
+  /* ---------- projects ---------- */
+  .proj{ margin-top:8px; break-inside:avoid; page-break-inside:avoid; }
+  .projhead{ font-size:10.2pt; font-weight:700; margin-bottom:3px; }
+  .projhead span{ font-weight:400; color:var(--muted); font-size:9.4pt; }
+
+  .edu{ margin:2px 0 0; display:flex; justify-content:space-between; gap:10px; }
+  .edu .when{ font-size:9pt; color:var(--muted); font-style:italic; }
+
+  @media print{
+    html{ background:#fff; }
+    .sheet{ max-width:none; margin:0; padding:0; }
+    a{ color:inherit; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header>
+  <h1>Sameer Khan</h1>
+  <div class="role">Senior ML Engineer &nbsp;|&nbsp; Document AI &amp; Multimodal &nbsp;|&nbsp; LLM / RAG &nbsp;|&nbsp; MLOps on AWS</div>
+  <div class="contact">
+    +91-8096796963<span class="sep">|</span><a href="mailto:sameerkhanofficial9@gmail.com">sameerkhanofficial9@gmail.com</a><span class="sep">|</span><a href="https://linkedin.com/in/mrsameerkhan3">linkedin.com/in/mrsameerkhan3</a><span class="sep">|</span><a href="https://github.com/MrSameerKhan">github.com/MrSameerKhan</a><span class="sep">|</span>Hyderabad, India
+  </div>
+</header>
+
+<h2>Summary</h2>
+<p class="summary">Senior Machine Learning Engineer with <b>9 years in Document AI</b> &mdash; computer vision, NLP and multimodal deep learning applied to one problem across three roles, turning scanned documents into structured, reliable data. Currently own ICE's production mortgage page classifier: <b>643 classes at ~1.7M requests/day</b> on SageMaker with <b>99.99% success</b>, and I proposed and built its <b>OCR-free transformer successor</b>. Also built near-duplicate detection across a 7.1M-page corpus, and a bank's document-digitisation platform as its first ML engineer. Hands-on across the full lifecycle &mdash; model architecture, distributed training, the serving path, and production incident response. Targeting senior individual-contributor roles with architecture ownership.</p>
+
+<h2>Technical Skills</h2>
+<p class="skill"><b>ML / Deep Learning:</b> PyTorch, PyTorch Lightning, TensorFlow / Keras, Hugging Face Transformers, CNN, ResNet50, Swin / Vision Transformers (ViT), Donut, multimodal fusion, BiLSTM, NER, full-parameter and parameter-efficient fine-tuning (LoRA / QLoRA / PEFT), SFT / instruction tuning, RLHF-DPO, mixed precision (fp16 / bf16)</p>
+<p class="skill"><b>Distributed Training &amp; Data:</b> Horovod, DDP / TorchDistributor, NCCL, multi-GPU training, Spark / PySpark, Databricks</p>
+<p class="skill"><b>Document AI / Computer Vision:</b> document classification, information extraction, OCR and OCR-free processing, document deduplication, signature verification, object detection, image preprocessing, Tesseract, AWS Textract, TensorFlow Object Detection, OpenCV</p>
+<p class="skill"><b>LLM / RAG:</b> RAG, FAISS, dense retrieval, Okapi BM25, hybrid retrieval, reciprocal rank fusion (RRF), cross-encoder reranking, structured outputs (JSON Schema), selective prediction, confidence calibration, Llama 3, Anthropic Claude API</p>
+<p class="skill"><b>Serving / MLOps:</b> AWS SageMaker (real-time endpoints, autoscaling, model registry), TF Serving, ONNX, model optimisation, Jenkins CI/CD, Docker, MLflow, CloudWatch, production monitoring</p>
+<p class="skill"><b>Languages / Tools:</b> Python, SQL, Git, Linux / bash</p>
+
+<h2>Work Experience</h2>
+
+<div class="job">
+  <div class="jobhead">
+    <div class="who">ICE Data Services &nbsp;|&nbsp; Senior ML Engineer &nbsp;|&nbsp; Hyderabad</div>
+    <div class="when">Nov 2023 &ndash; Present</div>
+  </div>
+  <ul>
+    <li>Own ICE's production mortgage document classifier end to end. <b>643 classes</b>, trained on <b>2.8M pages</b> from 49 encrypted lender sources. It serves <b>1.7M requests/day (45M/month)</b> on SageMaker at <b>p95 1.8s</b> with <b>99.99% success</b>, and cut loan-file document verification from about 4 days down to 4&ndash;5 hours.</li>
+    <li>Designed the <b>five-branch multimodal architecture</b>: ResNet50 plus CNN, BiLSTM, and a <b>multi-head-attention Transformer I wrote from scratch</b> over frozen GloVe. Trained it on <b>Horovod across 20&times; A10G GPUs</b>, after fixing the host-RAM OOM and all-reduce failures that were blocking runs. It gets <b>weighted F1 0.959 to 0.972</b> across five lender benchmarks.</li>
+    <li><b>Proposed and built the OCR-free successor</b> to get OCR out of the inference path: <b>Donut / Swin encoder, 75M parameters fully fine-tuned</b>, PyTorch Lightning DDP on <b>20&times; L40S</b> at bf16. It hit <b>weighted F1 0.975</b> on 528,574 pages against the OCR-based production ensemble's 0.974. I exported it to <b>ONNX</b>, benchmarked 9 SageMaker instance types and picked one <b>~20% cheaper per hour</b>.</li>
+    <li><b>Led the P1 root-cause analysis that cleared the model.</b> 21,096 pages were reported failed in a 260K-page regression. I traced 5 services in CloudWatch Logs Insights and ruled out both the model and the outage hypotheses. The real cause was in the platform Java path: an input validator was rejecting whole documents before inference, so <b>one dropped page could null a 530-page file</b>. True failure rate was <b>2.3%</b>, and the platform team shipped the fix I recommended.</li>
+    <li>Recovered a production accuracy regression across <b>946,355 pages</b>. Fixed a train/benchmark taxonomy mismatch that <b>took F1 from 0.62 to 0.92</b>, then found 64% of what was left was correct predictions being thrown away by one confidence threshold. I own the per-class threshold config &mdash; <b>calibrated selective prediction</b> across all 643 classes.</li>
+    <li>Shipped <b>four consecutive production model releases</b> through the Jenkins-to-SageMaker pipeline: cross-account artifact promotion, model registration, previous-version teardown, and one rollback. Handled autoscaling from <b>20 to 118 instances</b> under burst and took every release from staging to production through change control. Also migrated the serving export from <b>TF1 to TF2</b>.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="jobhead">
+    <div class="who">Persistent Systems <span class="client">(Client: ICE Data Services)</span> &nbsp;|&nbsp; Senior ML Engineer &nbsp;|&nbsp; Hyderabad</div>
+    <div class="when">Aug 2021 &ndash; Nov 2023</div>
+  </div>
+  <ul>
+    <li>Built the data-ingestion and OCR layer that the production classifier still runs on. Decrypted lender image sets, extracted text at scale with <b>Tesseract</b>, and normalised <b>27+ source schemas</b> into one labelled corpus using PySpark UDFs.</li>
+    <li>Added the <b>OpenCV preprocessing stage</b> &mdash; thresholding, denoising, skew correction, normalisation &mdash; that raised OCR quality for every downstream model.</li>
+    <li>Built the first multimodal <b>CNN + BiLSTM</b> training pipeline on Databricks, including the BiLSTM encoder-decoder that produces the sequence representations the text branches consume. The production 643-class ensemble was scaled up from this.</li>
+    <li>Set up the initial <b>SageMaker</b> deployment and monitoring path plus <b>MLflow</b> experiment tracking. The current Jenkins-to-SageMaker release pipeline was built on top of that.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="jobhead">
+    <div class="who">Zyclyx <span class="client">(Client: Al Rajhi Bank, Riyadh)</span> &nbsp;|&nbsp; Data Scientist &nbsp;|&nbsp; Riyadh</div>
+    <div class="when">Aug 2019 &ndash; Mar 2021</div>
+  </div>
+  <ul>
+    <li>Designed and built the bank's document-digitisation pipeline <b>as its first ML engineer</b>, running over <b>~100,000 bilingual Arabic and English documents</b> end to end &mdash; classification, field detection, OCR and entity extraction.</li>
+    <li>Built the model chain: a <b>ResNet50</b> classifier over <b>~65 document types (~88% accuracy)</b>, TensorFlow Object Detection to localise the required fields, then region cropping, Tesseract OCR, and a <b>GRU-based NER</b> to pull out entity values (name, country, ID number).</li>
+    <li>Built a deep-learning <b>signature-verification model</b> to flag forged signatures.</li>
+    <li>Traced the pipeline's largest error source upstream to the branches, each scanning at different settings &mdash; colour distortion, rotation and skew. I audited scanner configurations on-site across the bank's major branches and derived a standard profile, and <b>the bank issued it as a circular mandating those settings bank-wide</b>. That fixed the problem at the source instead of in preprocessing.</li>
+    <li>Integrated extraction output into the bank's RPA (BluePrism) workflow behind a <b>human-in-the-loop review gate</b>. Every page and its extracted values were checked before commit, and corrections went back as training signal. Shipped <b>on-premise</b> as Flask + Gunicorn microservices, so no document left the bank's network.</li>
+    <li><b>Mentored 5+ engineers</b> as the team grew around the pipeline I had built.</li>
+  </ul>
+</div>
+
+<div class="job">
+  <div class="jobhead">
+    <div class="who">VISSINDIA &nbsp;|&nbsp; Python &amp; Computer Vision Engineer &nbsp;|&nbsp; Hyderabad</div>
+    <div class="when">Feb 2017 &ndash; Aug 2019</div>
+  </div>
+  <ul>
+    <li>Built real-time computer-vision pipelines for identity verification and multi-object tracking: face detection (Haar cascades, HOG, CNN), keypoint matching (SIFT / SURF / FLANN), and TensorFlow object detection across video frames. Also built the OpenCV preprocessing layer that made noisy imagery usable by the detection models.</li>
+  </ul>
+</div>
+
+<h2>Projects</h2>
+
+<div class="proj">
+  <div class="projhead">Rulebook-RAG &nbsp;|&nbsp; Retrieval-grounded document classification <span>&mdash; personal project, 2026</span></div>
+  <ul>
+    <li>Built a <b>36-class</b> document classification system with <b>no trained model in the loop and no labelled training data</b>. The class knowledge sits in a written rulebook generated from official instruction documents, and gets retrieved per query. To add a class I write one rule and rebuild the index: <b>0.83 accuracy</b> on 5 classes added after the index was built, with no retraining.</li>
+    <li><b>Hand-wrote Okapi BM25</b> and fused it with dense embeddings using reciprocal rank fusion (<b>+5.2 pts</b>), then added cross-encoder reranking (<b>+3.9 pts</b>). Every prediction cites a rule id, and each id is resolved against the live index before the answer is returned: <b>0 invalid of 775</b>.</li>
+  </ul>
+</div>
+
+<div class="proj">
+  <div class="projhead">Document Deduplication Pipeline <span>&mdash; ICE Data Services</span></div>
+  <ul>
+    <li>Built near-duplicate detection across a <b>7.1M-page</b> mortgage corpus. Generated DonutSwin page embeddings with <b>TorchDistributor across 40 GPU nodes</b>, then ran a two-tier <b>FAISS IndexFlatIP</b> cosine search &mdash; one pass at page level, one on mean-pooled document embeddings.</li>
+    <li>Ran the searches inside label and page-count groups <b>so I could use many small exact searches instead of one approximate index</b>, and used <b>Union-Find</b> to collapse transitive duplicate chains. Flagged <b>67% of pages / 69% of documents</b> as near-duplicates.</li>
+  </ul>
+</div>
+
+<h2>Education</h2>
+<div class="edu">
+  <div><b>B.Tech, Computer Science Engineering</b> &nbsp;|&nbsp; TKR Engineering College (JNTU), Hyderabad</div>
+  <div class="when">2016</div>
+</div>
+
+</div>
+</body>
+</html>

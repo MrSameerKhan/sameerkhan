@@ -9,27 +9,30 @@
 
 | Field | Value |
 |-------|-------|
-| **Machine** | Windows |
-| **Date** | 22 August 2026 |
-| **What I did** | Wrote the `4.nlp/03_sequence_models/` end-to-end theory arc: RNN → LSTM → GRU → Attention → Transformer, all hand-computed with real numbers on one shared sentence. 3,366 new lines across attention + transformer alone. Commits `60f3b96 nlp`, `feb91ca gru`, `9b98b92 transformer`. **Did not touch Drill 01.** |
-| **Files changed** | `4.nlp/03_sequence_models/` 02_rnn, 03_lstm, 04_gru, 05_attention, 06_transformer `_end_to_end.md` |
+| **Machine** | Mac |
+| **Date** | 25 August 2026 |
+| **What I did** | Resume work. Compared my resume vs Naukri's paid draft 1 (`CustCopy2.pdf`) — found 3 blocking defects in theirs (unfilled template placeholders, a factually inverted F1 bullet, past tense on a current role). Built the hybrid in two variants: **v2 designed** (two-column, sidebar, colour — the one to send) and **v1 plain** (single-column, ATS-safe fallback). Analysis in `resume/RESUME_COMPARISON.md`. |
+| **Files changed** | `resume/RESUME_COMPARISON.md`, `resume/resume_hybrid_MASTER.md`, `resume/resume_hybrid_v1.html`, `resume/resume_sameer_khan_v2.html`, `resume/RESUME_CHANGE_REQUEST.md` (all new) |
 
-> ⚠️ Those three commits did not update this file. Caught on the 22 Aug Mac pull — SYNC.md still described the 14 Aug state. **Update this file in the same commit as the work, not later.**
+> **Correction (25 Aug):** the blue placeholders in Naukri's draft (`Please mention if any`, `DD'MM'YY`) are **deliberate fill-in markers** — their cover email asks the customer to complete them. Earlier I called this a QC failure. It is not. Do not raise it.
+
+> ⚠️ Reminder from 22 Aug: three commits shipped without updating this file. **Update it in the same commit as the work, not later.**
 
 ---
 
 ## Next Task
 
 ```
-What:   Drill 01 — fill in the 5 NotImplementedError bodies, 20 min, no reference
+What:   Send Naukri the change request + the v2 layout link
+Doc:    resume/RESUME_CHANGE_REQUEST.md  (10 sections, evidence-backed)
+Link:   github.com/MrSameerKhan/sameerkhan/blob/main/resume/resume_sameer_khan_v2.html
+Reply:  resumeservice@naukri.com — DO NOT change the subject line
+Subject must keep: #VR#260817TS43026084_43453892#
+Before sending: confirm the Languages list in section 8 is correct
+
+Then:   Drill 01 — open since 14 Aug, never attempted
 File:   code_practice/11_interview_drills/01_multihead_attention.py
-Run:    python code_practice/11_interview_drills/01_multihead_attention.py
-Goal:   13/13 PASS
-Then:   Paste implementation into Claude for interviewer-style review
-Why now: 05_attention + 06_transformer_end_to_end.md just covered this by hand
-         with real numbers. The drill is the same content as code. Do it while
-         the arithmetic is fresh — it should be FASTER than the 20 min budget.
-Note:   Code practice Phase 10 still PAUSED.
+Goal:   13/13 PASS, 20 min, no reference
 ```
 
 ---
@@ -56,6 +59,23 @@ Note:   Code practice Phase 10 still PAUSED.
 | 12–14 | STAR rewrite vs real resume numbers + full mock loop | updates `02_INTERVIEW_PACK.md` | ⬜ |
 
 Every drill is a literal "I hand-wrote / I built from scratch" claim on the resume — drilling them **is** resume defence.
+
+### Resume — RESOLVED 24 Aug
+
+Hybrid built. `resume/resume_hybrid_MASTER.md` is the **content SSOT** — edit that, then mirror into the HTML.
+
+| File | Use |
+|---|---|
+| `resume_sameer_khan_v2.html` | **Primary.** Designed two-column w/ sidebar + metrics. Send this. |
+| `resume_hybrid_v1.html` | Single-column ATS-safe fallback for strict Workday/Greenhouse portals |
+| `resume_hybrid_MASTER.md` | Plain-text content source — hand this to Naukri |
+
+**To make the PDF:** open the .html in Safari → File → Print → tick **"Print backgrounds"** under the
+Safari options pane → paper **A4**, scale **100%** → PDF ▾ → **Save as PDF**.
+Without "Print backgrounds" the navy header band and tinted sidebar render white.
+
+No Chrome / weasyprint / wkhtmltopdf on this Mac — browser print is the render path.
+Old files kept for reference only: `resume_sameer_khan_sr_ML.pdf`, `CustCopy2.pdf` (Naukri draft 1).
 
 ### Open Finding — 02_INTERVIEW_PACK.md is stale
 
