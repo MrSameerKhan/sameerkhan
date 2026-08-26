@@ -23,10 +23,10 @@
 ## Next Task
 
 ```
-What:   Send Naukri the change request + the v2 layout link
-Doc:    resume/RESUME_CHANGE_REQUEST.md  (10 sections, evidence-backed)
-Link:   github.com/MrSameerKhan/sameerkhan/blob/main/resume/resume_sameer_khan_v2.html
-Reply:  resumeservice@naukri.com — DO NOT change the subject line
+What:   Reply to Naukri with the change request + reference resume
+Attach: resume/RESUME_CHANGE_REQUEST.pdf   (6 pages, 10 sections, evidence-backed)
+        resume/resume_sameer_khan_v2.pdf   (2 pages, the target layout)
+To:     resumeservice@naukri.com — DO NOT change the subject line
 Subject must keep: #VR#260817TS43026084_43453892#
 Before sending: confirm the Languages list in section 8 is correct
 
@@ -43,20 +43,36 @@ Goal:   13/13 PASS, 20 min, no reference
 
 **Timeline (rev. 22 Aug):** nothing scheduled yet. The original "1–2 weeks" clock is off. Days below are an *order*, not dates — runway is intact, so depth over speed. But drills have slipped 8 days with zero attempted; theory is not a substitute for saying it out loud or typing it cold.
 
-### Drill Schedule
+### ACTIVE TRACK — LLM Architecture (scope set 25 Aug)
 
-| Day | Drill | File | Status |
-|-----|-------|------|--------|
-| 1 | Multi-head attention from scratch | `11_interview_drills/01_multihead_attention.py` | 🔧 Built — **not attempted, 8 days open** |
-| 2 | BM25 + RRF from scratch | not yet built | ⬜ |
-| 3 | FAISS cosine / IndexFlatIP | not yet built | ⬜ |
-| 4 | Union-Find duplicate collapse | not yet built | ⬜ |
-| 5 | Per-class threshold calibration | not yet built | ⬜ |
-| 6 | Weighted F1 by hand | not yet built | ⬜ |
-| 7 | Cross-encoder reranking | not yet built | ⬜ |
-| 8 | DDP / gradient all-reduce | not yet built | ⬜ |
-| 9–11 | System design: 643-class @ 1.7M req/day · OCR-free migration · dedup @ 7.1M pages | discussion, no file | ⬜ |
-| 12–14 | STAR rewrite vs real resume numbers + full mock loop | updates `02_INTERVIEW_PACK.md` | ⬜ |
+Full tracker: **`code_practice/11_interview_drills/MASTERY_PLAN.md`**
+
+**Scope: architecture only.** LoRA/QLoRA and RLHF/DPO are parked — adaptation and alignment, not
+architecture. Theory already exists for every board; the gap is recall, not reading.
+
+Each board passes 4 gates: **G1 draw · G2 hand-compute · G3 code in 20 min · G4 defend aloud.**
+No board advances until all four pass.
+
+| # | Board | G1 | Status |
+|---|-------|----|--------|
+| 1–5 | RNN → LSTM → GRU → Attention → Transformer **encoder** | — | ✅ drawn · G3 outstanding |
+| 6 | **Transformer Decoder** ← NEXT | 25 | ⬜ |
+| 7 | Tokenization → Embedding | 15 | ⬜ |
+| 8 | BERT | 20 | ⬜ |
+| 9 | GPT | 20 | ⬜ |
+| 10 | T5 / BART *(= the Donut decoder)* | 25 | ⬜ |
+| 11 | Modern LLM block — pre-LN, RMSNorm, SwiGLU, RoPE, GQA | 25 | ⬜ |
+| 12 | Attention at scale — Flash, KV cache, PagedAttention | 25 | ⬜ |
+| 13 | Long context — RoPE scaling, ALiBi, SWA | 20 | ⬜ |
+| 14 | Mixture of Experts | 20 | ⬜ |
+| 15 | Decoding + speculative | 20 | ⬜ |
+
+Boards 1–5 live in `4.nlp/03_sequence_models/whiteboard/`.
+Boards 6–15 go in **`5.transformers/whiteboard/`**, continuing the numbering.
+
+**Done means:** given any model card (Llama / Mistral / DeepSeek / Qwen), draw the whole model
+from memory — tokens → vectors, each block, what changed since 2017 and why, how generation runs,
+where the memory goes.
 
 Every drill is a literal "I hand-wrote / I built from scratch" claim on the resume — drilling them **is** resume defence.
 
@@ -70,11 +86,26 @@ Hybrid built. `resume/resume_hybrid_MASTER.md` is the **content SSOT** — edit 
 | `resume_hybrid_v1.html` | Single-column ATS-safe fallback for strict Workday/Greenhouse portals |
 | `resume_hybrid_MASTER.md` | Plain-text content source — hand this to Naukri |
 
-**To make the PDF:** open the .html in Safari → File → Print → tick **"Print backgrounds"** under the
-Safari options pane → paper **A4**, scale **100%** → PDF ▾ → **Save as PDF**.
-Without "Print backgrounds" the navy header band and tinted sidebar render white.
+**To make the PDF — scripted (preferred):**
+```bash
+cd resume
+/private/tmp/.../scratchpad/pdfenv/bin/python make_pdf.py resume_sameer_khan_v2.html
+```
+`make_pdf.py` is committed in `resume/`. It needs a playwright venv:
+```bash
+python3 -m venv pdfenv && ./pdfenv/bin/pip install playwright pypdf
+./pdfenv/bin/playwright install chromium
+```
+(the scratchpad venv is temporary — recreate it anywhere, incl. Windows.)
 
-No Chrome / weasyprint / wkhtmltopdf on this Mac — browser print is the render path.
+**Manual fallback:** open the .html in Safari → File → Print → tick **"Print backgrounds"**
+→ A4, scale **100%** → PDF ▾ → Save as PDF. Without that checkbox the navy band and tinted
+sidebar render white.
+
+**Verified 25 Aug** by rendering and inspecting: 2 pages, page-1 main slack 19.7mm /
+sidebar 12.9mm, page-2 slack 16.0mm. PDF text layer extracts main content BEFORE sidebar
+(correct ATS reading order), 719 words selectable on page 1, **0 ligature glyphs** —
+`font-variant-ligatures:none` is set so "first" does not extract as "ﬁrst".
 Old files kept for reference only: `resume_sameer_khan_sr_ML.pdf`, `CustCopy2.pdf` (Naukri draft 1).
 
 ### Open Finding — 02_INTERVIEW_PACK.md is stale

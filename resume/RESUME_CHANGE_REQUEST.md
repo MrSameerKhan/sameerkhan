@@ -1,12 +1,13 @@
 # Resume Change Request — Draft 1 Feedback
 
-**To:** Jaya Waldia, Resume Writing Team, Naukri
-**From:** Sameer Khan
-**Ref:** `#VR#260817TS43026084_43453892#`
+**To:** Jaya Waldia, Resume Writing Team, Naukri  
+**From:** Sameer Khan  
+**Ref:** `#VR#260817TS43026084_43453892#`  
 **Re:** `CustCopy2.pdf` / `CustomerCopy.docx`, received 21 Aug 2026
 
-**Reference layout I have prepared:**
-https://github.com/MrSameerKhan/sameerkhan/blob/main/resume/resume_sameer_khan_v2.html
+**Attached:** `resume_sameer_khan_v2.pdf` — a reference layout I have prepared showing all of
+the changes below already applied. It is a reference for the wording and ordering, not a
+replacement for your template; please treat it as the target content.
 
 ---
 

@@ -15,6 +15,10 @@ body{
   font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
   color:var(--body); font-size:8.5pt; line-height:1.32;
   -webkit-font-smoothing:antialiased;
+  /* ATS: stop fi/fl becoming single ligature glyphs in the PDF text layer,
+     which makes "first" extract as "ﬁrst" and miss keyword searches */
+  font-variant-ligatures:none;
+  font-feature-settings:"liga" 0,"clig" 0,"dlig" 0,"hlig" 0;
 }
 .page{
   width:210mm; height:297mm; background:var(--white);
@@ -29,7 +33,7 @@ body{
 .band::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.2mm;background:var(--blue);}
 .band h1{ font-size:26pt; font-weight:700; letter-spacing:.6px; line-height:1; }
 .band .tag{ margin-top:2.4mm; font-size:9.6pt; font-weight:600; color:#B9D3EE; letter-spacing:.9px; text-transform:uppercase; }
-.band .ct{ margin-top:4mm; font-size:8pt; color:#D7E5F4; display:flex; flex-wrap:wrap; gap:1.5mm 4mm; }
+.band .ct{ margin-top:4mm; font-size:7.5pt; color:#D7E5F4; display:flex; flex-wrap:nowrap; gap:0 3.2mm; white-space:nowrap; }
 .band .ct span{ white-space:nowrap; }
 .band .ct b{ color:var(--white); font-weight:600; }
 
@@ -37,9 +41,9 @@ body{
 .grid{ display:grid; grid-template-columns:58mm 1fr; flex:1 1 auto; min-height:0; }
 .page.cont .grid{ grid-template-columns:14mm 1fr; }
 .page.cont .side{ padding:0; }
-.page.cont .main{ padding:8mm 12mm 7mm 8mm; }
+.page.cont .main{ padding:11mm 12mm 7mm 8mm; }
 .stripe{ height:100%; background:var(--navy); position:relative; }
-.stripe::after{content:"";position:absolute;left:0;right:0;top:0;height:34mm;background:var(--blue);}
+
 .contnote{ font-size:7.8pt; font-weight:700; border-bottom:.8pt solid var(--rule); padding-bottom:1.2mm; color:var(--mute); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:4mm; }
 .mstrip{ display:grid; grid-template-columns:repeat(6,1fr); gap:1.8mm; margin-bottom:4mm; }
 .mstrip div{ background:var(--tint); border-top:2.4pt solid var(--blue); padding:1.8mm 1.2mm; text-align:center; }
@@ -66,7 +70,7 @@ body{
 /* ============ MAIN CONTENT ============ */
 .summary{text-align:justify;}
 .summary b{color:var(--navy);}
-.job{margin-bottom:2.8mm;}
+.job{margin-bottom:4mm;}
 .job:last-child{margin-bottom:0;}
 .jh{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;margin-bottom:1.6mm;}
 .jh .co{font-size:9.6pt;font-weight:700;color:var(--ink);line-height:1.2;}
@@ -74,10 +78,10 @@ body{
 .jh .co .rl{display:block;font-size:8.6pt;font-weight:600;color:var(--blue);margin-top:.5mm;}
 .jh .dt{font-size:8pt;color:var(--white);background:var(--blue);padding:.9mm 2.2mm;white-space:nowrap;flex:0 0 auto;font-weight:600;}
 ul{list-style:none;}
-li{position:relative;padding-left:3.2mm;margin-bottom:1.1mm;text-align:justify;}
+li{position:relative;padding-left:3.2mm;margin-bottom:1.7mm;text-align:justify;}
 li::before{content:"";position:absolute;left:0;top:1.35mm;width:1.5mm;height:1.5mm;background:var(--blue);}
 li b{color:var(--navy);}
-.pj{margin-bottom:3mm;}
+.pj{margin-bottom:4.2mm;}
 .pj .ph{font-size:9.4pt;font-weight:700;color:var(--ink);margin-bottom:1.5mm;border-left:2.4pt solid var(--blue);padding-left:2.4mm;}
 .pj .ph em{font-style:normal;font-weight:400;color:var(--mute);font-size:8.4pt;}
 
@@ -106,11 +110,11 @@ li b{color:var(--navy);}
 .tl .y{color:var(--mute);font-size:7.3pt;}
 
 /* page-1 breathes into its spare vertical space; page-2 stays tight */
-.page:not(.cont) .main li{ margin-bottom:2.9mm; }
-.page:not(.cont) .main .summary{ line-height:1.48; }
-.page:not(.cont) .main .blk{ margin-bottom:6.5mm; }
+.page:not(.cont) .main li{ margin-bottom:6.8mm; }
+.page:not(.cont) .main .summary{ line-height:1.62; }
+.page:not(.cont) .main .blk{ margin-bottom:10mm; }
 .page:not(.cont) .main .jh{ margin-bottom:2.6mm; }
-.page:not(.cont) .main{ padding-top:8mm; }
+.page:not(.cont) .main{ padding-top:12mm; }
 
 @media print{
   html{background:#fff;}

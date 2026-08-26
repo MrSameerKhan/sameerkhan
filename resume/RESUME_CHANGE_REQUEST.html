@@ -1,0 +1,354 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>Resume Change Request — Sameer Khan</title><style>
+@page{size:A4;margin:16mm 15mm 14mm;}
+*{box-sizing:border-box;}
+body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:9.4pt;line-height:1.45;
+ color:#23282e;margin:0;font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0;}
+h1{font-size:17pt;color:#123A63;margin:0 0 3mm;border-bottom:2pt solid #2A6CB0;padding-bottom:2mm;}
+h2{font-size:11.5pt;color:#123A63;margin:8mm 0 2.5mm;border-bottom:.8pt solid #C6D3E0;
+ padding-bottom:1.3mm;break-after:avoid;page-break-after:avoid;}
+h3{font-size:10pt;color:#2A6CB0;margin:5mm 0 2mm;break-after:avoid;}
+p{margin:0 0 2.6mm;}
+table{border-collapse:collapse;width:100%;margin:3mm 0 4mm;font-size:8.5pt;
+ break-inside:avoid;page-break-inside:avoid;}
+th{background:#123A63;color:#fff;text-align:left;padding:1.8mm 2.2mm;font-size:8.3pt;}
+td{border:.5pt solid #C6D3E0;padding:1.8mm 2.2mm;vertical-align:top;}
+tr:nth-child(even) td{background:#F4F8FC;}
+blockquote{margin:3mm 0;padding:2.2mm 4mm;border-left:2.5pt solid #2A6CB0;background:#EDF3F9;
+ font-style:italic;}
+blockquote p{margin:0;}
+code{background:#EDF3F9;padding:.4mm 1.2mm;font-family:"SF Mono",Menlo,monospace;font-size:8.4pt;}
+pre{background:#F4F8FC;border-left:2.5pt solid #2A6CB0;padding:2.5mm 3mm;overflow-x:auto;
+ font-size:8.2pt;break-inside:avoid;}
+pre code{background:none;padding:0;}
+ul,ol{margin:0 0 3mm;padding-left:5mm;} li{margin-bottom:1.4mm;}
+hr{border:none;border-top:.6pt solid #C6D3E0;margin:6mm 0;}
+strong{color:#123A63;}
+</style></head><body><h1>Resume Change Request — Draft 1 Feedback</h1>
+<p><strong>To:</strong> Jaya Waldia, Resume Writing Team, Naukri<br />
+<strong>From:</strong> Sameer Khan<br />
+<strong>Ref:</strong> <code>#VR#260817TS43026084_43453892#</code><br />
+<strong>Re:</strong> <code>CustCopy2.pdf</code> / <code>CustomerCopy.docx</code>, received 21 Aug 2026</p>
+<p><strong>Attached:</strong> <code>resume_sameer_khan_v2.pdf</code> — a reference layout I have prepared showing all of
+the changes below already applied. It is a reference for the wording and ordering, not a
+replacement for your template; please treat it as the target content.</p>
+<hr />
+<p>Thank you for the draft — the structure is a clear improvement on what I sent you, and
+several of your decisions are better than mine (listed in §8). I have gone through it line
+by line and prepared this document so my feedback is specific and testable rather than a
+matter of taste.</p>
+<p>Requests are ranked. <strong>§1 is a factual correction and is not negotiable.</strong> §2–§6 are
+strongly evidenced. §7 is a question, not a request.</p>
+<hr />
+<h2>1. Factual error — the F1 figure reads backwards <em>(must fix)</em></h2>
+<p><strong>Your draft, ICE bullet 4:</strong></p>
+<blockquote>
+<p>"Improved model performance across 946K+ pages by identifying a train-to-benchmark
+taxonomy mismatch <strong>that had reduced F1 from 0.62 to 0.92</strong>"</p>
+</blockquote>
+<p>"Reduced from 0.62 to 0.92" describes an <em>increase</em>. As written, the sentence says the
+defect caused the improvement.</p>
+<p><strong>What actually happened:</strong> the taxonomy mismatch had depressed F1 <strong>to</strong> 0.62. After I
+fixed it, F1 rose <strong>to</strong> 0.92.</p>
+<p><strong>Please use:</strong></p>
+<blockquote>
+<p>"Recovered a production accuracy regression across 946,355 pages by fixing a
+train/benchmark taxonomy mismatch <strong>that took F1 from 0.62 to 0.92</strong>; further established
+that 64% of residual errors were valid predictions discarded by a confidence threshold,
+leading to calibrated per-class selective prediction across all 643 classes."</p>
+</blockquote>
+<p><strong>Why this matters more than the wording:</strong> every interviewer for these roles is an ML
+practitioner. They will notice within one read. The risk is not the typo — it is that it
+implies I did not check my own numbers.</p>
+<hr />
+<h2>2. My current role is written in the past tense</h2>
+<p>ICE Data Services is dated <strong>Nov 2023 – Present</strong>, but every bullet reads <code>Owned</code>,
+<code>Managed</code>, <code>Modernized</code>, <code>Developed</code>. On a current role this reads as though I have left.</p>
+<p><strong>Please convert the ICE bullets to present tense</strong> — <code>Own</code>, <code>Manage</code>, <code>Lead</code> — and keep
+past tense only for completed one-off events (the P1 RCA, the TF1→TF2 migration).</p>
+<p>Prior roles stay in past tense, correctly.</p>
+<hr />
+<h2>3. Core Competencies — please remove, and use the space for domains</h2>
+<p>I want to be precise here, because your cover note gives a specific rationale for this
+block: <em>"keywords mentioned in Core Competencies and across Organisational Experience have
+greater chances of finding a match in Applicant Tracking Systems."</em></p>
+<p>I tested that claim against your own document. I extracted every content word from the 12
+competency phrases and searched for each one in the rest of the resume.</p>
+<table>
+<thead>
+<tr>
+<th>Competency phrase</th>
+<th>Its keywords, counted elsewhere in the same resume</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Document AI &amp; Intelligent Document Processing</td>
+<td>document×24, processing×9 — <em>only new word: "intelligent"</em></td>
+</tr>
+<tr>
+<td>Machine Learning &amp; Multimodal Deep Learning</td>
+<td>machine×4, learning×8, multimodal×5, deep×4</td>
+</tr>
+<tr>
+<td>Computer Vision &amp; OCR-Free AI</td>
+<td>computer×4, vision×5, ocr-free×3</td>
+</tr>
+<tr>
+<td>NLP &amp; Information Extraction</td>
+<td>nlp×1, information×2, extraction×4</td>
+</tr>
+<tr>
+<td>LLM Engineering &amp; Generative AI</td>
+<td>llm×5, engineering×4, generative×4</td>
+</tr>
+<tr>
+<td>RAG &amp; Enterprise Retrieval Systems</td>
+<td>rag×6, enterprise×2, retrieval×7, systems×3</td>
+</tr>
+<tr>
+<td>Transformer Architecture &amp; Model Fine-Tuning</td>
+<td>transformer×5, architecture×7, model×22, fine-tuning×1</td>
+</tr>
+<tr>
+<td>Distributed ML &amp; Large-Scale Model Training</td>
+<td>distributed×5, large-scale×2, model×22, training×9</td>
+</tr>
+<tr>
+<td>MLOps &amp; Production AI Engineering</td>
+<td>mlops×4, production×18, engineering×4</td>
+</tr>
+<tr>
+<td>AWS SageMaker &amp; Cloud AI Engineering</td>
+<td>aws×6, sagemaker×8, cloud×3, engineering×4</td>
+</tr>
+<tr>
+<td>Model Optimization, Inference &amp; AI Reliability</td>
+<td>model×22, optimization×4, inference×2, reliability×2</td>
+</tr>
+<tr>
+<td>AI Solution Architecture &amp; Technical Leadership</td>
+<td>solution×5, architecture×7, technical×3 — <em>only new word: "leadership"</em></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Result: 10 of the 12 phrases contribute no keyword that is not already in the document</strong>,
+usually several times over, and mostly in the Technical Skills block immediately below them.
+The only two new words the block adds are <strong>"intelligent"</strong> and <strong>"leadership"</strong> — neither
+of which a recruiter searches for.</p>
+<h3>There is also an extraction problem</h3>
+<p>I pulled the text layer out of <code>CustCopy2.pdf</code> — this is what a parser receives:</p>
+<pre><code>CORE COMPETENCIES
+EDUCATION
+  B.Tech. - Computer Science &amp; Engineering...
+CERTIFICATIONS
+PERSONAL DETAILS
+CAREER TIMELINE
+Document AI &amp; Intelligent Document Processing
+Machine Learning &amp; Multimodal Deep Learning
+...
+</code></pre>
+<p>The <code>CORE COMPETENCIES</code> heading is separated from its own items, which land after
+<code>CAREER TIMELINE</code>. A keyword-matching ATS still finds the strings, but any parser that maps
+content to sections files them under the wrong heading.</p>
+<p>The same extraction also yields <strong><code>Model FineTuning</code></strong> — the hyphen is destroyed by the line
+break inside the box. A search for "fine-tuning" or "fine tuning" will not match it.</p>
+<h3>One competency I specifically want removed regardless</h3>
+<p><strong>"AI Solution Architecture &amp; Technical Leadership."</strong> I have never held a lead or manager
+title. If a resume claims technical leadership, the interview will test it, and I would
+rather compete on what I can evidence.</p>
+<h3>What to put in that space instead</h3>
+<p><strong>Domain Expertise</strong> — three items, none of which appear anywhere else in the document:</p>
+<ul>
+<li>Mortgage &amp; Loan File Documents</li>
+<li>Retail Banking — Arabic / English</li>
+<li>Identity Verification &amp; KYC</li>
+</ul>
+<p>For Document AI roles, domain match is frequently what shortlists a candidate, and this is
+genuinely absent from the current draft.</p>
+<p><strong>If the block must stay for template reasons:</strong> please trim it to 5–6 items, drop the
+Technical Leadership entry, and build it as a <strong>single-column table with cell shading rather
+than text boxes or SmartArt</strong> — drawing objects sit outside the document flow and many
+parsers skip them entirely, whereas table cells are extracted reliably.</p>
+<hr />
+<h2>4. Please restore seven specific phrases from my original</h2>
+<p>These are not stylistic preferences. <strong>Each one is a question I want an interviewer to ask
+me</strong>, because each is something I can talk about for ten minutes. Generalising them removes
+the hook.</p>
+<table>
+<thead>
+<tr>
+<th>My original</th>
+<th>Your draft</th>
+<th>What is lost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"a multi-head-attention Transformer <strong>I wrote from scratch</strong>"</td>
+<td>"<strong>custom</strong> multi-head-attention Transformer <strong>components</strong>"</td>
+<td>Personal authorship. This single phrase generates more technical interviews than anything else on the page.</td>
+</tr>
+<tr>
+<td>"<strong>Proposed and built</strong> the OCR-free successor"</td>
+<td>"<strong>Developed</strong> an OCR-free Donut/Swin model"</td>
+<td>Initiative. "Proposed" says I identified the opportunity; "developed" says I was assigned it. For a senior IC role that distinction is the whole point.</td>
+</tr>
+<tr>
+<td>"Led the P1 root-cause analysis <strong>that cleared the model</strong>"</td>
+<td>"Led technical RCA for a P1 production regression"</td>
+<td>The outcome. Without it the bullet describes activity, not result — and the result was that my model was exonerated.</td>
+</tr>
+<tr>
+<td>"an input validator was rejecting whole documents, so <strong>one dropped page could null a 530-page file</strong>"</td>
+<td>"rejected complete documents when individual pages failed"</td>
+<td>The concrete image. "530-page file" is what a reader remembers an hour later.</td>
+</tr>
+<tr>
+<td>"I ran the searches inside label and page-count groups <strong>so I could use many small exact searches instead of one approximate index</strong>"</td>
+<td>"Optimized exact retrieval through label/page-count grouping"</td>
+<td>The engineering judgement. At senior level the reasoning <em>is</em> the signal; the mechanism alone reads as a tool list.</td>
+</tr>
+<tr>
+<td>"the bank issued it as a circular… <strong>That fixed the problem at the source instead of in preprocessing</strong>"</td>
+<td>"established a standardized configuration subsequently mandated bank-wide"</td>
+<td>The systems-thinking punchline — I fixed a data problem upstream instead of patching it in code.</td>
+</tr>
+<tr>
+<td>"9 years in Document AI… <strong>applied to one problem across three roles</strong>"</td>
+<td><em>(absent)</em></td>
+<td>My single most differentiating sentence. Nine years of depth on one problem is rare; the draft replaces it with breadth claims that every candidate makes.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. Hard numbers appear too late</h2>
+<p>Counting words from the top of page 1 to the first concrete metric:</p>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Words before the first hard number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Your draft</td>
+<td><strong>~370</strong> (Job Objective + 6 Profile Summary bullets + competency boxes)</td>
+</tr>
+<tr>
+<td>My original</td>
+<td>~30</td>
+</tr>
+</tbody>
+</table>
+<p>A recruiter's first pass is short. In the current draft it lands on <em>"architecture-oriented,"
+"end-to-end exposure," "robust model architectures"</em> — phrasing that does not distinguish me
+from any other applicant. <strong>"643 classes at 1.7M requests/day with 99.99% success"</strong> does.</p>
+<p><strong>Request:</strong> compress the Job Objective to two lines and the Profile Summary from six bullets
+to three, so a hard number appears in the first two lines of the page.</p>
+<p>I am not asking to shorten the resume overall — your Organisational Experience section is a
+good length. The density is concentrated entirely in the top block.</p>
+<hr />
+<h2>6. Three hedging phrases to remove</h2>
+<table>
+<thead>
+<tr>
+<th>Current text</th>
+<th>Problem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"with knowledge and <strong>practical exposure to</strong> LLM-based applications"</td>
+<td>"Exposure" is read by senior hiring managers as <em>has not actually done this</em>.</td>
+</tr>
+<tr>
+<td>"with <strong>growing focus on</strong> Agentic AI and modern GenAI architectures"</td>
+<td>Signals aspiration, not capability — and there is no agentic work on the resume to support it.</td>
+</tr>
+<tr>
+<td>"with a <strong>strong understanding of</strong> designing scalable ML pipelines"</td>
+<td>"Understanding" is weaker than the bullets below it, which describe systems I actually built and run.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Request:</strong> state these concretely or cut them. I would rather claim less and defend all of it.</p>
+<hr />
+<h2>7. Question, not a request — has this template been parser-tested?</h2>
+<p>The two-column layout with a left sidebar is visually strong. My only concern is that some
+enterprise ATS platforms interleave sidebar text into the body when extracting.</p>
+<p><strong>Has this specific template been tested against Workday, Greenhouse and Taleo parsers, or
+against Naukri's own parser?</strong> I am not assuming there is a problem — I would just like to
+know, because most of my applications will go through company portals rather than the Naukri
+portal.</p>
+<p>If it has not been tested, I am happy to keep two versions: your designed layout for the
+Naukri portal and recruiter email, and a single-column variant for strict ATS portals. That
+is a good outcome, not a complaint.</p>
+<hr />
+<h2>8. The blue fields you asked me to complete</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>My answer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Certifications</strong></td>
+<td>I have none. <strong>Please remove the section entirely</strong> rather than leaving it blank — an empty heading draws attention to the gap.</td>
+</tr>
+<tr>
+<td><strong>Date of Birth</strong></td>
+<td><strong>Please remove this field.</strong> Several of my target employers are US/UK-headquartered, where DOB on a resume is discouraged and occasionally triggers compliance filtering. It adds nothing for domestic applications either.</td>
+</tr>
+<tr>
+<td><strong>Languages Known</strong></td>
+<td>English, Hindi, Telugu, Urdu <em>(please confirm this list is correct before it goes in)</em></td>
+</tr>
+<tr>
+<td><strong>"over 9 years of experience"</strong></td>
+<td>Correct. Feb 2017 – present.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>9. What I want kept from your draft</h2>
+<p>To be clear that this is not a rejection — these are improvements on what I sent you, and I
+want them preserved:</p>
+<ol>
+<li><strong>Technical Skills keyword coverage.</strong> Your categorisation is better than mine, and you
+   added terms I had missed — Information Extraction, Model Optimization, Production
+   Monitoring, Confidence Calibration, Image Preprocessing, Instruction Tuning. Keep all of it.</li>
+<li><strong>Deduplication and signature verification promoted to page 1.</strong> In my version both were
+   buried on page 2. You were right to surface them.</li>
+<li><strong>The Zyclyx role split into separate bullets.</strong> I had crammed classifier, detection, OCR,
+   NER and signature verification into one dense bullet. Yours is far more readable.</li>
+<li><strong>The individual-contributor targeting statement.</strong> Useful — it pre-empts the "do you want
+   to move into management?" conversation. I only want it shorter, not gone.</li>
+<li><strong>Reverse-chronological structure and the overall two-page discipline.</strong></li>
+</ol>
+<hr />
+<h2>10. Questions for you</h2>
+<ol>
+<li>Has this template been tested against non-Naukri ATS parsers (§7)?</li>
+<li>Can you send the <strong>editable <code>.docx</code></strong> with each revision, so I can check wording without a
+   round trip?</li>
+<li>If the Core Competencies block is a fixed requirement of the service, can it be built as a
+   shaded table rather than text boxes (§3)?</li>
+<li>Is there a length constraint I should work within if I want the top block compressed (§5)?</li>
+</ol>
+<hr />
+<h2>Appendix — how the evidence in §3 and §5 was produced</h2>
+<ul>
+<li><strong>Keyword counts:</strong> every content word was extracted from the 12 competency phrases,
+  stop-words removed, then counted with word-boundary matching against the full text of
+  <code>CustCopy2.pdf</code> excluding the competency block itself.</li>
+<li><strong>Extraction order and the <code>FineTuning</code> artifact:</strong> taken from the PDF's own text layer —
+  the same layer an ATS reads. Reproducible from the file you sent.</li>
+<li><strong>Word-position counts in §5:</strong> counted from the first word of the document to the first
+  numeric metric.</li>
+</ul>
+<p>Happy to walk through any of this on a call.</p>
+<p>— Sameer</p></body></html>
