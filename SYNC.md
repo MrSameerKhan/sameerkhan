@@ -10,7 +10,7 @@
 | Field | Value |
 |-------|-------|
 | **Machine** | Mac |
-| **Date** | 25 August 2026 |
+| **Date** | 28 August 2026 |
 | **What I did** | Resume work. Compared my resume vs Naukri's paid draft 1 (`CustCopy2.pdf`) — found 3 blocking defects in theirs (unfilled template placeholders, a factually inverted F1 bullet, past tense on a current role). Built the hybrid in two variants: **v2 designed** (two-column, sidebar, colour — the one to send) and **v1 plain** (single-column, ATS-safe fallback). Analysis in `resume/RESUME_COMPARISON.md`. |
 | **Files changed** | `resume/RESUME_COMPARISON.md`, `resume/resume_hybrid_MASTER.md`, `resume/resume_hybrid_v1.html`, `resume/resume_sameer_khan_v2.html`, `resume/RESUME_CHANGE_REQUEST.md` (all new) |
 
@@ -57,6 +57,7 @@ No board advances until all four pass.
 |---|-------|----|--------|
 | 1–5 | RNN → LSTM → GRU → Attention → Transformer **encoder** | — | ✅ drawn · G3 outstanding |
 | 6 | **Transformer Decoder** ← NEXT | 25 | ⬜ |
+| 6b | Encoder w/ multi-head, d_model=4 — **theory written 28 Aug**, board not drawn | 20 | 📄 |
 | 7 | Tokenization → Embedding | 15 | ⬜ |
 | 8 | BERT | 20 | ⬜ |
 | 9 | GPT | 20 | ⬜ |
