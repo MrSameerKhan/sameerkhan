@@ -2,6 +2,8 @@
 
 > T5 (Text-to-Text Transfer Transformer) reframes every NLP task as seq2seq: one encoder, one decoder, one loss. The new concept is cross-attention — decoder Q attends to encoder K, V. Everything else is BERT (encoder self-attention) or GPT (decoder causal self-attention). The architectural insight: encoder reads the full input bidirectionally, decoder generates token-by-token, reading the encoder via cross-attention at every step.
 
+> **Scope boundary.** This file owns **T5 as a model** — span corruption, relative position bias, the variants, BERT/GPT/T5 comparison. For the decoder *mechanism* hand-computed at `d_model=4` with two real heads — `-inf` masking vs zeroing after softmax, rectangular cross-attention, teacher forcing vs autoregressive as one identity, backward checked against `torch.autograd` — see [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md).
+
 ---
 
 ## Quick Reference

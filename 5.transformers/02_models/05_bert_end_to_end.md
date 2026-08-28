@@ -1,1031 +1,802 @@
-# 05 — BERT: Complete End-to-End Walkthrough
+# 05 — BERT: End-to-End with Multi-Head Attention
 
-> Same sentence as all previous files: "cat sat on mat". Same 2D embeddings. New: bidirectional attention, [MASK] token, MLM objective, fine-tuning with [CLS].
-
----
-
-## 0. What BERT Adds Over Plain Transformer
-
-```
-Plain Transformer (06_transformer_end_to_end.md):
-    - Sinusoidal PE + attention + FFN + residual + LN
-    - Trained as DECODER (causal mask — can't see future)
-    - One task: predict next token
-
-BERT adds three things:
-1. BIDIRECTIONAL ATTENTION (no causal mask)
-   Every token attends to ALL other tokens — left AND right context.
-   [MASK] at position 2 can see "cat" (left) AND "on mat" (right).
-   This is why BERT understands context better for understanding tasks.
-
-2. [CLS] SPECIAL TOKEN (classification head)
-   [CLS] is prepended to every input.
-   Its final representation accumulates global sentence meaning.
-   Used as the input to classification heads during fine-tuning.
-
-3. MLM + NSP PRETRAINING OBJECTIVES
-   MLM: randomly mask 15% of tokens → predict them
-   NSP: given two sentences, predict if B follows A
-   (RoBERTa later showed NSP hurts — dropped it)
-
-| Architecture | Attention    | Pretraining | Use Case      |
-|-------------|-------------|------------|---------------|
-| GPT / LLaMA | Causal (→)  | Next token | Generation    |
-| BERT        | Bidirect (↔)| MLM + NSP  | Understanding |
-| T5          | Enc bidirect| Span denois| SeqSeq        |
-```
-
-```mermaid
-flowchart LR
-    A["Input\n'cat sat on mat'"] --> B["Tokenize + special\n[CLS] cat sat on mat [SEP]\n6 tokens"]
-    B --> C["Embeddings\ntoken + segment + pos\n6 × 768"]
-    C --> D["12× Transformer Block\n↔ Bidirectional attention\nno causal mask\n6 × 768"]
-    D --> E["Final hidden states\n6 × 768"]
-    E --> F["[CLS] token h₀\n768-dim\nglobal sentence repr"]
-    E --> G["Token hᵢ\n768-dim each\nper-token repr"]
-    F --> H{"Fine-tune head"}
-    G --> H
-    H -->|"Classification"| I["Linear 768→C\nsoftmax → label"]
-    H -->|"NER"| J["Linear 768→L\nper-token IOB tag"]
-    H -->|"Span QA"| K["Linear 768→2\nstart / end logits"]
-    style D fill:#2980b9,color:#fff
-    style F fill:#8e44ad,color:#fff
-    style I fill:#27ae60,color:#fff
-    style J fill:#27ae60,color:#fff
-    style K fill:#27ae60,color:#fff
-```
+> Companion to [../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md)
+> (the encoder block) and [06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md)
+> (the decoder). **Same dimensions throughout the arc** — `d_model=4`, `n_heads=2`, `d_head=2`,
+> `√d_k=1.414`, `d_ff=8` — so every number here is comparable to those files.
+>
+> BERT = the 06b encoder + three input embeddings instead of one + two pretraining heads.
+> Nothing in the block itself changes. That is the point of this file.
+>
+> Every number below was computed in numpy and re-checked against `torch.autograd`
+> (forward `allclose` to 1.3e-15; total loss `3.638889 → 2.185477` after one SGD step).
 
 ---
 
-## 1. Problem Statement
+## Table of Contents
 
-```
-Sentence:   "cat sat on mat"
-Task 1:     MLM Pretraining — mask "sat", predict it
-Task 2:     Fine-tuning — classify: does the sentence mention a cat? (y=1)
-
-This walkthrough: ONE BERT encoder block.
-    Input:  [CLS] cat [MASK] on mat    (5 tokens, "sat" masked)
-    Step 1: Build input = token_embed + segment_embed + PE
-    Step 2: Bidirectional attention (no causal mask)
-    Step 3: FFN + residuals + LN
-    Step 4: MLM head on [MASK] position → predict "sat"
-    Step 5: Fine-tuning head on [CLS] position → binary classification
-```
-
----
-
-## 2. Input Representation
-
-### 2.1 Token Embeddings
-
-| Word | Index | Embedding |
-|------|-------|-----------|
-| [CLS] | 4 | [0.3, 0.3] ← special token, learned embedding |
-| cat | 0 | [1.0, 0.5] |
-| [MASK] | 5 | [0.0, 0.0] ← special token, zero-initialized |
-| on | 2 | [0.1, 0.1] |
-| mat | 3 | [0.2, 0.4] |
-
-(sat=index 1, embedding [0.2, 0.3] — exists in vocab but MASKED in input)
-
-**Input sequence (5 tokens):**
-```
-pos 0: [CLS]  → [0.3, 0.3]
-pos 1: cat    → [1.0, 0.5]
-pos 2: [MASK] → [0.0, 0.0]
-pos 3: on     → [0.1, 0.1]
-pos 4: mat    → [0.2, 0.4]
-```
-
-### 2.2 Segment Embeddings (Sentence A / B)
-
-For single-sentence tasks: all tokens get segment A embedding.
-For NSP: segment A = first sentence, segment B = second sentence.
-
-```
-Segment A embedding: [0.1, 0.1]  (learned; same for all tokens in sentence A)
-Segment B embedding: [0.2, 0.2]  (used in NSP tasks)
-
-Single sentence (all segment A):
-    [CLS]:  [0.1, 0.1]
-    cat:    [0.1, 0.1]
-    [MASK]: [0.1, 0.1]
-    on:     [0.1, 0.1]
-    mat:    [0.1, 0.1]
-```
-
-### 2.3 Positional Encoding
-
-Same sinusoidal formula as transformer. For d=2:
-```
-pos=0 ([CLS]):  PE = [sin(0), cos(0)]     = [0.000, 1.000]
-pos=1 (cat):    PE = [sin(13), cos(13)]   = [0.841, 0.540]
-pos=2 ([MASK]): PE = [sin(2), cos(2)]     = [0.909, -0.416]
-pos=3 (on):     PE = [sin(3), cos(3)]     = [0.141, -0.990]
-pos=4 (mat):    PE = [sin(4), cos(4)]     = [-0.757, -0.654]
-
-Note: cos(4) = -0.654, sin(4) = -0.757
-```
-
-### 2.4 Final Input = Token + Segment + PE
-
-| Token | Segment | PE | X_input |
-|-------|---------|-----|---------|
-| [CLS]: [0.3,0.3] | +[0.1,0.1] | +[0.000, 1.000] | [0.400, 1.400] |
-| cat:   [1.0,0.5] | +[0.1,0.1] | +[0.841, 0.540] | [1.941, 1.140] |
-| [MASK]:[0.0,0.0] | +[0.1,0.1] | +[0.909,-0.416] | [1.009,-0.316] |
-| on:    [0.1,0.1] | +[0.1,0.1] | +[0.141,-0.990] | [0.341,-0.790] |
-| mat:   [0.2,0.4] | +[0.1,0.1] | +[-0.757,-0.654]| [-0.457,-0.154] |
-
-Note: [MASK] input = [1.009, -0.316]
-Token embed = [0,0] so the representation comes ENTIRELY from segment+PE.
-This is intentional — [MASK] has no semantic context; context must fill it in.
+1. What BERT adds over the plain encoder
+2. Setup — a sentence pair, dimensions
+3. Input = token + segment + **learned** position
+4. Weight setup
+5. Bidirectional multi-head attention
+6. **Why bidirectional** — what the causal mask would have cost
+7. Add & Norm 1
+8. FFN — **GELU**, not ReLU
+9. Add & Norm 2 → encoder output
+10. Head 1 — MLM
+11. Head 2 — NSP
+12. Backward — where two objectives send gradient
+13. Weight update — and multi-task interference
+14. The 80/10/10 masking rule
+15. Fine-tuning from `[CLS]`
+16. Where BERT-base's 110M parameters live
+17. BERT vs GPT vs the plain encoder
+18. Quick reference
 
 ---
 
-## 3. Weight Setup
+## 1. What BERT adds over the plain encoder
 
-Same Wq, Wk, Wv, W1, W2 as the transformer walkthrough:
-```python
-Wq = [[0.60, 0.40], [0.20, 0.50]]
-Wk = [[0.50, 0.30], [0.10, 0.40]]
-Wv = [[0.80, 0.20], [0.30, 0.70]]
+| | 06b (plain encoder) | **BERT (this file)** |
+|---|---|---|
+| Input embedding | token + sinusoidal PE | **token + segment + learned position** |
+| Position encoding | sinusoidal, fixed | **learned, a trainable table** |
+| Attention | bidirectional | bidirectional — *unchanged* |
+| FFN activation | ReLU | **GELU** |
+| Output heads | none | **MLM head + NSP head** |
+| Loss | — | **two cross-entropies, summed** |
+| Special tokens | none | `[CLS]`, `[SEP]`, `[MASK]` |
 
-W1 (2×4): [[0.5, 0.3, 0.2, 0.1], [0.4, 0.2, 0.3, 0.1]]
-b1 = zeros(4)
-W2 (4×2): [[0.5, 0.3], [0.2, 0.4], [0.3, 0.2], [0.1, 0.5]]
-b2 = zeros(2)
+**The transformer block is byte-for-byte the same block as 06b.** BERT is not a new architecture —
+it is an encoder stack plus a *pretraining recipe*. Everything novel is at the input boundary and
+the output boundary.
 
-MLM head W_mlm (2×vocab, vocab=5: cat,sat,on,mat,CLS/MASK special):
-    [[0.5, 0.3, 0.2, 0.1],
-     [0.2, 0.4, 0.1, 0.3]]
-# (columns: CLS, cat, sat, on, mat... but CLS/MASK are never targets)
-# We only care about columns for real words: cat(0), sat(1), on(2), mat(3)
-
-Classification head W_cls (2×1) for fine-tuning from [CLS]:
-    W_cls = [0.5, 0.3]    b_cls = 0
-```
+> **Correction to be aware of.** BERT does **not** use sinusoidal position encoding. The 2017 paper
+> did; BERT replaced it with a *learned* embedding table of shape `(max_position, d_model)` =
+> `(512, 768)`. This is why BERT cannot accept a sequence longer than 512 tokens — there is no row
+> 513 in the table. Sinusoidal encoding has no such limit. This is a standard interview question and
+> getting it backwards is a tell.
 
 ---
 
-## 4. Forward Pass — MLM Pretraining
-
-### Step 1: Compute Q, K, V
+## 2. Setup
 
 ```
-Q = X_input @ Wq:
-q_cls:  [0.400×0.60+1.400×0.20, 0.400×0.40+1.400×0.50] = [0.240+0.280, 0.160+0.700] = [0.520, 0.860]
-q_cat:  [1.941×0.60+1.140×0.20, 1.941×0.40+1.140×0.50] = [1.165+0.228, 0.776+0.570] = [1.393, 1.346]
-q_mask: [1.009×0.60+(-0.316)×0.20, 1.009×0.40+(-0.316)×0.50] = [0.605-0.063, 0.404-0.158] = [0.542, 0.246]
-q_on:   [0.341×0.60+(-0.790)×0.20, 0.341×0.20+(-0.790)×0.50] = [0.205-0.158, 0.136-0.395] = [0.047, -0.259]
-q_mat:  [(-0.457)×0.60+(-0.154)×0.20, (-0.457)×0.40+(-0.154)×0.50] = [-0.274-0.031, -0.183-0.077]
-       = [-0.305, -0.260]
+Segment A:  bank approved          Segment B:  loan
+Full input: [CLS] bank approved [SEP] loan [SEP]
+Masked:     [CLS] [MASK] approved [SEP] loan [SEP]      <- 'bank' is masked
 
-K = X_input @ Wk:
-k_cls:  [0.300, 0.560]
-k_cat:  [0.773, 0.177]
-k_mask: [0.505, -0.033, 0.103-0.126] = [0.585-0.032, 0.103-0.126] = ...
-k_on:   [0.179, -0.213]
-k_mat:  [-0.281, -0.199]
+L = 6      d_model = 4      n_heads = 2      d_head = 2      d_ff = 8      √d_k = 1.4142
 
-V = X_input @ Wv:
-v_cls:  [0.740, 1.060]
-v_cat:  [1.895, 1.186]
-v_mask: [0.712, -0.019]
-v_on:   [0.037, -0.453]
-v_mat:  [-0.412, -0.199]
-
-Summary table:
-         Q              K              V
-[CLS]: [0.520, 0.860]  [0.340, 0.680]  [0.740, 1.060]
-cat:   [1.393, 1.346]  [1.085, 0.838]  [1.895, 1.186]
-[MASK]:[0.542, 0.246]  [0.472, 0.177]  [0.712, -0.019]
-on:    [0.047,-0.259]  [0.092,-0.453]  [0.036,-0.086]
-mat:   [-0.305,-0.260] [-0.281,-0.199] [-0.412,-0.199]
+MLM target : position 1 -> 'bank'
+NSP target : IsNext (class 1)
 ```
 
-### Step 2: Bidirectional Attention (No Causal Mask)
+**Why this sentence.** It is 06b's sentence, cut into a pair. `bank` is the ambiguous token, and it
+is the one masked — so the model must recover it from `approved` and `loan`, which sit **to its
+right**. A causal model structurally cannot do this. §6 measures exactly how much it cannot.
 
-**Focus on [MASK] row (the position we need to predict):**
+### 2.1 Vocabulary
+
+`V = 8`. `bank`, `approved`, `the`, `loan` reuse 06b's vectors unchanged.
+
+| Token | Index | Embedding | Note |
+|---|---|---|---|
+| `[CLS]` | 0 | `[0.2, 0.2, 0.2, 0.2]` | sentence-level slot |
+| `[SEP]` | 1 | `[0.1, 0.1, 0.1, 0.1]` | segment separator |
+| `[MASK]` | 2 | `[0.0, 0.0, 0.0, 0.0]` | **zero on purpose** — see §3.4 |
+| bank | 3 | `[1.0, 0.8, 0.1, 0.1]` | 06b |
+| approved | 4 | `[0.3, 0.2, 0.4, 0.3]` | 06b |
+| the | 5 | `[0.1, 0.1, 0.2, 0.2]` | 06b |
+| loan | 6 | `[0.1, 0.1, 1.0, 0.9]` | 06b |
+| granted | 7 | `[0.2, 0.1, 0.5, 0.4]` | |
+
+---
+
+## 3. Input = token + segment + learned position
+
+BERT sums **three** embeddings. All three are `(·, d_model)` and all three are learned.
+
+### 3.1 Token embeddings
 
 ```
-Score row for [MASK] query q_mask=[0.542, 0.246], scaled by √2=1.414:
-
-s_mask_cls  = (0.542×0.340 + 0.246×0.680)/1.414 = (0.184+0.167)/1.414 = 0.351/1.414 = 0.248
-s_mask_cat  = (0.542×1.085 + 0.246×0.838)/1.414 = (0.588+0.206)/1.414 = 0.843/1.414 = 0.596
-s_mask_mask = (0.542×0.472 + 0.246×0.177)/1.414 = (0.256+0.044)/1.414 = 0.300/1.414 = 0.212
-s_mask_on   = (0.542×0.092 + 0.246×(-0.453))/1.414 = (0.050-0.111)/1.414 = -0.003
-s_mask_mat  = (0.542×(-0.281)+0.246×(-0.199))/1.414 = (-0.132-0.049)/1.414 = -0.128
-
-Scaled scores: [0.248, 0.596, 0.212, -0.002, -0.128]
-
-Softmax (bidirectional — all 5 positions visible):
-exp(0.248)=1.281, exp(0.596)=1.815, exp(0.212)=1.236, exp(-0.002)=0.998, exp(-0.128)=0.880
-sum = 6.210
-
-A_mask = [1.281/6.210, 1.815/6.210, 1.236/6.210, 0.998/6.210, 0.880/6.210]
-       = [0.206, 0.292, 0.199, 0.161, 0.142]
-
-Attention weights for [MASK]:
-    [CLS]=0.206  cat=0.292  [MASK]=0.199  on=0.161  mat=0.142
+pos 0  [CLS]     [0.2000,  0.2000,  0.2000,  0.2000]
+pos 1  [MASK]    [0.0000,  0.0000,  0.0000,  0.0000]
+pos 2  approved  [0.3000,  0.2000,  0.4000,  0.3000]
+pos 3  [SEP]     [0.1000,  0.1000,  0.1000,  0.1000]
+pos 4  loan      [0.1000,  0.1000,  1.0000,  0.9000]
+pos 5  [SEP]     [0.1000,  0.1000,  0.1000,  0.1000]
 ```
 
-**What BERT's bidirectionality gives [MASK]:**
+### 3.2 Segment embeddings
+
+Two rows only — segment A and segment B. Every token in a segment gets the *same* vector.
+
 ```
-CAUSAL (GPT): [MASK] at pos 2 can only see pos 0 and 1
-    Can see: [CLS], cat
-    Cannot see: on, mat  ← blocked by causal mask
-
-BIDIRECTIONAL (BERT): sees ALL positions
-    Attends to: cat(0.292) [CLS](0.206) self(0.199) on(0.161) mat(0.142)
-
-"sat" is predicted from BOTH "cat" (left context) AND
-"on mat" (right context). Both help: cats SAT, sat ON mat.
-This is fundamentally why BERT outperforms GPT on understanding tasks.
+E_A = [0.10, 0.00, 0.10, 0.00]      positions 0-3   ([CLS] [MASK] approved [SEP])
+E_B = [0.00, 0.10, 0.00, 0.10]      positions 4-5   (loan [SEP])
 ```
 
-**Compute context vector for [MASK]:**
 ```
-c_mask[0] = 0.206×0.740 + 0.292×1.895 + 0.199×0.712 + 0.161×0.036 + 0.142×(-0.412)
-          = 0.152 + 0.553 + 0.142 + 0.006 - 0.058 = 0.795
-c_mask[1] = 0.206×1.060 + 0.292×1.186 + 0.199×(-0.019) + 0.161×(-0.085) + 0.142×(-0.199)
-          = 0.218 + 0.346 - 0.004 - 0.078 - 0.028 = 0.454
-
-c_mask = [0.795, 0.454]
+pos 0  [0.1000,  0.0000,  0.1000,  0.0000]
+pos 1  [0.1000,  0.0000,  0.1000,  0.0000]
+pos 2  [0.1000,  0.0000,  0.1000,  0.0000]
+pos 3  [0.1000,  0.0000,  0.1000,  0.0000]
+pos 4  [0.0000,  0.1000,  0.0000,  0.1000]
+pos 5  [0.0000,  0.1000,  0.0000,  0.1000]
 ```
 
-**Also compute [CLS] context (needed for fine-tuning):**
+The trailing `[SEP]` at position 3 belongs to segment **A**, not B. Off-by-one here is a real bug
+in hand-rolled BERT preprocessing.
+
+### 3.3 Learned position embeddings
+
+Not a formula — a lookup table, updated by gradient descent like any other weight:
+
 ```
-Scores for [CLS] query q_cls=[0.520, 0.860]:
-s_cls_cls  = (0.520×0.340+0.860×0.680)/1.414 = 0.762/1.414 = 0.539
-s_cls_cat  = (0.520×1.085+0.860×0.838)/1.414 = 1.287/1.414 = 0.910
-s_cls_mask = (0.520×0.472+0.860×0.177)/1.414 = 0.397/1.414 = 0.281
-s_cls_on   = (0.520×0.092+0.860×(-0.453))/1.414 = -0.342/1.414 = -0.096
-s_cls_mat  = (0.520×(-0.281)+0.860×(-0.199))/1.414 = -0.318/1.414 = -0.225
+        dim0     dim1     dim2     dim3
+pos 0 [ 0.3000,  0.1000, -0.2000,  0.2000]
+pos 1 [ 0.0000,  0.0000,  0.5000,  0.3000]
+pos 2 [-0.2000,  0.3000,  0.4000,  0.0000]
+pos 3 [ 0.1000, -0.3000,  0.2000,  0.4000]
+pos 4 [ 0.4000,  0.2000, -0.1000, -0.3000]
+pos 5 [-0.3000,  0.1000,  0.2000,  0.2000]
+```
 
-Softmax([0.539, 0.910, 0.281, -0.096, -0.225]):
-exp: [1.714, 2.484, 1.324, 0.908, 0.798]  sum=7.559
-A_cls = [0.227, 0.771, 0.175, 0.120, 0.107]
+Contrast with 06b §3.2, where every row was `sin`/`cos` of the position — computed, not stored, and
+defined for any position you ask for. Here row 6 does not exist.
 
-[CLS] attends most to cat (0.371) then itself (0.227).
-This is how [CLS] accumulates sentence meaning — it aggregates information
-from all tokens, becoming a global sentence representation.
+### 3.4 X = token + segment + position
 
-c_cls[0] = 0.227×0.740 + 0.771×1.895 + 0.175×0.712 + 0.120×0.036 + 0.107×(-0.412)
-          = 0.168 + 0.703 + 0.125 + 0.004 - 0.044 = 0.956
-c_cls[1] = 0.227×1.060 + 0.771×1.186 + 0.175×(-0.019) + 0.120×(-0.485) + 0.107×(-0.199)
-          = 0.241 + 0.914 - 0.003 - 0.058 - 0.021 = 1.073
-           (slightly off — rounding; approx [0.956, 1.073])
+```
+               dim0     dim1     dim2     dim3
+[CLS]      [ 0.6000,  0.3000,  0.1000,  0.4000]
+[MASK]     [ 0.1000,  0.0000,  0.6000,  0.3000]
+approved   [ 0.2000,  0.5000,  0.9000,  0.3000]
+[SEP]      [ 0.3000, -0.2000,  0.4000,  0.5000]
+loan       [ 0.5000,  0.4000,  0.9000,  0.7000]
+[SEP]      [-0.2000,  0.3000,  0.3000,  0.4000]
+```
 
-c_cls = [0.956, 0.599]
+Shape `(6, 4)`.
+
+**Look at row 1.** The `[MASK]` token embedding is all zeros, so
+`X[1] = 0 + E_A + P_1 = [0.1, 0.0, 0.6, 0.3]` — its representation comes **entirely from segment and
+position**. The `[MASK]` query carries no content of its own. Everything it eventually predicts has
+to be pulled in from other positions by attention. That is the mechanism of MLM in one line.
+
+(Real `[MASK]` embeddings are randomly initialised and then learned, not zero. Zero here makes the
+point legible.)
+
+---
+
+## 4. Weight setup
+
+`Wq`, `Wk`, `Wv`, `W_o` are **identical to 06b** — so any difference from 06b's numbers comes from
+the input, not the weights.
+
+```
+Wq                              Wk
+[[1.2, 0.0, 0.0, 0.0],          [[1.0, 0.2, 0.0, 0.0],
+ [0.0, 1.2, 0.0, 0.0],           [0.2, 1.0, 0.0, 0.0],
+ [0.0, 0.0, 1.2, 0.0],           [0.0, 0.0, 1.0, 0.2],
+ [0.0, 0.0, 0.0, 1.2]]           [0.0, 0.0, 0.2, 1.0]]
+
+Wv                              W_o
+[[0.9, 0.1, 0.0, 0.0],          [[0.9, 0.1, 0.1, 0.0],
+ [0.1, 0.9, 0.0, 0.0],           [0.1, 0.9, 0.0, 0.1],
+ [0.0, 0.0, 0.9, 0.1],           [0.1, 0.0, 0.9, 0.1],
+ [0.0, 0.0, 0.1, 0.9]]           [0.0, 0.1, 0.1, 0.9]]
+```
+
+FFN (same as 06c), MLM head `(4 × 8)`, NSP head `(4 × 2)`:
+
+```
+W1 (4 × 8)                                                    W2 (8 × 4)
+[[ 0.30,-0.20, 0.10, 0.40,-0.30, 0.20, 0.10,-0.10],           [[ 0.20,-0.10, 0.30, 0.10],
+ [ 0.10, 0.30,-0.20, 0.10, 0.20,-0.30, 0.40, 0.20],            [-0.10, 0.30, 0.10, 0.20],
+ [-0.20, 0.10, 0.40,-0.30, 0.10, 0.20,-0.10, 0.30],            [ 0.30, 0.20,-0.10, 0.10],
+ [ 0.20, 0.40,-0.10, 0.20,-0.20, 0.10, 0.30,-0.20]]            [ 0.10, 0.10, 0.20, 0.30],
+                                                               [-0.20, 0.30, 0.10,-0.10],
+W_mlm (4 × 8)   cols = [CLS] [SEP] [MASK] bank approved the loan granted
+[[ 0.3,-0.2, 0.1, 0.5,-0.1, 0.2, 0.4, 0.1],                    [ 0.30,-0.20, 0.20, 0.10],
+ [-0.2, 0.4, 0.2,-0.3, 0.5, 0.1,-0.2, 0.3],                    [ 0.10, 0.20, 0.30,-0.20],
+ [ 0.1, 0.3,-0.2, 0.2, 0.1,-0.1, 0.6, 0.2],                    [ 0.20, 0.10,-0.20, 0.30]]
+ [ 0.4, 0.1, 0.3, 0.1, 0.2, 0.5, 0.3,-0.1]]
+
+W_nsp (4 × 2)   cols = [NotNext, IsNext]
+[[ 0.4,-0.3],
+ [-0.2, 0.5],
+ [ 0.3, 0.1],
+ [ 0.1, 0.2]]
 ```
 
 ---
 
-## 5. Step 3: Residual + LayerNorm + FFN
+## 5. Bidirectional multi-head attention
 
-**Residual 1 (post-attention):**
-```
-x_attn = X_input + C  (adding context to original input)
-
-[CLS]:  [0.400, 1.400] + [0.956, 0.599] = [1.356, 1.999]
-[MASK]: [1.009,-0.316] + [0.795, 0.454] = [1.804, 0.138]
-(Only tracking CLS and MASK — they're used in the output)
-```
-
-**LayerNorm:**
-```
-[MASK]: x=[1.804, 0.138]
-    μ=(1.804+0.138)/2=0.971, σ=(1.804-0.138)/2/√3=0.833
-    LN([MASK]) = [-1.000, 1.000]  (normalize to zero mean, unit variance)
-
-[CLS]: x=[1.356, 1.999]
-    μ=(1.356+1.999)/2=1.678, σ=(1.999-1.356)/2/√3=0.322
-    LN([CLS]) = [-1.000, 1.000]
-```
-
-**FFN:**
-```
-[MASK] (LN=[1.000, -1.000]):
-    pre_act = [0.1, 0.3, -0.1, 0.0]
-    h = ReLU = [0.1, 0.3, 0.0, 0.0]
-    FFN_out_mask = [0.07, 0.07]
-
-[CLS] (LN=[-1.000, 1.000]):
-    pre_act = [-0.1, -0.3, 0.1, 0.0]
-    h = ReLU = [0.0, 0.0, 0.1, 0.0]
-    FFN_out_cls = [0.03, 0.02]
-```
-
-**Residual 2 (final representations):**
-```
-x_final = x_attn + FFN_out
-
-x_final_mask = [1.804, 0.138] + [0.07, 0.07] = [1.874, 0.208]
-x_final_cls  = [1.356, 1.999] + [0.03, 0.02] = [1.386, 2.019]
-```
-
----
-
-## 6. MLM Head — Predict "sat" at [MASK]
+### 5.1 Q, K, V
 
 ```
-The MLM head takes x_final_mask and projects to vocabulary logits.
+Q = X @ Wq                                K = X @ Wk
+[[ 0.7200,  0.3600,  0.1200,  0.4800],    [[ 0.6600,  0.4200,  0.1800,  0.4200],
+ [ 0.1200,  0.0000,  0.7200,  0.3600],     [ 0.1000,  0.0200,  0.6600,  0.4200],
+ [ 0.2400,  0.6000,  1.0800,  0.3600],     [ 0.3000,  0.5400,  0.9600,  0.4800],
+ [ 0.3600, -0.2400,  0.4800,  0.6000],     [ 0.2600, -0.1400,  0.5000,  0.5800],
+ [ 0.6000,  0.4800,  1.0800,  0.8400],     [ 0.5800,  0.5000,  1.0400,  0.8800],
+ [-0.2400,  0.3600,  0.3600,  0.4800]]     [-0.1400,  0.2600,  0.3800,  0.4600]]
 
-W_mlm (2×4, columns = cat/sat/on/mat):
-    [[0.5, 0.3, 0.2, 0.1],
-     [0.2, 0.4, 0.1, 0.3]]
-
-logits = x_final_mask @ W_mlm
-       = [1.874, 0.208] @ [[0.5, 0.3, 0.2, 0.1],
-                            [0.2, 0.4, 0.1, 0.3]]
-logit[cat] = 1.874×0.5 + 0.208×0.2 = 0.937 + 0.042 = 0.979
-logit[sat] = 1.874×0.3 + 0.208×0.4 = 0.562 + 0.083 = 0.645
-logit[on]  = 1.874×0.2 + 0.208×0.1 = 0.375 + 0.021 = 0.396
-logit[mat] = 1.874×0.1 + 0.208×0.3 = 0.187 + 0.062 = 0.249
-
-logits = [0.979, 0.645, 0.396, 0.249]
-
-Softmax:
-exp(0.979)=2.662, exp(0.645)=1.906, exp(0.396)=1.486, exp(0.249)=1.283
-sum = 7.337
-
-P(cat) = 2.662/7.337 = 0.363
-P(sat) = 1.906/7.337 = 0.260  ← correct answer (target)
-P(on)  = 1.486/7.337 = 0.203
-P(mat) = 1.283/7.337 = 0.175
+V = X @ Wv
+[[ 0.5700,  0.3300,  0.1300,  0.3700],
+ [ 0.0900,  0.0100,  0.5700,  0.3300],
+ [ 0.2300,  0.4700,  0.8400,  0.3600],
+ [ 0.2500, -0.1500,  0.4100,  0.4900],
+ [ 0.4900,  0.4100,  0.8800,  0.7200],
+ [-0.1500,  0.2500,  0.3100,  0.3900]]
 ```
 
----
+Then the reshape into heads — columns 0-1 to head 0, columns 2-3 to head 1. A **reshape, not a
+projection**, exactly as in 06b §6.
 
-## 7. MLM Loss
-
-```
-Target: "sat" (index 1)
-Loss = cross-entropy at [MASK] position only
-
-L_mlm = -log(P(sat)) = -log(0.260) = 1.347
-
-Note: BERT only computes loss on MASKED positions (15% of tokens).
-The other 85% of tokens contribute nothing to the MLM loss.
-This is different from GPT which computes loss on EVERY token.
-
-| MLM loss at initialization: 1.347                                |
-| Expected if random guessing (4-way): -log(0.25) = 1.386         |
-| Slightly better than random — weight initialization helps        |
-```
-
----
-
-## 8. MLM Backward Pass
-
-### Step A: Gradient at logits
+### 5.2 Head 0 — dims 0-1
 
 ```
-∂L/∂logits = probs - one_hot(target)
-           = [0.363, 0.260, 0.203, 0.175] - [0, 1, 0, 0]
-           = [0.363, -0.740, 0.203, 0.175]
+scores = Q₀ K₀ᵀ / √2
 
-Interpretation:
-    cat logit needs to go DOWN (0.363 → target 0) + gradient +0.363
-    sat logit needs to go UP (-0.740 → 0) + gradient -0.740 → strongest signal
-    on, mat need to go down slightly
+            [CLS]  [MASK]  approved  [SEP]    loan   [SEP]
+[CLS]    [ 0.4429, 0.0560,  0.2902, 0.0967, 0.4226,-0.0051]
+[MASK]   [ 0.0560, 0.0085,  0.0255, 0.0221, 0.0492,-0.0119]
+approved [ 0.2902, 0.0255,  0.2800,-0.0153, 0.3106, 0.0865]
+[SEP]    [ 0.0967, 0.0221, -0.0153, 0.0899, 0.0628,-0.0798]
+loan     [ 0.4226, 0.0492,  0.3106, 0.0628, 0.4158, 0.0288]
+[SEP]    [-0.0051,-0.0119,  0.0865,-0.0798, 0.0288, 0.0899]
+
+A₀ = softmax(scores, dim=-1)          NO MASK — the matrix is full
+
+            [CLS]  [MASK]  approved  [SEP]    loan   [SEP]
+[CLS]    [ 0.2056, 0.1396, 0.1765, 0.1454, 0.2015, 0.1314]
+[MASK]   [ 0.1719, 0.1639, 0.1667, 0.1662, 0.1707, 0.1606]   <- nearly uniform
+approved [ 0.1876, 0.1440, 0.1857, 0.1382, 0.1915, 0.1530]
+[SEP]    [ 0.1779, 0.1651, 0.1591, 0.1767, 0.1720, 0.1491]
+loan     [ 0.2021, 0.1391, 0.1807, 0.1410, 0.2007, 0.1363]
+[SEP]    [ 0.1626, 0.1615, 0.1782, 0.1509, 0.1682, 0.1788]
 ```
 
-### Step B: Gradient Through W_mlm
+### 5.3 Head 1 — dims 2-3
 
 ```
-∂L/∂W_mlm = x_final_mask^T ⊗ ∂L/∂logits
+scores = Q₁ K₁ᵀ / √2
 
-x_final_mask = [1.874, 0.208]  (column vector when transposed)
+            [CLS]  [MASK]  approved  [SEP]    loan   [SEP]
+[CLS]    [ 0.1578, 0.1986, 0.2444, 0.2393, 0.3869, 0.1884]
+[MASK]   [ 0.1986, 0.4429, 0.6109, 0.4022, 0.7535, 0.3106]
+approved [ 0.2444, 0.6109, 0.8553, 0.5295, 1.0182, 0.4073]
+[SEP]    [ 0.2393, 0.4022, 0.5295, 0.4158, 0.7263, 0.3241]
+loan     [ 0.3869, 0.7535, 1.0182, 0.7263, 1.3169, 0.5634]
+[SEP]    [ 0.1884, 0.3106, 0.4073, 0.3241, 0.5634, 0.2529]
 
-∂L/∂W_mlm = [[1.874], [0.208]] ⊗ [[0.363, -0.740, 0.203, 0.175]]
+A₁ = softmax(scores, dim=-1)
 
-Row 0 (dim 0 of x_final_mask = 1.874):
-    = [1.874×0.363, 1.874×(-0.740), 1.874×0.203, 1.874×0.175]
-    = [0.680, -1.387, 0.381, 0.328]
-
-Row 1 (dim 1 of x_final_mask = 0.208):
-    = [0.208×0.363, 0.208×(-0.740), 0.208×0.203, 0.208×0.175]
-    = [0.076, -0.154, 0.042, 0.036]
-
-∂L/∂W_mlm = [[0.680, -1.387, 0.381, 0.328],
-              [0.076, -0.154, 0.042, 0.036]]
-
-Largest gradient: W_mlm[:,sat] (column 1) gets biggest update.
-This pushes the "sat" logit higher for inputs similar to x_final_mask.
+            [CLS]  [MASK]  approved  [SEP]    loan   [SEP]
+[CLS]    [ 0.1537, 0.1601, 0.1676, 0.1668, 0.1933, 0.1585]
+[MASK]   [ 0.1270, 0.1622, 0.1918, 0.1557, 0.2212, 0.1421]   <- the row that matters
+approved [ 0.1116, 0.1610, 0.2056, 0.1484, 0.2420, 0.1314]
+[SEP]    [ 0.1347, 0.1586, 0.1801, 0.1607, 0.2193, 0.1467]
+loan     [ 0.1058, 0.1526, 0.1989, 0.1485, 0.2681, 0.1262]
+[SEP]    [ 0.1420, 0.1605, 0.1768, 0.1627, 0.2066, 0.1515]
 ```
 
-### Step C: Gradient to x_final_mask
+**Row `[MASK]` in head 1: `loan` = 0.2212, `approved` = 0.1918 — the top two.** Those are precisely
+the two content words that disambiguate `bank`, and both sit to the *right* of the mask. Head 0's
+same row is flat (`0.1606 … 0.1719`, spread 0.011) and has not differentiated at all.
+
+> **Honest note, same as 06b and 06c.** The embeddings and position table were chosen so head 1's
+> preference is visible. Head 0 being flat is what untrained attention actually looks like, and it
+> is left in rather than tuned away. Head specialisation is a property of **trained** models; the
+> architecture only makes it possible.
+
+### 5.4 Concat + W_o
 
 ```
-∂L/∂x_final_mask = ∂L/∂logits @ W_mlm^T
+O₀                        O₁                        concat = [O₀ ‖ O₁]
+[[0.2857, 0.2458],        [[0.5397, 0.4528],        [[0.2857, 0.2458, 0.5397, 0.4528],
+ [0.2522, 0.2219],         [0.5726, 0.4605],         [0.2522, 0.2219, 0.5726, 0.4605],
+ [0.2680, 0.2467],         [0.5935, 0.4666],         [0.2680, 0.2467, 0.5935, 0.4666],
+ [0.2590, 0.2164],         [0.5635, 0.4608],         [0.2590, 0.2164, 0.5635, 0.4608],
+ [0.2824, 0.2482],         [0.6037, 0.4761],         [0.2824, 0.2482, 0.6037, 0.4761],
+ [0.2415, 0.2300]]         [0.5539, 0.4567]]         [0.2415, 0.2300, 0.5539, 0.4567]]
 
-W_mlm^T (4×2):
-    [[0.5, 0.2],
-     [0.3, 0.4],
-     [0.2, 0.1],
-     [0.2, 0.3]]
-
-∂L/∂x_final_mask[0] = 0.363×0.5 + (-0.740)×0.3 + 0.203×0.2 + 0.175×0.1
-                     = 0.182 - 0.222 + 0.041 + 0.018 = 0.019
-∂L/∂x_final_mask[1] = 0.363×0.2 + (-0.740)×0.4 + 0.203×0.1 + 0.175×0.3
-                     = 0.073 - 0.296 + 0.020 + 0.053 = -0.150
-
-∂L/∂x_final_mask = [0.019, -0.150]
-```
-
-### Step D: Residual 2 Split
-
-```
-x_final_mask = x_attn_mask + FFN_out_mask   (residual connection)
-
-∂L/∂x_attn_mask = [0.019, -0.150]  ← direct highway
-∂L/∂FFN_out_mask = [0.019, -0.150]  ← FFN path
-```
-
-### Step F: Residual 1 Split → Attention Gradient
-
-```
-∂L/∂x_attn_mask = [0.019, -0.150]
-LN blocks the FFN path gradient for d=2, same as transformer file.
-
-Splits through residual 1:
-∂L/∂x_input_mask = [0.019, -0.150]  ← highway to input embedding+PE
-∂L/∂c_mask       = [0.019, -0.150]  ← gradient to attention output
-```
-
-### Step G: Gradient Through Wv (via MASK context)
-
-```
-∂L/∂V[1] = A_mask[1] × ∂L/∂c_mask   (how much each value contributed)
-
-∂L/∂v_cls  = 0.206 × [0.019,-0.150] = [0.004, -0.031]
-∂L/∂v_cat  = 0.292 × [0.019,-0.150] = [0.006, -0.044]
-∂L/∂v_mask = 0.199 × [0.019,-0.150] = [0.004, -0.030]
-∂L/∂v_on   = 0.161 × [0.019,-0.150] = [0.003, -0.024]
-∂L/∂v_mat  = 0.142 × [0.019,-0.150] = [0.003, -0.021]
-
-∂L/∂Wv = x_input^T @ ∂L/∂V  (outer product, same structure as transformer)
-
-Key observation:
-In the transformer file, only position 4 (mat) contributed to loss.
-Here, ALL positions contribute through [MASK]'s attention weights.
-v_cat receives gradient 0.292× (cat is most attended)
-v_cls receives 0.206×
-v_mat even receives 0.142×
-
-This is bidirectionality in gradients too:
-Both left-context (CLS, cat) and right-context (on, mat) tokens
-receive gradient signal — their value representations get updated
-to be more useful for predicting masked tokens.
+MHA = concat @ W_o
+[[0.3357, 0.2951, 0.5595, 0.4860],
+ [0.3064, 0.2710, 0.5867, 0.4940],
+ [0.3252, 0.2955, 0.6076, 0.5040],
+ [0.3111, 0.2668, 0.5791, 0.4927],
+ [0.3394, 0.2993, 0.6192, 0.5137],
+ [0.2957, 0.2768, 0.5683, 0.4894]]
 ```
 
 ---
 
-## 9. Weight Update (η = 0.1)
+## 6. Why bidirectional — what the causal mask would have cost
+
+Run the **identical block** with 06c's causal mask applied, and compare the `[MASK]` row:
 
 ```
-W_mlm_new = W_mlm - 0.1 × ∂L/∂W_mlm
-           = [[0.5, 0.3, 0.2, 0.1],   -0.1× [[ 0.680, -1.387, 0.381, 0.328],
-              [0.2, 0.4, 0.1, 0.3]]          [ 0.076, -0.154, 0.042, 0.036]]
+head 0  bidirectional : [0.1719, 0.1639, 0.1667, 0.1662, 0.1707, 0.1606]
+head 0  causal        : [0.5119, 0.4881, 0.0000, 0.0000, 0.0000, 0.0000]
 
-           = [[0.5-0.068, 0.3+0.139, 0.2-0.038, 0.1-0.033],
-              [0.2-0.008, 0.4+0.015, 0.1-0.004, 0.3-0.004]]
+head 1  bidirectional : [0.1270, 0.1622, 0.1918, 0.1557, 0.2212, 0.1421]
+head 1  causal        : [0.4392, 0.5608, 0.0000, 0.0000, 0.0000, 0.0000]
 
-           = [[0.432, 0.439, 0.162, 0.067],
-              [0.192, 0.415, 0.096, 0.296]]
-
-Changes:
-    sat column (index 1): W_mlm[:,1] increased from [0.3,0.4] → [0.439,0.415]
-    cat column (index 0): W_mlm[:,0] decreased from [0.5,0.2] → [0.432,0.192]
-
-This makes the model more likely to predict "sat" for representations
-similar to x_final_mask = [1.874, 0.208].
+tokens                :  [CLS]   [MASK]  approved  [SEP]   loan    [SEP]
 ```
+
+Probability mass the `[MASK]` position places on its **right context** (positions 2–5):
+
+| | bidirectional | causal |
+|---|---|---|
+| head 0 | 0.6642 | **0.0000** |
+| head 1 | 0.7108 | **0.0000** |
+
+**Exactly zero, in both heads.** This is the argument for BERT and it does not depend on trained
+weights — it is structural. A causal model predicting position 1 has `approved`, `[SEP]`, `loan`,
+`[SEP]` unavailable, and `bank` is exactly the token those words disambiguate. Two thirds of the
+available evidence is switched off by the mask.
+
+> **What this toy does *not* show.** The causal run's MLM loss is actually *lower* here
+> (`1.727530` vs `1.890774`), because with untrained weights the extra context is noise. The mask's
+> cost appears under **training**, not at initialisation — same caveat as 06c §6.4. Quote the
+> `0.0000` right-context mass in an interview, not the loss.
+
+**The corresponding cost:** BERT cannot generate. To produce token `t` it needs tokens `t+1…L` in
+its input, which do not exist yet at generation time. Bidirectionality and autoregression are
+mutually exclusive, and that single trade is the whole BERT-vs-GPT split.
 
 ---
 
-## 10. Second Forward — Verify MLM Loss Decreased
+## 7. Add & Norm 1
 
 ```
-With W_mlm_new, recompute logits:
-(Using approximately same x_final_mask = [1.874, 0.208])
+R1 = X + MHA
+[[0.9357, 0.5951, 0.6595, 0.8860],
+ [0.4064, 0.2710, 1.1867, 0.7940],
+ [0.5252, 0.7955, 1.5076, 0.8040],
+ [0.6111, 0.0668, 0.9791, 0.9927],
+ [0.8394, 0.6993, 1.5192, 1.2137],
+ [0.0957, 0.5768, 0.8683, 0.8894]]
 
-logit[sat] = 1.874×0.439 + 0.208×0.415 = 0.823 + 0.086 = 0.909
-logit[cat] = 1.874×0.432 + 0.208×0.192 = 0.809 + 0.040 = 0.849
+per-row mean: [0.7691, 0.6645, 0.9081, 0.6624, 1.0679, 0.6076]
+per-row var : [0.0209, 0.1277, 0.1324, 0.1417, 0.1033, 0.1026]
 
-Before: logit[sat]=0.645, logit[cat]=0.979  → cat wins
-After:  logit[sat]=0.909, logit[cat]=0.849  → sat wins ✓
-
-Softmax([0.849, 0.909, -0.38, -0.233]):
-exp: [2.337, 2.482, 1.462, 1.262]  sum=7.543
-P(sat) = 2.482/7.543 = 0.329  (up from 0.260)
-
-L' = -log(0.329) = 1.111  < 1.347 ✓
-
-Loss decreased: sat moved from 3rd most likely to MOST LIKELY after one step.
+h1 = LayerNorm(R1)
+[[ 1.1514, -1.2025, -0.7571,  0.8081],
+ [-0.7222, -1.1010,  1.4610,  0.3622],
+ [-1.0522, -0.3095,  1.6477, -0.2861],
+ [-0.1364, -1.5823,  0.8412,  0.8774],
+ [-0.7110, -1.1471,  1.4044,  0.4537],
+ [-1.5980, -0.0960,  0.8141,  0.8799]]
 ```
+
+Row `[CLS]` has variance 0.0209 — an order of magnitude below every other row. Its inputs were the
+most uniform, and LayerNorm amplifies that spread back up to variance 1 regardless. Normalisation
+is per-token and independent, so padding tokens can never leak into real ones.
 
 ---
 
-## 11. Fine-Tuning — Classification from [CLS]
-
-After pretraining, we add a classification head on top of [CLS] and fine-tune.
+## 8. FFN — GELU, not ReLU
 
 ```
-[CLS] final representation: x_final_cls = [1.386, 2.019]
+Z = h1 @ W1
+[[ 0.5382, -0.3435, -0.0280,  0.7291, -0.8233,  0.5204, -0.0477, -0.7444],
+ [-0.5465,  0.1051,  0.6962, -0.7649,  0.0701,  0.5143, -0.5501,  0.2179],
+ [-0.7334,  0.1679,  0.6444, -1.0033,  0.4757,  0.1834, -0.4796,  0.5948],
+ [-0.1919, -0.0123,  0.5516, -0.2897, -0.3669,  0.7034, -0.4674, -0.2259],
+ [-0.5182,  0.1200,  0.6747, -0.7297,  0.0336,  0.5282, -0.5343,  0.1723],
+ [-0.4758,  0.7242,  0.0970, -0.7170,  0.3656, -0.0400, -0.0156,  0.2088]]
 
-Task: does this sentence mention a cat? (y=1)
+GELU(Z)                     GELU(x) = x · Φ(x) = 0.5x(1 + erf(x/√2))
+[[ 0.3793, -0.1256, -0.0137,  0.5592, -0.1689,  0.3636, -0.0229, -0.1700],
+ [-0.1598,  0.0570,  0.5269, -0.1699,  0.0370,  0.3582, -0.1601,  0.1277],
+ [-0.1699,  0.0952,  0.4771, -0.1584,  0.3249,  0.1050, -0.1514,  0.4307],
+ [-0.0814, -0.0061,  0.3913, -0.1118, -0.1309,  0.5339, -0.1496, -0.0928],
+ [-0.1566,  0.0657,  0.5061, -0.1699,  0.0172,  0.3704, -0.1585,  0.0979],
+ [-0.1509,  0.5544,  0.0523, -0.1697,  0.2350, -0.0194, -0.0077,  0.1217]]
 
-z = W_cls · x_final_cls + b_cls
-  = [0.5, 0.3] · [1.386, 2.019] + 0
-  = 0.5×1.386 + 0.3×2.019
-  = 0.693 + 0.606
-  = 1.299
-
-ŷ = σ(1.299) = 1/(1+e^(-1.299)) = 0.786
-
-L_cls = -log(0.786) = 0.241   (target y=1, prediction 0.786 is decent)
+FFN out = GELU(Z) @ W2
+[[ 0.2468, -0.1674,  0.2974,  0.1861],
+ [ 0.2130,  0.0417, -0.1272,  0.0996],
+ [ 0.1213,  0.2143, -0.1989,  0.1397],
+ [ 0.2434, -0.1119, -0.0191,  0.0648],
+ [ 0.2084,  0.0288, -0.1163,  0.0935],
+ [-0.1161,  0.2599, -0.0360,  0.0627]]
 ```
 
-**Fine-tuning backward:**
+### The difference from ReLU, measured
+
 ```
-∂L_cls/∂z = ŷ - y = 0.786 - 1 = -0.214
+Z row 1     [-0.4836, -0.5619,  0.8894, -0.6001,  0.0955,  0.5003, -0.7404,  0.4584]
+GELU        [-0.1520, -0.1613,  0.7232, -0.1646,  0.0514,  0.3460, -0.1699,  0.3101]
+ReLU        [ 0.0000,  0.0000,  0.8894,  0.0000,  0.0955,  0.5003,  0.0000,  0.4584]
 
-∂L_cls/∂W_cls = -0.214 × x_final_cls = -0.214 × [1.386, 2.019]
-              = [-0.297, -0.432]
-
-∂L_cls/∂x_final_cls = -0.214 × [0.5, 0.3] = [-0.107, -0.064]
-
-W_cls_new = [0.5, 0.3] - 0.1 × [-0.297, -0.432]
-          = [0.5+0.030, 0.3+0.043]
-          = [0.530, 0.343]
-
-The fine-tuning gradient flows through:
-∂L_cls/∂x_final_cls = [-0.107, -0.064]
-→ through residual 2 = x_attn_cls and FFN_cls
-→ through residual 1 = ALL attention weights
-→ ∂L_cls/∂Wq, ∂L_cls/∂Wk, ∂L_cls/∂Wv
-
-During fine-tuning:
-    W_mlm is NOT used (it's task-specific — MLM head is discarded after pretrain)
-    W_cls is newly added and trained
-    Wq, Wk, Wv, W1, W2 are fine-tuned (small LR, don't diverge from pretrained)
-
-Typical fine-tuning LR: 2e-5 to 5e-5 (vs pretraining LR 1e-4)
-→ Small updates to pretrained weights preserve general knowledge
-→ Large W_cls update since it's freshly initialized
+exact zeros:   GELU 0 of 48        ReLU 24 of 48 (50%)
 ```
+
+**GELU never outputs exactly zero for a negative input** — it outputs a small negative number, and
+it bottoms out around `-0.17` before returning toward zero. Two consequences:
+
+1. **No dead units.** A ReLU unit stuck negative gets zero gradient forever. GELU always passes some
+   gradient, so units recover.
+2. **No sparsity.** ReLU's 50% zeros are a real compute saving that GELU gives up. BERT and GPT both
+   took that trade; modern models take it further with SwiGLU (board 13).
+
+GELU is smooth everywhere, ReLU has a kink at 0. That smoothness is the usual explanation for why
+GELU trains slightly better at scale — the honest version is that it was found empirically and the
+theory came after.
 
 ---
 
-## 12. MLM Masking Strategy (15% Rule)
+## 9. Add & Norm 2 → encoder output
 
 ```
-In pretraining, BERT doesn't mask every token — only 15%.
-Of those 15%, the 80/10/10 rule applies:
-    80% → replace with [MASK]
-    10% → replace with random token from vocab
-    10% → keep unchanged
+R2 = h1 + FFN_out
+[[ 1.3983, -1.3699, -0.4597,  0.9942],
+ [-0.5092, -1.0594,  1.3339,  0.4618],
+ [-0.9308, -0.0952,  1.4488, -0.1463],
+ [ 0.1070, -1.6941,  0.8221,  0.9422],
+ [-0.5027, -1.1183,  1.2881,  0.5472],
+ [-1.7141,  0.1639,  0.7780,  0.9426]]
 
-Why not just mask 100%?
-Problem: at fine-tuning, the model NEVER sees [MASK] tokens.
-If trained only with [MASK], model is confused when real tokens appear.
+per-row mean: [0.1407, 0.0568, 0.0691, 0.0443, 0.0536, 0.0426]
+per-row var : [1.2381, 0.8403, 0.7442, 1.1093, 0.8626, 1.1129]
 
-Why 10% random replacements?
-Forces model to distrust input — can't assume token is correct.
-Model must use context to verify/predict every token.
-
-Why 10% unchanged?
-Forces model to produce good representations even for non-masked tokens.
-The model never knows which tokens will be used in downstream tasks.
-
-Example with "cat sat on mat" (4 tokens, mask 15% ≈ 1 token):
-    "cat [MASK] on mat"  → 80% case (masked)
-    "cat RANDOM on mat"  → 10% case (e.g., "cat dog on mat")
-    "cat sat on mat"     → 10% case (appears unchanged, still predict "sat")
+BERT OUTPUT = LayerNorm(R2)
+               dim0     dim1     dim2     dim3
+[CLS]      [ 1.1302, -1.3576, -0.5396,  0.7670]   <- goes to the NSP head
+[MASK]     [-0.6174, -1.2176,  1.3932,  0.4418]   <- goes to the MLM head
+approved   [-1.1591, -0.1904,  1.5993, -0.2497]
+[SEP]      [ 0.0595, -1.6505,  0.7385,  0.8525]
+loan       [-0.5989, -1.2618,  1.3292,  0.5315]
+[SEP]      [-1.6652,  0.1150,  0.6971,  0.8531]
 ```
+
+Shape `(6, 4)` — identical to the input. Stack 12 of these and you have BERT-base.
+
+**Two rows are special, and only because of what is attached to them.** Nothing in the block treats
+position 0 differently; `[CLS]` is "the sentence vector" purely because the NSP head reads that row
+and gradient therefore trains it to be one.
 
 ---
 
-## 13. BERT vs GPT vs Plain Transformer
+## 10. Head 1 — MLM
 
-| | BERT | GPT | Plain Transformer |
-|-|------|-----|------------------|
-| Attention type | Bidirectional | Causal (→) | Causal (decoder) |
-| [CLS] token | Yes (sent rep) | No | No |
-| Pretraining obj | MLM + NSP | Next token | Next token |
-| Input | Token+Seg+PE | Token+PE | Token+PE |
-| Loss computed on | 15% (masked) | All tokens | All tokens |
-| Use case | Understanding/NLU | Generation | Generation/Translation |
-| Fine-tuning head | [CLS] → Linear | Last token | Same |
-| Example model | BERT-base 110M | GPT-2 117M | Vaswani 2017 |
+Applied to **the masked position only** (position 1). The other five rows contribute nothing to the
+MLM loss.
+
+```
+logits = OUTPUT[1] @ W_mlm                      (4,) @ (4,8) -> (8,)
+
+          [CLS]    [SEP]   [MASK]     bank  approved      the     loan  granted
+       [ 0.3744,  0.0986, -0.4514,  0.3794, -0.3194, -0.1636,  0.9650, -0.1926]
+
+probs = softmax(logits)
+       [ 0.1502,  0.1140,  0.0658,  0.1510,  0.0751,  0.0877,  0.2711,  0.0852]
+```
+
+```
+greedy = 'loan'   (0.2711)
+gold   = 'bank'   p = 0.1510
+
+L_mlm = -log(0.1510) = 1.890774
+```
+
+Uniform over 8 tokens would be `log 8 = 2.0794`. At `1.8908` the untrained model is barely better
+than chance, and it is predicting `loan` — it has copied the most distinctive nearby token rather
+than inferred the missing one. Exactly what you would expect before training.
 
 ---
 
-## 14. Gradient Comparison — MLM vs Causal LM
+## 11. Head 2 — NSP
+
+Applied to **`[CLS]` only**.
 
 ```
-MLM (BERT): gradient flows only from masked positions
-4 tokens, 1 masked = 25% of positions produce gradient per step
-At scale: 15% of 512 tokens → ~77 gradient sources per sequence
-Each masked token → gradient reaches ALL other tokens via attention
+logits = OUTPUT[0] @ W_nsp                      (4,) @ (4,2) -> (2,)
 
-Causal LM (GPT): gradient flows from ALL positions
-4 tokens → 4 gradient sources
-BUT: token at position 1 only gets gradient from positions 1→4
-     position 2 only from 2→4...
-Causal mask restricts gradient paths
+          NotNext   IsNext
+       [  0.6384, -0.9184]
 
-Which trains faster?
-GPT: more gradient signal per sequence (all tokens)
-BERT: each gradient is richer (uses full bidirectional context)
-In practice: GPT scales better with data, BERT with fine-tuning
+probs  [  0.8259,  0.1741]
+
+gold = IsNext (class 1)
+L_nsp = -log(0.1741) = 1.748114
 ```
+
+The model says **NotNext at 0.8259** — confidently wrong. Chance is `log 2 = 0.6931`, so at `1.7481`
+this is meaningfully worse than guessing.
+
+### Total loss
+
+```
+L = L_mlm + L_nsp = 1.890774 + 1.748114 = 3.638889
+```
+
+BERT **sums** the two, unweighted. Two heads, two losses, one shared encoder — and §13 shows what
+that costs.
+
+> **NSP did not survive.** RoBERTa removed it and scored *better*; ALBERT replaced it with
+> sentence-order prediction. The consensus is that NSP is too easy — distinguishing a random
+> document's sentence from the true next one is mostly topic detection, solvable without any
+> sentence-level reasoning. Know that it exists, that it is computed from `[CLS]`, and that it was
+> dropped.
 
 ---
 
-## 15. Full Picture
+## 12. Backward — where two objectives send gradient
+
+All gradients from `torch.autograd`; the torch forward matched the numpy forward to **1.3e-15**
+(`allclose`, atol 1e-6).
+
+### 12.1 Magnitudes
 
 ```
-INPUT:
-    [CLS]  cat  [MASK]   on   mat
-      |     |     |       |     |
-      + seg_A embeddings (all [0.1,0.1])
-      |     |     |       |     |
-      + PE(0) PE(1) PE(2) PE(3) PE(4)
-[0.4,1.4] [1.94,1.14] [1.009,-0.316] [0.341,-0.990] [-0.457,-0.154]
-                         ↓
-              (ALL attend to ALL — no causal mask)
-              BIDIRECTIONAL ATTENTION
-              [MASK] attends:
-                  [CLS]=0.206, cat=0.292,
-                  self=0.199, on=0.161,
-                  mat=0.142
-                         ↓
-    RESIDUAL 1 + LN + FFN + RESIDUAL 2
-                         ↓
-      x_final_mask=[1.874, 0.208]    x_final_cls=[1.386, 2.019]
-             ↓                               ↓
-        MLM HEAD                       CLS HEAD
-      (pretraining)                  (fine-tuning)
-   W_mlm @ x_final_mask          W_cls · x_final_cls
-logits=[0.979,0.645,0.396,0.249]   z=1.299, ŷ=0.786
-P(sat)=0.260                       L_cls=0.241
-L_mlm=1.347                            ↓
-         ↓                          fine-tune
-      pretrain
+                    max |grad|        L2
+  dL/dEMB            2.248861      4.016738    <- largest
+  dL/dPOS            2.248861      3.998272
+  dL/dSEG            2.633911      3.682268
+  dL/dW_nsp          1.121253      2.335983
+  dL/dW_mlm          1.182877      1.849153
+  dL/dW_o            0.969513      2.003167
+  dL/dW_v            0.802228      1.632737
+  dL/dW2             0.194601      0.522533
+  dL/dW1             0.256092      0.474408
+  dL/dW_q            0.038321      0.060161
+  dL/dW_k            0.031643      0.055041    <- smallest, 25x below W_v
 ```
+
+**06b's finding reproduces exactly.** `W_v` and `W_o` sit on a linear path to the loss; `W_q` and
+`W_k` reach it only through the softmax, whose Jacobian collapses as rows sharpen. The
+query/key path learns slowest, here by a factor of ~25.
+
+The three embedding tables get the largest gradients of all — they are one lookup away from the loss
+and they are shared by every position.
+
+### 12.2 Only tokens that appear get gradient
+
+```
+dL/dEMB, per vocabulary row:
+   [CLS]      [ 1.5634, -1.2464,  2.0483, -2.2489]   L2 = 3.640120
+   [SEP]      [ 0.0182, -0.0668,  0.3736, -0.3987]   L2 = 0.550715
+   [MASK]     [-1.2481,  0.8850,  0.1877,  0.1642]   L2 = 1.550188
+   bank       [ 0.0000,  0.0000,  0.0000,  0.0000]   L2 = 0.000000   <- the GOLD label
+   approved   [ 0.0231, -0.0809,  0.2056, -0.1446]   L2 = 0.265077
+   the        [ 0.0000,  0.0000,  0.0000,  0.0000]   L2 = 0.000000
+   loan       [ 0.0845, -0.0745,  0.2366, -0.1960]   L2 = 0.327216
+   granted    [ 0.0000,  0.0000,  0.0000,  0.0000]   L2 = 0.000000
+```
+
+Three rows are **exactly zero**: `the` and `granted` never appear in the input, so no gradient
+reaches them. That is why an embedding table of 30,522 rows updates only a few thousand rows per
+step, and why embedding gradients are stored sparsely.
+
+**`bank` is zero too — and it is the answer.** Its gradient goes into **column 3 of `W_mlm`**, not
+into `EMB[bank]`, because the MLM head is a separate matrix here. **If the MLM head were tied to the
+embedding table** — as GPT and most modern LLMs do — that same gradient would land on `EMB[bank]`
+and this row would be non-zero. Weight tying is not just a parameter saving; it changes which
+tensor learns. (Board 7, board 9.)
+
+`[CLS]` has by far the largest embedding gradient (L2 3.64) because it carries the entire NSP loss
+alone.
 
 ---
 
-## 16. Quick Reference
+## 13. Weight update — and multi-task interference
 
 ```
-BERT END-TO-END — QUICK REFERENCE
+SGD, lr = 0.05,  W ← W - lr · dL/dW   (all eleven tensors)
 
-INPUT = token_embed + segment_embed + PE
-No causal mask → bidirectional attention
-[MASK] at pos 2: attends CLS(0.206) cat(0.292) self(0.199) on(0.161) mat(0.142)
-c_mask=[0.795, 0.454] → x_final_mask=[1.874, 0.208]
+L_mlm   1.890774 -> 1.803056
+L_nsp   1.748114 -> 0.382421
+total   3.638889 -> 2.185477     DECREASED by 1.453412   ✓
 
-MLM logits=[0.979, 0.645, 0.396, 0.249] → P(sat)=0.260 + L_mlm=1.347
-
-Fine-tuning: x_final_cls=[1.386, 2.019]
-z=1.299, ŷ=0.786, L_cls=0.241
-
-After update: P(sat)=0.329, L'=1.111 ✓
-
-Masking: 15% tokens; 80% [MASK], 10% random, 10% unchanged
-NSP: dropped in RoBERTa (too easy, hurts performance)
-Bidirectional: [MASK] sees both left AND right context
+p(bank) 0.1510 -> 0.1648
+p(IsNext) 0.1741 -> 0.6822        NotNext -> IsNext, now correct
 ```
+
+Both objectives improved. But sweep the learning rate and the picture changes:
+
+```
+    lr      L_mlm      L_nsp      total    p(bank)
+     0    1.890774   1.748114   3.638889   0.1510
+  0.02    1.829016   0.747000   2.576017   0.1606
+  0.05    1.803056   0.382421   2.185477   0.1648   <- both improve
+  0.10    1.904092   0.281652   2.185744   0.1490   <- MLM now WORSE than start
+  0.15    2.034609   0.255879   2.290488   0.1307
+  0.20    2.149560   0.245518   2.395079   0.1165
+  0.30    2.352433   0.239618   2.592052   0.0951
+  0.50    2.658983   0.273108   2.932092   0.0700
+```
+
+**Past `lr ≈ 0.05`, NSP keeps improving while MLM actively degrades — and the *total* still looks
+fine.** At `lr = 0.5` the summed loss has dropped from 3.64 to 2.93 and you would call that
+progress, but MLM has gone from 1.89 to 2.66 and `p(bank)` has more than halved.
+
+This is **multi-task interference**, and it is visible in a 6-token toy. Two heads share one
+encoder; the easier objective (NSP — binary, one position, large gradient) captures the shared
+weights and the harder one (MLM — 8-way, one position) pays for it. Watching only the summed loss
+hides it entirely.
+
+It is also a concrete reason RoBERTa's removal of NSP *helped*: deleting the easy objective gave the
+hard one the whole encoder.
 
 ---
 
-## 17. Code
+## 14. The 80/10/10 masking rule
 
-### Version 1: Pure NumPy — BERT MLM Forward
+15% of tokens are selected for prediction. Of those selected:
 
-```python
-import numpy as np
-
-# Data
-# Tokens: [CLS]=4, cat=0, [MASK]=5, on=2, mat=3
-token_embeds = np.array([
-    [1.0, 0.5],   # cat (index 0)
-    [0.2, 0.3],   # sat (index 1, not in input — masked)
-    [0.1, 0.1],   # on (index 2)
-    [0.2, 0.4],   # mat (index 3)
-    [0.3, 0.3],   # [CLS] (index 4)
-    [0.0, 0.0],   # [MASK] (index 5)
-])
-
-# Input sequence: [CLS]=4, cat=0, [MASK]=5, on=2, mat=3
-input_ids = [4, 0, 5, 2, 3]
-X_tok = token_embeds[input_ids]    # (5, 2)
-X_seg = np.full_like(X_tok, 0.1)  # segment A for all tokens
-
-# Positional Encoding
-def pe(seq_len, d):
-    pe = np.zeros((seq_len, d))
-    for pos in range(seq_len):
-        for i in range(d // 2):
-            pe[pos, 2*i]   = np.sin(pos / (10000 ** (2*i/d)))
-            pe[pos, 2*i+1] = np.cos(pos / (10000 ** (2*i/d)))
-    return pe
-
-x_pe = pe(4, 2)   # only 4 positions for non-CLS tokens
-# Add CLS position separately; all positions 0-4
-x_pe_full = pe(5, 2)   # positions 0-4
-X_input = X_tok + X_seg + x_pe_full   # (5, 2)
-
-# Weights
-Wq = np.array([[0.60, 0.40], [0.20, 0.50]])
-Wk = np.array([[0.50, 0.30], [0.10, 0.40]])
-Wv = np.array([[0.80, 0.20], [0.30, 0.70]])
-
-W1 = np.array([[0.5, 0.3, 0.2, 0.1], [0.4, 0.2, 0.3, 0.1]])
-b1 = np.zeros(4)
-W2 = np.array([[0.5, 0.3], [0.2, 0.4], [0.3, 0.2], [0.1, 0.5]])
-b2 = np.zeros(2)
-
-W_mlm = np.array([[0.5, 0.3, 0.2, 0.1],
-                   [0.2, 0.4, 0.1, 0.3]])  # 2×4 real vocab items
-gamma, beta = np.ones(2), np.zeros(2)
-
-# Attention (bidirectional — no mask)
-Q = X_input @ Wq   # (5, 2)
-K = X_input @ Wk
-V = X_input @ Wv
-
-d_k = Q.shape[-1]
-scores = Q @ K.T / np.sqrt(d_k)   # (5, 5)
-A = np.exp(scores_stable := scores - scores.max(axis=-1, keepdims=True))
-A /= A.sum(axis=-1, keepdims=True)
-C = A @ V
-
-# Residual + LayerNorm + FFN
-def layernorm(x, gamma, beta, eps=1e-8):
-    mu = x.mean(-1, keepdims=True)
-    std = x.std(-1, keepdims=True) + eps
-    return gamma * (x - mu) / std + beta
-
-X_ln = layernorm(X_input + C, gamma, beta)
-h  = np.maximum(0, X_ln @ W1 + b1)    # (5, 4) → ReLU
-FFN_out = h @ W2 + b2                  # (5, 2) — residual 2
-X_final = X_attn + FFN_out
-
-# MLM Head
-logits = X_final[2] @ W_mlm   # [MASK] position (index 2) → (4,)
-logits_stable = logits - logits.max()
-probs = np.exp(logits_stable) / np.exp(logits_stable).sum()
-
-print("MLM probs:", dict(zip(['cat', 'sat', 'on', 'mat'], np.round(probs, 3))))
-# {'cat': 0.363, 'sat': 0.260, 'on': 0.203, 'mat': 0.175}
-
-y_mlm = 1  # target: "sat" = index 1
-loss = -np.log(probs[y_mlm])
-print(f"MLM Loss: {loss:.3f}")  # 1.347
-
-# Backward
-one_hot = np.zeros(4); one_hot[y_mlm] = 1
-dl_dlogits = probs - one_hot
-dl_dW_mlm = np.outer(X_final[2], dl_dlogits)
-
-# Weight Update
-lr = 0.1
-W_mlm_new = W_mlm - lr * dl_dW_mlm.T
-
-# Verify Loss Decreased
-logits2 = X_final[2] @ W_mlm_new
-p2 = np.exp(logits2 - logits2.max())
-p2 /= p2.sum()
-loss2 = -np.log(p2[y_mlm])
-print(f"After update: P(sat)={p2[y_mlm]:.3f}, L'={loss2:.3f}")  # L' < 1.347 ✓
+```
+80%  ->  replaced with [MASK]
+10%  ->  replaced with a RANDOM token
+10%  ->  left UNCHANGED (but still predicted)
 ```
 
-### Version 2: PyTorch with Autograd
+On a full BERT-base sequence:
 
-```python
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-# Input
-# Tokens: [CLS]=4, cat=0, [MASK]=5, on=2, mat=3
-token_embeds = torch.tensor([
-    [1.0, 0.5],  # cat (index 0)
-    [0.2, 0.3],  # sat (index 1)
-    [0.1, 0.1],  # on (index 2)
-    [0.2, 0.4],  # mat (index 3)
-    [0.3, 0.3],  # [CLS] (index 4)
-    [0.0, 0.0],  # [MASK] (index 5)
-])
-
-input_ids = torch.tensor([4, 0, 5, 2, 3])
-X_tok = token_embeds[input_ids]    # (5, 2)
-X_seg = torch.full_like(X_tok, 0.1)
-
-def make_pe(seq_len, d):
-    pe = torch.zeros(seq_len, d)
-    pos = torch.arange(seq_len).unsqueeze(1).float()
-    div = torch.pow(10000, torch.arange(0, d, 2).float() / d)
-    pe[:, 0::2] = torch.sin(pos / div)
-    pe[:, 1::2] = torch.cos(pos / div)
-    return pe
-
-X_input = X_tok + X_seg + make_pe(5, 2)   # (5, 2)
-
-# Weights
-Wq = torch.tensor([[0.60, 0.40], [0.20, 0.50]], requires_grad=True)
-Wk = torch.tensor([[0.50, 0.30], [0.10, 0.40]], requires_grad=True)
-Wv = torch.tensor([[0.80, 0.20], [0.30, 0.70]], requires_grad=True)
-W1 = torch.tensor([[0.5, 0.3, 0.2, 0.1], [0.4, 0.2, 0.3, 0.1]], dtype=torch.float32, requires_grad=True)
-b1 = torch.zeros(4, requires_grad=True)
-W2 = torch.tensor([[0.5, 0.3], [0.2, 0.4], [0.3, 0.2], [0.1, 0.5]], dtype=torch.float32, requires_grad=True)
-b2 = torch.zeros(2, requires_grad=True)
-W_mlm = torch.tensor([[0.5, 0.3, 0.2, 0.1],
-                       [0.2, 0.4, 0.1, 0.3]], requires_grad=True)
-gamma = torch.ones(2, requires_grad=True)
-beta  = torch.zeros(2, requires_grad=True)
-y_mlm = torch.tensor(1)  # target: "sat"
-
-# Forward
-Q = X_input @ Wq
-K = X_input @ Wk
-V = X_input @ Wv
-
-# Bidirectional attention — no mask
-scores = Q @ K.T / (Q.shape[-1] ** 0.5)
-A = F.softmax(scores, dim=-1)
-C = A @ V
-
-X_attn = X_input + C
-X_ln = F.layer_norm(X_attn, [2], gamma, beta)
-h = F.relu(X_ln @ W1 + b1)
-X_final = X_attn + h @ W2 + b2
-
-# MLM loss on [MASK] position (index 2)
-logits = X_final[2] @ W_mlm   # (4,)
-loss   = F.cross_entropy(logits.unsqueeze(0), y_mlm.unsqueeze(0))  # 1.347
-print(f"MLM Loss: {loss.item():.3f}")
-
-# Backward + Update
-loss.backward()
-print(f"∂L/∂W_mlm\n", W_mlm.grad.round(decimals=3))
-
-lr = 0.1
-with torch.no_grad():
-    for p in [Wq, Wk, Wv, W1, W2, W_mlm, gamma, beta]:
-        p -= lr * p.grad
-        p.grad.zero_()
-
-# Verify
-logits2 = X_final[2].detach() @ W_mlm
-probs2 = F.softmax(logits2, dim=0)
-loss2 = F.cross_entropy(logits2.unsqueeze(0), y_mlm.unsqueeze(0))
-print(f"After update: P(sat)={probs2[1].item():.3f}, L'={loss2.item():.3f}")
+```
+sequence length                   512
+selected for prediction (15%)    76.8 tokens
+   -> [MASK]              (80%)  61.44
+   -> random token        (10%)   7.68
+   -> unchanged           (10%)   7.68
 ```
 
-### Version 3: HuggingFace BERT Fine-Tuning (Production)
+**Why not 100% `[MASK]`.** `[MASK]` never appears at fine-tuning or inference time. If it were the
+only signal, the encoder would learn "produce a good representation *when you see `[MASK]`*" and
+have no reason to build good representations for ordinary tokens — a train/test mismatch on every
+downstream task. The 10% random and 10% unchanged force the model to build a real representation for
+**every** position, because it cannot tell from the input alone which positions are being graded.
 
-```python
-from transformers import BertTokenizer, BertForSequenceClassification
-from transformers import BertForMaskedLM
-import torch
+**The cost of 15%:**
 
-# MLM Pretraining Inference
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-mlm_model  = BertForMaskedLM.from_pretrained('bert-base-uncased')
+```
+BERT computes loss on  76.8 of 512 positions  = 15% of the sequence
+GPT  computes loss on 512 of 512 positions    = 100%
 
-text = "cat [MASK] on mat"
-inputs = tokenizer(text, return_tensors='pt')
-mask_ids = (inputs['input_ids'] == tokenizer.mask_token_id).nonzero(as_tuple=True)[1]
-
-with torch.no_grad():
-    outputs = mlm_model(**inputs)
-    logits = outputs.logits[0, mask_ids, :]   # logits at [MASK] position
-    mask_logits = logits[0, mask_ids, :]
-    top5 = torch.topk(mask_logits, 5)
-
-# Top 5 predictions
-for score, idx in zip(top5.values.tolist(), top5.indices.tolist()):
-    word = tokenizer.convert_ids_to_tokens([idx])[0]
-    print(f"  {word}: {score:.3f}")
-# sat: 8.127, lay: 0.889, stood: 0.123...
-
-# Fine-Tuning for Classification
-from transformers import AdamW, get_linear_schedule_with_warmup
-
-model = BertForSequenceClassification.from_pretrained(
-    'bert-base-uncased',
-    num_labels=2  # binary classification
-)
-
-# Dataset
-texts  = ["cat sat on mat", "dog ran in park", "bird flew over tree"]
-labels = torch.tensor([1, 0, 0])  # 1 = mentions cat
-
-# Tokenize
-batch = tokenizer(
-    texts,
-    padding=True,
-    truncation=True,
-    max_length=64,
-    return_tensors='pt'
-)
-
-# Optimizer with weight decay (don't decay bias and LayerNorm)
-no_decay = ['bias', 'LayerNorm.weight']
-optimizer_groups = [
-    {'params': [p for n,p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-     'weight_decay': 0.01},
-    {'params': [p for n,p in model.named_parameters() if any(nd in n for nd in no_decay)],
-     'weight_decay': 0.0},
-]
-optimizer = AdamW(optimizer_groups, lr=2e-5)
-
-# Linear warmup + decay (standard BERT fine-tuning schedule)
-total_steps = 10
-scheduler = get_linear_schedule_with_warmup(
-    optimizer, num_warmup_steps=2, num_training_steps=total_steps
-)
-
-# Training step
-model.train()
-outputs = model(**batch, labels=labels)
-loss = outputs.loss
-print(f"Fine-tuning loss: {loss.item():.3f}")
-
-loss.backward()
-torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)   # gradient clipping
-optimizer.step()
-scheduler.step()
-optimizer.zero_grad()
-
-# Inference
-model.eval()
-with torch.no_grad():
-    test_input = tokenizer("the cat is here", return_tensors='pt')
-    logits = model(**test_input).logits
-    pred = torch.argmax(logits, dim=-1)
-    print(f"Prediction: {pred.item()}")  # 1 (mentions cat)
+-> GPT extracts 6.67x more training signal per sequence
 ```
 
----
-
-## 18. Gotchas
-
-| GOTCHA | WHAT GOES WRONG | HOW TO FIX |
-|--------|----------------|-----------|
-| Using BERT for generation | BERT is bidirectional — can't autoregressively generate text | Use GPT/LLaMA instead; BERT can't predict "what comes next" |
-| Not adding [CLS] at the start of fine-tuning input | Classification uses [CLS] representation | Tokenizer does this automatically |
-| Using MLM head at fine-tuning time | W_mlm is task-specific, discarded after pretrain | Use BertForSequenceClassification instead of BertForMaskedLM |
-| Learning rate too high for fine-tuning | BERT weights pretrained on massive data | Use 2e-5 to 5e-5 with warmup |
-| Not freezing lower layers on small datasets | Fine-tuning ALL layers on 100 examples → overfit | Freeze layers 1-6; fine-tune 7-12 only |
-| Forgetting special tokens | Model input format: [CLS] text [SEP] — missing these → degraded | Always use tokenizer; don't tokenize manually |
-| Segment embedding mismatch in NSP/sentence pair tasks | Pair: A then B | Check token_type_ids in tokenizer output |
-| Input > 512 tokens | BERT max_length=512 — index error for longer inputs | Truncate, or use Longformer/BigBird |
+That ratio is the honest reason MLM pretraining is compute-inefficient relative to causal LM, and
+part of why the field went the GPT way once scale became the lever.
 
 ---
 
-## 19. Interview Q&A
+## 15. Fine-tuning from `[CLS]`
 
-**Q: What is Masked Language Modeling and why does it create bidirectional representations?**
+Pretraining is done. Throw away the MLM and NSP heads, keep the encoder, attach a new head to
+`[CLS]`.
 
-MLM randomly masks 15% of input tokens and trains the model to predict them. Because the prediction task requires seeing BOTH left AND right context (e.g., predicting [MASK] in "cat [MASK] on mat" benefits from both "cat" left and "on mat" right), the self-attention has no causal mask — all tokens attend to all others. This is fundamentally different from GPT's causal LM: at position 2, GPT can only see tokens 1-2, while BERT's [MASK] at position 2 sees all 4 tokens. Bidirectionality makes BERT better at understanding tasks (classification, NER, QA) but incapable of generation (can't predict token-by-token without seeing the future).
+```
+task: does this sentence pair concern a loan?   gold = 1 (yes)
 
-**Q: Why does BERT use the 80/10/10 masking rule instead of masking 100%?**
+[CLS] output = [ 1.1302, -1.3576, -0.5396,  0.7670]
 
-The 80/10/10 rule reduces train-test mismatch (also called the pretraining-finetuning discrepancy): 100% masking: model learns to represent [MASK] tokens well, but at fine-tuning there are no [MASK] tokens → the model has never learned to represent real tokens. 80% [MASK] + 10% random + 10% unchanged: 80% provides the masked prediction signal; 10% random forces the model to distrust input → builds context-based representations for every token even when unmasked (it might be wrong!); 10% unchanged: forces model to produce useful representations for real tokens, since downstream tasks need those representations.
+W_cls (4 × 2)  — NEW, randomly initialised
+[[ 0.6, -0.4],
+ [-0.3,  0.5],
+ [ 0.2,  0.3],
+ [ 0.4, -0.2]]
 
-**Q: What is the [CLS] token and why does fine-tuning use it?**
+logits = [CLS] @ W_cls = [ 1.2843, -1.4462]
+probs                  = [ 0.9388,  0.0612]
 
-[CLS] is a special token prepended to every BERT input. Unlike regular word tokens, [CLS] has no semantic meaning before pretraining — it's a blank slate. During bidirectional pretraining, [CLS] attends to ALL other tokens in every training example. Because it appears in every sequence and must produce useful representations for NSP (binary classification on [CLS]), it learns to aggregate global sentence information. After pretraining, [CLS]'s final representation is a compressed summary of the entire input sequence. Adding a linear layer on top (W_cls: d=768 for binary classification) and fine-tuning on labeled data is efficient and effective.
+L_cls = -log(0.0612) = 2.793614
+```
 
-**Q: What changed between BERT and RoBERTa?**
+The head is `4 × 2` — **8 parameters** against the encoder's millions. Everything that makes this
+work was already learned during pretraining; the head only reads it out.
 
-RoBERTa (Liu et al., 2019) kept the architecture identical but changed training: (1) Removed NSP — ablation showed NSP hurts MLM performance (task conflict). (2) Dynamic masking — mask pattern changes each epoch vs BERT's static mask. (3) Larger batches: 256 → 8192 (with lower LR). (4) More data: 160GB vs 16GB in BERT. (5) Byte-level BPE tokenizer: vocab 50K vs BERT's WordPiece 30K. Result: 1-3+ improvements across GLUE, SQuAD, and RACE benchmarks. Lesson: data and training duration matter more than architectural novelty.
-
-**Q: Can you use BERT for text generation? Why or why not?**
-
-No — not directly. BERT is bidirectional: generating token t requires seeing tokens t+1, t+2,... which don't exist yet during generation. GPT: P(x_t | x_1,...,x_{t-1}) — each token conditioned on previous only. BERT: P(x_t | all other tokens) — requires the surrounding context is given. BERT CAN fill in blanks (masked prediction), but only when the surrounding context is given. Useful for: spell correction ("The cat sat on the ___"), cloze tests (fill in missing words given full surrounding context). For generation: use GPT/LLaMA (decoder-only) or T5 (encoder-decoder for conditional generation).
-
----
-
-## 20. Connections
-
-- **Transformer Architecture (fundamentals/02):** BERT = a stack of 12 encoder blocks; same MHA + FFN + residual + LN structure; [CLS]=101, [SEP]=102, [MASK]=103 in BERT-base vocabulary
-- **Tokenization (fundamentals/03):** BERT uses WordPiece tokens, [CLS]/[SEP]/[MASK] are special; tokenizer directly shapes the MLM pretraining objective
-- **06 Transformer E2E (NLP/sequence_models):** BERT = same architecture but no causal mask; same forward pass but bidirectional; same residual gradient flows
-- **GPT Family (models/02):** GPT = same architecture but causal mask, trained on next-token prediction — the encoder vs decoder split
-- **Efficient Transformers (models/04):** DistilBERT uses knowledge distillation from BERT; ELECTRA replaces MLM with a more efficient discriminative objective; T5 uses BERT-style encoder (bidirectional) + GPT-style decoder for generation
+**What actually happens in fine-tuning:** the new head *and the whole encoder* are updated together,
+at a small learning rate (2e-5 to 5e-5, vs 1e-4 for pretraining), for 2–4 epochs. Freezing the
+encoder and training only the head — "feature extraction" — is faster but consistently several
+points worse. Fine-tuning the encoder is the entire reason BERT displaced static embeddings.
 
 ---
 
-## Key Takeaway
+## 16. Where BERT-base's 110M parameters live
 
-BERT = transformer encoder with NO causal mask + MLM pretraining. Bidirectionality lets [MASK] see the full sentence, making it powerful for understanding. The [CLS] token accumulates global sentence meaning — used as input to classification head during fine-tuning. Loss computed only on masked positions (15%). The 80/10/10 masking rule solves the train-test discrepancy. RoBERTa proved that removing NSP + more data + larger batches beats architectural changes.
+```
+token embeddings      30522 × 768              =  23,440,896
+position embeddings     512 × 768              =     393,216
+segment embeddings        2 × 768              =       1,536
+                                                  ──────────
+                                                  23,835,648   (21.9%)
+
+per layer:
+  attention   4 × d²        = 4 × 768²         =   2,359,296
+  FFN         2 × d × d_ff  = 2 × 768 × 3072   =   4,718,592
+                                                  ──────────
+                                                   7,077,888
+× 12 layers                                    =  84,934,656   (78.1%)
+                                                  ──────────
+TOTAL                                          = 108,770,304   ✓ ("110M")
+```
+
+Two things people get wrong:
+
+- **The embedding table is 22% of BERT-base** — 23.4M parameters in a single lookup matrix, more
+  than three encoder layers. It is also the first thing quantised or factorised (ALBERT factorises
+  it to 128 dimensions and saves ~20M).
+- **Within a layer the FFN is two-thirds** (`4d²` vs `8d²`), same 33/67 split as 06b §16. Attention
+  is the expensive part at *inference*; the FFN is the heavy part in *parameters*.
+
+The 512-row position table is only 393K parameters — but it is the reason BERT hard-stops at 512
+tokens.
+
+---
+
+## 17. BERT vs GPT vs the plain encoder
+
+| | 06b encoder | **BERT** | GPT |
+|---|---|---|---|
+| Attention | bidirectional | **bidirectional** | causal |
+| Position | sinusoidal | **learned table (512 max)** | learned table |
+| Segment embedding | ✗ | **✓** | ✗ |
+| Activation | ReLU | **GELU** | GELU |
+| Objective | — | **MLM + NSP** | next-token |
+| Loss positions / seq | — | **15%** | 100% |
+| Can generate | ✗ | **✗** | ✓ |
+| Best at | — | **understanding: classification, NER, QA-extraction** | generation, few-shot |
+| Cross-attention | ✗ | ✗ | ✗ |
+
+**The one-line version:** BERT and GPT are the same block. BERT deletes the causal mask and pays for
+it by being unable to generate; GPT keeps the mask and pays for it by only ever seeing the left.
+
+---
+
+## 18. Quick reference
+
+```
+BERT ENCODER LAYER  (identical to 06b — only the boundaries differ)
+
+ 1. X   = E_token + E_segment + E_position        (L, d)   THREE tables, all learned
+ 2. Q,K,V = X @ Wq, X @ Wk, X @ Wv
+ 3. split → (n_heads, L, d_head)                  reshape, not a projection
+ 4. S   = Q Kᵀ / √d_head                          (n_heads, L, L)   NO MASK
+ 5. A   = softmax(S);  O = A @ V;  MHA = concat @ W_o
+ 6. h1  = LayerNorm(X + MHA)
+ 7. F   = GELU(h1 @ W1) @ W2                      GELU, not ReLU
+ 8. out = LayerNorm(h1 + F)                       (L, d) — same shape in/out
+
+HEADS
+ 9. MLM: logits = out[masked_positions] @ W_mlm   (n_masked, V)   15% of positions
+10. NSP: logits = out[0] @ W_nsp                  ([CLS] only)    (2,)
+11. L = L_mlm + L_nsp                             unweighted sum
+```
+
+**The seven things to be able to say cold:**
+
+1. BERT's position encoding is a **learned table**, not sinusoidal — which is why 512 is a hard cap.
+2. Input is **three** summed embeddings: token + segment + position.
+3. Bidirectionality is measurable: the `[MASK]` row puts **0.0000** mass on its right context under
+   a causal mask and **0.66–0.71** without one. The price is that BERT cannot generate.
+4. **80/10/10** exists because `[MASK]` never appears at fine-tuning time — without the 10/10 the
+   model only learns to represent masked slots.
+5. MLM grades **15%** of positions; causal LM grades **100%**. GPT gets 6.67× more signal per
+   sequence.
+6. **NSP was dropped** by RoBERTa and it scored better. Summing two losses lets the easy objective
+   eat the shared encoder — visible here as MLM degrading while total loss falls.
+7. Embeddings are **22%** of BERT-base; within a layer the FFN is **67%**. Only tokens present in the
+   batch get embedding gradient — and the gold label gets none unless the head is **tied**.
+
+---
+
+## See also
+
+- [../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md) — the identical block, without BERT's boundaries
+- [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) — the causal mask this file removes, and cross-attention
+- [01_bert_family.md](01_bert_family.md) — RoBERTa, ALBERT, DistilBERT, ELECTRA and what each changed
+- [06_gpt1_end_to_end.md](06_gpt1_end_to_end.md) — the same block with the mask kept
+- [06b_gpt2_end_to_end.md](06b_gpt2_end_to_end.md) — GPT-2: pre-LN, `1/√N` init, byte-level BPE
+- [../../4.nlp/01_fundamentals/03_tokenization.md](../../4.nlp/01_fundamentals/03_tokenization.md) — WordPiece, and where `[CLS]`/`[SEP]` come from
+- [08_modern_llm_architecture.md](08_modern_llm_architecture.md) — what replaced LayerNorm, GELU and learned positions

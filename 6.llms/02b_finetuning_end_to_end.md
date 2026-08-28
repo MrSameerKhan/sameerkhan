@@ -1034,8 +1034,8 @@ Yes, but it's unusual. For tokenizer vocabulary (vocab_size × d), LoRA would be
 
 - **To pretraining objectives (fundamentals/04_pretraining_objectives.md):** SFT continues CLM training with high-quality demonstrations — same objective, different data distribution. BERT-style models fine-tune with adapter/LoRA on attention weights — because MLM representations are already classification-ready. GPT-style models go through SFT → RLHF/DPO for alignment — building on the CLM representation.
 
-- **To BERT end-to-end (models/05_bert_end_to_end.md):** The [CLS] hidden state x_cls = [1.386, 2.019] used directly as classification input in Section 1.2 — The classification head math here matches the "Fine-tuning" section there exactly — Fine-tuning only the [CLS] projection is the simplest PEFT approach for BERT.
+- **To BERT end-to-end (models/05_bert_end_to_end.md):** the `[CLS]` hidden state feeds the classification head — that file's "Fine-tuning from [CLS]" section works it through with numbers — fine-tuning only the `[CLS]` projection is the simplest PEFT approach for BERT.
 
-- **To GPT end-to-end (models/06_gpt_end_to_end.md):** CLM loss values (2.604, 3.101, 2.120) are the SFT starting point — KV cache makes RLHF inference tractable — Sampling strategies (top-p, temperature) are how RLHF generates response candidates.
+- **To GPT-1 end-to-end (models/06_gpt1_end_to_end.md):** the CLM loss there is the SFT starting point — KV cache makes RLHF inference tractable — the sampling strategies worked through there (top-p, temperature) are how RLHF generates response candidates.
 
 - **To transformer architecture (fundamentals/02_transformer_architecture.md):** LoRA targets W_Q, W_K, W_V, W_O — all attention projections defined in that file — The FFN W₁, W₂ matrices are secondary LoRA targets (full fine-tuning of these is common) — full fine-tuning can optionally update token vocabulary — RLHF reward hacking is partly a tokenization artifact — DPO log probabilities are summed over tokens.

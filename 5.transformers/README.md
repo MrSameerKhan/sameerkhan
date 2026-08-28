@@ -37,7 +37,7 @@ mindmap
 | **Tokenization + pretraining** | `01_fundamentals/03_tokenization` → `04_pretraining_objectives` |
 | **Vision Transformer** | `01_fundamentals/05_vision_transformers` (overview) — depth in `../3.computerVision/01_fundamentals/04_vision_transformer_deep.md` |
 | **Model families** | `02_models/01_bert_family` → `02_gpt_family` → `03_encoder_decoder` → `04_efficient_transformers` |
-| **Worked examples** | `02_models/05_bert_end_to_end` → `06_gpt_end_to_end` → `07_t5_end_to_end` |
+| **Worked examples** | `02_models/05_bert_end_to_end` → `06_gpt1_end_to_end` → `06b_gpt2_end_to_end` → `06c_gpt3_end_to_end` → `07_t5_end_to_end` |
 | **Modern LLM architecture (LLaMA vs GPT-2)** | `02_models/08_modern_llm_architecture` |
 | **PEFT** | `02_models/09_parameter_efficient_tuning` |
 | **Frontier topics** | `02_models/10_mixture_of_experts` → `02_models/11_long_context_scaling` → `02_models/12_constrained_decoding` → `02_models/13_speculative_decoding` → `02_models/14_reasoning_models` |
@@ -65,7 +65,9 @@ mindmap
 | `03_encoder_decoder.md` | T5, BART, mT5, Flan-T5 |
 | `04_efficient_transformers.md` | FlashAttention 1/2/3 / Paged Attention / GQA / MLA / distillation / quantization summary |
 | `05_bert_end_to_end.md` | Worked example with numbers (BERT) |
-| `06_gpt_end_to_end.md` | Worked example with numbers (GPT) |
+| `06_gpt1_end_to_end.md` | Worked example with numbers (GPT-1, post-LN, weight tying) |
+| `06b_gpt2_end_to_end.md` | Worked example with numbers (GPT-2, pre-LN, 1/√N init, byte-level BPE) |
+| `06c_gpt3_end_to_end.md` | GPT-3: sparse attention, 8-model ladder, in-context learning |
 | `07_t5_end_to_end.md` | Worked example with numbers (T5) |
 | `08_modern_llm_architecture.md` | LLaMA vs GPT-2 detailed comparison |
 | `09_parameter_efficient_tuning.md` | SSOT: LoRA / QLoRA / DoRA / LoftQ / PiSSA / GaLore |

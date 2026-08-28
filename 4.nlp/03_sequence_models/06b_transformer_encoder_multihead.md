@@ -546,6 +546,7 @@ The 33/67 split is scale-invariant: it is `4d²` vs `8d²` whenever `d_ff = 4·d
 
 ## See also
 
+- [06c_transformer_decoder_end_to_end.md](06c_transformer_decoder_end_to_end.md) — the decoder that reads this file's output as its cross-attention memory
 - [06_transformer_end_to_end.md](06_transformer_end_to_end.md) — `d_model=2`, single head, full backward
 - [05_attention_end_to_end.md](05_attention_end_to_end.md) — attention before the transformer block
 - [../../5.transformers/02_models/08_modern_llm_architecture.md](../../5.transformers/02_models/08_modern_llm_architecture.md) — what changed since: RMSNorm, SwiGLU, RoPE, GQA

@@ -801,7 +801,8 @@ MLM computes loss at 15% of tokens. RTD (ELECTRA's discriminator objective) comp
 - **Transformer Architecture (02_transformer_architecture.md):** MLM, RTD = Encoder-only (BERT/ELECTRA); CLM (GPT) = CLM; Encoder-Decoder (T5, BART) = Span corruption, denoising
 - **Tokenization (03_tokenization.md):** MLM masks WordPiece tokens, not words — whole-word masking motivates WordPiece token boundary interpretation. CLM vocabulary size affects perplexity interpretation. T5 adds sentinel tokens to its vocabulary → fixed 100 extra IDs
 - **BERT end-to-end (models/05_bert_end_to_end.md):** MLM numbers worked through there — [CLS] for classification → NSP motivation and removal. The MLM head W_mlm and backward pass match exactly
-- **GPT end-to-end (models/06_gpt_end_to_end.md):** CLM loss at positions 0,1,2 → same values (2.604, 3.101, 2.120). Weight tying — same W_lm = token_embeds.T
+- **GPT-1 end-to-end (models/06_gpt1_end_to_end.md):** CLM loss computed at *every* position (not 15% as in MLM), with the worked numbers. Weight tying — `W_lm = Eᵀ`, and the exact two-path gradient identity
+- **GPT-2 end-to-end (models/06b_gpt2_end_to_end.md):** same objective, pre-LN block; byte-level BPE changes what a "token" in the loss actually is
 - **Fine-tuning (models/07_finetuning_end_to_end.md):** What you learn during pretraining determines what you adapt during fine-tuning. MLM representations → classifiers, NER, QA. CLM representations → generative fine-tuning, RLHF. Span corruption representations → seq2seq fine-tuning, instruction tuning
 
 ---
