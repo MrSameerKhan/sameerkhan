@@ -1,7 +1,7 @@
 # Session 3 — ColPali: Vision-RAG on Document Images
 Status: `🔧 Code-built`
 
-Theory: [../../../9.multimodal/02_document_ai.md](../../../9.multimodal/02_document_ai.md)
+Theory: [../../../9.multimodal/02_document_ai.md](../../9.multimodal/02_document_ai.md)
 
 ---
 

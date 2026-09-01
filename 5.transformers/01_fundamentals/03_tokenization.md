@@ -1,5 +1,17 @@
 # Tokenization
 
+> **Canonical home is `4.nlp/`.** Per the repo ownership table, tokenization belongs to
+> [../../4.nlp/01_fundamentals/03_tokenization.md](../../4.nlp/01_fundamentals/03_tokenization.md)
+> (concept) and
+> [../../4.nlp/01_fundamentals/04_tokenization_end_to_end.md](../../4.nlp/01_fundamentals/04_tokenization_end_to_end.md)
+> (BPE training hand-computed — verified to reproduce exactly), with
+> [05_embedding_lookup_end_to_end.md](../../4.nlp/01_fundamentals/05_embedding_lookup_end_to_end.md)
+> for tokens → vectors.
+>
+> **This file is retained for the transformer-specific material** the 4.nlp files do not carry:
+> special tokens per architecture (§6), vocabulary sizes in practice (§7), and the debugging
+> artifacts (§8). §2–§5 duplicate the canonical files — prefer those.
+
 > Tokenization converts raw text into integer IDs for the embedding table. BPE builds a vocabulary by merging frequent character pairs — "cat sat on mat" naturally produces "at" as a subword (appears in 3 of 4 words). Byte-level BPE eliminates OOV entirely. SentencePiece handles any language without pre-tokenization. The tokenizer must always match the model — wrong tokenizer → wrong IDs → garbage output.
 
 ---
@@ -42,10 +54,10 @@ flowchart LR
 |-------|-------|
 | BERT (2018) | 30K WordPiece — English-only |
 | GPT-2 (2019) | 50K byte-BPE — First byte-level (no UNK) |
-| GPT-3 (2020) | 50K byte-BPE — same as GPT-2 (tiktoken cl100k_base later) |
+| GPT-3 (2020) | 50K byte-BPE — **identical to GPT-2**; cl100k_base arrives with GPT-3.5/4 |
 | LLaMA-1/2 (2023) | 32K SentencePiece — small vocab, strong English focus |
 | GPT-4o (cl100k) | 100K — 2× efficiency on non-English / code |
-| LLaMA-3 (2024) | 128K SentencePiece — + strong CJK + code |
+| LLaMA-3 (2024) | 128K **tiktoken BPE** — moved OFF SentencePiece; + strong CJK + code |
 | Qwen2.5 (2024) | 151K — + strong CJK + code |
 | GPT-4o (o200k_base) | 200K — + multilingual, vision tokens |
 
@@ -375,17 +387,37 @@ MLM input: [CLS] cat [MASK] on mat [SEP]
 | BERT | WordPiece | 30,522 | English, ## continuation |
 | RoBERTa | Byte-level BPE | 50,265 | byte-level, no language assumption |
 | GPT-2 | Byte-level BPE | 50,257 | same family as RoBERTa |
-| GPT-3/4 | Byte-level BPE | 100,277 | tiktoken, cl100k_base |
-| T5 | SentencePiece | 32,100 | ▁ space prefix |
-| LLaMA-1/2 | Byte-level BPE | 32,000 | smaller vocab — fewer tokens |
-| LLaMA-3 | Byte-level BPE | 128,256 | 4× larger vocab → fewer tokens |
+| GPT-3 | Byte-level BPE | **50,257** | **same tokenizer as GPT-2**, unchanged |
+| GPT-3.5 / GPT-4 | Byte-level BPE | 100,277 | tiktoken `cl100k_base` |
+| GPT-4o | Byte-level BPE | 200,019 | tiktoken `o200k_base` |
+| T5 | SentencePiece | 32,128 | 32,000 + 100 sentinels = 32,100, padded to 32,128 |
+| LLaMA-1/2 | **SentencePiece BPE** | 32,000 | not byte-level |
+| LLaMA-3 | **tiktoken BPE** (byte-level) | 128,256 | 4× larger; **changed family** from Llama 2 |
 | Mistral | SentencePiece | 32,000 | same as LLaMA-2 |
 | Gemma | SentencePiece | 256,128 | very large, better multilingual |
 
-**Rule of thumb for sequence length:**
-- English text: ~1 token per 4 characters (GPT-2 tokenizer)
-- Code: ~1 token per 3 characters (more symbols, punctuation)
-- Chinese: ~1 token per 1-2 characters (byte-level BPE is less efficient)
+**Rule of thumb for sequence length** (GPT-2/GPT-3 byte-level BPE):
+
+```
+English   ~4 characters per token       (~0.25 tokens/char)
+Code      ~3 characters per token       (more symbols and punctuation)
+Chinese   ~1-2 TOKENS PER CHARACTER     (~4-8x worse than English)
+```
+
+**Note the direction on Chinese.** A CJK character is 3 UTF-8 bytes, and byte-level BPE learned
+mostly on English rarely merges them into single tokens — so one character typically costs **one to
+two tokens**, not the other way round. The same document in Chinese can be 4–8× more tokens than in
+English.
+
+Three consequences, all of which are the same fact:
+
+- **Billing** — per-token pricing is not comparable across languages.
+- **Context** — "128k context" holds far less Chinese text than English text.
+- **Latency** — generation is per token, so the same answer takes longer.
+
+This is why Llama 3 and Qwen enlarged their vocabularies: it is a direct, measurable cost, not a
+cosmetic one. Fuller treatment in
+[../../4.nlp/01_fundamentals/05_embedding_lookup_end_to_end.md](../../4.nlp/01_fundamentals/05_embedding_lookup_end_to_end.md) §7.
 
 ---
 

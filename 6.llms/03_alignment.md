@@ -1,6 +1,6 @@
 # LLM Alignment (RLHF, DPO)
 
-> Alignment = making LLMs do what humans want. RLHF does this via human preference data → reward model → PPO. DPO simplifies RLHF by directly optimizing preferences without a separate reward model — same quality, much simpler. In practice: SFT first, then DPO. The KL penalty is critical to prevent reward hacking. Constitutional AI / RLAIF scales this with AI-generated feedback instead of human labels.
+> Alignment = making LLMs do what humans want. RLHF does this via human preference data → reward model → PPO. DPO simplifies RLHF by directly optimizing preferences without a separate reward model — far simpler, and competitive in practice, though it is **offline** and leaves you no reusable reward model (see `03c_dpo_end_to_end.md` §7). In practice: SFT first, then DPO. The KL penalty is critical to prevent reward hacking. Constitutional AI / RLAIF scales this with AI-generated feedback instead of human labels.
 
 ---
 
@@ -199,12 +199,29 @@ for batch in dataloader:
 **Key insight:** Skip the reward model entirely. Optimize preferences directly.
 
 ```
-RLHF insight: the optimal policy π* has a closed-form relationship with reward r:
-r(x, y) = β · log(π*(y|x) / π_ref(y|x)) + β · log Z(x)
+RLHF insight: the KL-constrained optimum has a CLOSED FORM
+    π*(y|x) = (1/Z(x)) · π_ref(y|x) · exp(r(x,y)/β)
 
-This means: the reward is implicitly defined by the policy!
-We don't need to train a separate reward model.
+Invert it:
+    r(x, y) = β · log(π*(y|x) / π_ref(y|x)) + β · log Z(x)
+                                              ^^^^^^^^^^^^
+                                              INTRACTABLE — Z sums over ALL responses
 ```
+
+**The step that makes this usable — and it is the one most write-ups skip:**
+
+```
+Bradley-Terry depends only on the DIFFERENCE of rewards, and Z(x) depends only on x,
+so it is IDENTICAL for y_w and y_l:
+
+  r(x,y_w) − r(x,y_l)
+    = [β·log(π*_w/π_ref_w) + β·log Z(x)] − [β·log(π*_l/π_ref_l) + β·log Z(x)]
+    =  β·log(π*_w/π_ref_w) − β·log(π*_l/π_ref_l)          ← Z cancels EXACTLY
+```
+
+Verified elementwise (`0.000e+00`) and against Bradley-Terry in
+[03c_dpo_end_to_end.md](03c_dpo_end_to_end.md) §5. **That cancellation is DPO** — the reward model
+disappears because the policy becomes its own reward model.
 
 DPO rearranges the RLHF objective to directly use preference pairs:
 
@@ -405,6 +422,14 @@ As β → ∞: pure SFT, ignores reward signal → no alignment
   - Monitor KL divergence during training
   - Target KL = 6-10 nats for typical RLHF
   - Adaptive: adjust β to keep KL near target_kl
+
+Computed on a 4-response toy (03c_dpo_end_to_end.md §4), π* ∝ π_ref·exp(r/β):
+
+     β        A        B        C        D    KL(π*‖π_ref)
+   ref   0.4000   0.3000   0.2000   0.1000
+ 10.00   0.4260   0.2920   0.1797   0.1023          0.0020   ← barely moves
+  1.00   0.6394   0.1950   0.0584   0.1072          0.1515
+  0.05   0.9999   0.0000   0.0000   0.0001          0.9155   ← collapsed onto argmax r
 ```
 
 ---
@@ -450,7 +475,7 @@ Reward hacking occurs when the model finds responses that score high on the rewa
 
 ## Key Takeaway
 
-Alignment = making LLMs do what humans want. RLHF does this via human preference data → reward model → PPO. DPO simplifies RLHF by directly optimizing preferences without a separate reward model — same quality, much simpler. In practice: SFT first, then DPO. The KL penalty is critical to prevent reward hacking. Constitutional AI / RLAIF scales this with AI-generated feedback instead of human labels.
+Alignment = making LLMs do what humans want. RLHF does this via human preference data → reward model → PPO. DPO simplifies RLHF by directly optimizing preferences without a separate reward model — far simpler, competitive in practice, but offline and with no reusable reward model. In practice: SFT first, then DPO. The KL penalty is critical to prevent reward hacking. Constitutional AI / RLAIF scales this with AI-generated feedback instead of human labels.
 
 ---
 

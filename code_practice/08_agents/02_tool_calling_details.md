@@ -1,7 +1,7 @@
 # Session 2 — OpenAI Function Calling
 Status: `✅ Run`
 
-Theory: [../../../8.agents/01_agents.md](../../../8.agents/01_agents.md)
+Theory: [../../../8.agents/01_agents.md](../../8.agents/01_agents.md)
 
 ---
 

@@ -1,5 +1,13 @@
 # Prompting & Prompt Engineering
 
+> **Scope note.** Prompting is **off the board track** — it is how you *use* a model, not how one is
+> built. It sits directly on top of two boards that are on the track:
+> **in-context learning** (board 9, [../5.transformers/02_models/06c_gpt3_end_to_end.md](../5.transformers/02_models/06c_gpt3_end_to_end.md) §5 —
+> verified that the weights are bit-identical across prompts) and
+> **reasoning models / RLVR** (frontier, [../5.transformers/02_models/14_reasoning_models.md](../5.transformers/02_models/14_reasoning_models.md)).
+> Sampling parameters are board 11:
+> [../4.nlp/03_sequence_models/07_decoding_strategies.md](../4.nlp/03_sequence_models/07_decoding_strategies.md).
+
 > Prompt engineering is the art of creating the right context for the correct answer to be the most probable continuation. Core progression: zero-shot → few-shot → CoT → self-consistency. For production: system prompt for role/constraints, few-shot for format, CoT for reasoning tasks, JSON mode for structured output. The highest-ROI skill: writing clear, unambiguous instructions with explicit output format specifications.
 
 ---
@@ -131,7 +139,17 @@ Or: provide few-shot examples with reasoning steps shown.
 prompt = f"""Question: {question}
 
 Let's think step by step:"""
-# Just adding this phrase improves accuracy on GSM8K from ~18% to ~70% (GPT-3)
+# CAUTION: the widely-quoted "~18% -> ~70%" conflates TWO different results.
+#   Zero-shot CoT  (Kojima et al. 2022, "LLMs are Zero-Shot Reasoners")
+#       measured on text-davinci-002 -- the jump is real but SMALLER than 70%.
+#   Few-shot CoT   (Wei et al. 2022) measured on PaLM 540B -- different model,
+#       different prompt regime, and the ~18% baseline comes from HERE, not from
+#       the zero-shot setting.
+#   Self-consistency (Wang et al. 2022) stacks on top of CoT and lifts it further.
+#
+#   Say "CoT gives a large jump on multi-step arithmetic, and the size depends on
+#   model scale" -- and cite the specific paper if you quote a number. Mixing the
+#   baseline from one paper with the ceiling from another is the common error.
 ```
 
 ### Few-Shot CoT

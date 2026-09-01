@@ -1,7 +1,7 @@
 # Session 4 — DPO Alignment
 Status: `🔧 Code-built`
 
-Theory: [../../../6.llms/03_alignment.md](../../../6.llms/03_alignment.md) · [../../../6.llms/06_alignment_follow_ups.md](../../../6.llms/06_alignment_follow_ups.md)
+Theory: [../../../6.llms/03_alignment.md](../../6.llms/03_alignment.md) · [../../../6.llms/06_alignment_follow_ups.md](../../6.llms/06_alignment_follow_ups.md)
 
 ---
 

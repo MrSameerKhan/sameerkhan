@@ -52,7 +52,7 @@ Tier 1 references Tier 2. Tier 1 never explains. Tier 3 references Tier 2. Tier 
 
 | Pattern | When | Example |
 |---------|------|---------|
-| Relative path with extension | Always | `[../9.multimodal/02_document_ai.md](../9.multimodal/02_document_ai.md)` |
+| Relative path with extension | Always | `[../9.multimodal/02_document_ai.md](9.multimodal/02_document_ai.md)` |
 | Anchor link for sub-section | When pointing into a specific section | `[file.md#65-conformal-prediction](file.md#65-conformal-prediction)` |
 | "Connections" table | At the bottom of each theory file | See any current theory file for example |
 | Bare URLs | Never (use markdown link syntax) | ✗ `https://...` |

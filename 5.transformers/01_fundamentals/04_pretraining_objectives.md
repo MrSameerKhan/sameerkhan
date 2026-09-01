@@ -1,5 +1,15 @@
 # Pretraining Objectives — End to End with Numbers
 
+> **Scope note.** This file owns the **objectives** — MLM, CLM, span corruption, RTD, and the
+> comparisons between them. Each is also hand-computed inside the model that uses it, at
+> `d_model=4` with two real heads and a verified backward pass:
+> [MLM + NSP in BERT](../02_models/05_bert_end_to_end.md) ·
+> [CLM in GPT-1](../02_models/06_gpt1_end_to_end.md) ·
+> [span corruption in T5](../02_models/07_t5_end_to_end.md) ·
+> [denoising in BART](../02_models/07b_bart_end_to_end.md).
+> Scaling — how much data for how many parameters — is
+> [board 17](../../4.nlp/03_sequence_models/08_scaling_laws_emergent.md).
+
 > Same sentence throughout: "cat sat on mat". Same 2D embeddings throughout: cat=[1.0,0.5], sat=[0.2,0.3], on=[0.1,0.1], mat=[0.2,0.4].
 
 ---
@@ -433,27 +443,55 @@ This is why domain matters: Classification tasks → use BERT-style bidirectiona
 
 BERT uses 15%. What if you use more?
 
-| Masking rate | Effect |
+| Masking rate | The conventional account |
 |-------------|--------|
-| 5% | Too easy — model learns to ignore; slow convergence |
-| 15% | BERT's sweet spot — enough signal, enough context |
-| 40% | Too hard — too much context is missing; model can't learn |
-| 50%+ | Degenerate — model guesses randomly, no learning signal |
+| 5% | Too easy — little signal per sequence, slow convergence |
+| 15% | BERT's choice — the long-standing default |
+| 40% | "Too hard — too much context missing" |
+| 50%+ | Degenerate |
 
-RoBERTa tested this empirically and found 15% optimal.
+> **This table is the received wisdom, and it has been challenged.** Wettig et al. (2023),
+> *"Should You Mask 15% in Masked Language Modeling?"*, found that **40% masking can outperform
+> 15%**, that the optimal rate rises with model size, and that the 80/10/10 corruption split is not
+> necessary either. So "40% is too hard to learn from" is not a safe claim.
+>
+> The defensible position: **15% is a well-tested default, not a proven optimum**, and there is
+> published evidence that higher rates help at scale. Knowing the result exists is the signal;
+> asserting 15% is optimal is the trap.
 
-### Span Length (T5)
+**What 15% definitely does cost** is signal per sequence — MLM grades 15% of positions where CLM
+grades ~100%, a **6.67×** difference, quantified in
+[../02_models/05_bert_end_to_end.md](../02_models/05_bert_end_to_end.md) §14.
 
-T5 uses Poisson(λ=3) for span lengths:
+### Span Length — and who actually uses Poisson
+
+**Correction worth being precise about:** the `Poisson(λ=3)` distribution below is **BART's**, not
+T5's.
+
 ```
-P(len=1) = e^(-3) × 3^1 / 1! = 0.149
-P(len=2) = e^(-3) × 3^2 / 2! = 0.224
-P(len=3) = e^(-3) × 3^3 / 3! = 0.224
-P(len=4) = e^(-3) × 3^4 / 4! = 0.168
-P(len=5) = e^(-3) × 3^5 / 5! = 0.101
+T5     15% of tokens corrupted, MEAN SPAN LENGTH 3
+       (the paper specifies a mean, not a Poisson; spans form by grouping selected tokens)
+
+BART   span lengths drawn from Poisson(λ = 3)  -- explicitly, for text infilling
 ```
 
-Longer spans = harder reconstruction = stronger encoder. But too long and the decoder can't recover enough signal.
+The Poisson values themselves are correct:
+
+```
+P(len=1) = e^(−3) · 3¹ / 1! = 0.149361
+P(len=2) = e^(−3) · 3² / 2! = 0.224042
+P(len=3) = e^(−3) · 3³ / 3! = 0.224042
+P(len=4) = e^(−3) · 3⁴ / 4! = 0.168031
+P(len=5) = e^(−3) · 3⁵ / 5! = 0.100819
+```
+
+**`P(len=0) = e^(−3) = 0.049787` is the interesting one, and it is BART-specific:** a length-0 span
+means `[mask]` is *inserted* without deleting anything, so the model cannot infer the answer length
+from the number of masks. See
+[../02_models/07b_bart_end_to_end.md](../02_models/07b_bart_end_to_end.md) §2.
+
+Longer spans = harder reconstruction = stronger encoder. Too long and the decoder cannot recover
+enough signal.
 
 ---
 

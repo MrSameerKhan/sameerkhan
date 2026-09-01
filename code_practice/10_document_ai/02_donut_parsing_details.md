@@ -1,7 +1,7 @@
 # Session 2 — Donut: OCR-Free Document Understanding
 Status: `🔧 Code-built`
 
-Theory: [../../../9.multimodal/05_donut_end_to_end.md](../../../9.multimodal/05_donut_end_to_end.md)
+Theory: [../../../9.multimodal/05_donut_end_to_end.md](../../9.multimodal/05_donut_end_to_end.md)
 
 ---
 

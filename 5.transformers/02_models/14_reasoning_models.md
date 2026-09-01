@@ -1,5 +1,13 @@
 # Reasoning Models — o1, DeepSeek-R1, Test-Time Compute, RLVR
 
+> **Scope note.** This is the frontier board, and it sits directly on top of board 20. **RLVR
+> (reinforcement learning with verifiable rewards) replaces the reward model with a *verifier*** —
+> a math checker or a unit-test suite — which removes the single biggest failure mode of RLHF:
+> reward hacking against a learned, imperfect proxy
+> ([../../6.llms/03c_dpo_end_to_end.md](../../6.llms/03c_dpo_end_to_end.md) §4). You cannot hack a
+> unit test the way you can hack a preference model. That is why the technique landed on math and
+> code first, and why extending it to open-ended tasks is the hard open problem.
+
 > The 2024-2026 frontier: models that "think" longer at inference. The next paradigm after instruction tuning.
 
 ---
@@ -142,7 +150,22 @@ The DeepSeek-R1 paper (2025) is the only fully public recipe. Approximate sequen
 
 **GRPO key insight:** instead of PPO's complex value function + KL trick, GRPO computes advantage as (reward − mean_reward_in_batch) / std. Simpler, more stable for RL on language.
 
-**Test-time scaling curve:** more thinking tokens → better accuracy, log-linear. Each additional thinking token costs ~$0.0001 (output tokens). At thousands of tokens, the cost adds up.
+**Test-time scaling curve:** more thinking tokens → better accuracy, roughly log-linear — so
+**each doubling of thinking budget buys a constant increment**, which is exactly the diminishing
+return that makes a token cap rational rather than stingy.
+
+Worked, at `$0.15 / 1K` output tokens:
+
+```
+  thinking tokens      cost/query      latency @ 20 tok/s
+              100         $0.015                     5 s
+            1,000         $0.15                     50 s
+           10,000         $1.50                    500 s  = 8.3 min
+```
+
+Both figures in §6 check out: `10,000 × $0.15/1000 = $1.50`, and `10,000 / 20 = 500 s`.
+(Use one price consistently — `$0.15/1K` above, not the `~$0.0001/token` = `$0.10/1K` quoted
+elsewhere in this file.)
 
 ---
 
@@ -166,7 +189,7 @@ The DeepSeek-R1 paper (2025) is the only fully public recipe. Approximate sequen
 
 **Q1: What's different about o1 vs GPT-4o?**
 
-o1 is a reasoning model: trained with RL to allocate compute by generating long internal chain-of-thought before answering. GPT-4o has the same compute per output token regardless of difficulty. On AIME 2024, o1 jumps from ~30% (4o) to 83%; o3 gets ~96×. Higher quality and latency on hard problems.
+o1 is a reasoning model: trained with RL to allocate compute by generating long internal chain-of-thought before answering. GPT-4o has the same compute per output token regardless of difficulty. On AIME 2024, o1 jumps from ~30% (4o) to ~83%; o3 gets ~96%. Higher quality and latency on hard problems.
 
 **Q2: What is RLVR and why does it work better than RLHF for reasoning?**
 

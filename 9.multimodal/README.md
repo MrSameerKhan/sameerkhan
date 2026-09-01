@@ -74,7 +74,7 @@ mindmap
 - **Pure vision** (CNN, ViT, segmentation): `../3.computerVision/`
 - **Self-supervised vision foundation models** (DINOv2, MAE, I-JEPA, CLIP, SigLIP): `../3.computerVision/02_applications/05_self_supervised_vision.md`
 - **Transformer architecture** (ViT is a transformer): `../5.transformers/01_fundamentals/05_vision_transformers.md`
-- **Generative models** (Diffusion / Stable Diffusion / DiT): `../2.deep_learning/02_architectures/05_generative.md`
+- **Generative models** (Diffusion / Stable Diffusion / DiT): `../2.deep learning/02_architectures/05_generative.md`
 - **Document RAG** (visual retrieval): `../7.rag/`
 - **Document processing system design**: `../11.system_design/04_document_processing_pipeline.md`
 

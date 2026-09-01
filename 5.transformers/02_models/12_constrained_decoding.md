@@ -1,5 +1,37 @@
 # Constrained Decoding — Structured Output Generation
 
+> **Scope note.** The masking mechanism here is *identical* to the causal mask — set disallowed
+> logits to `−∞` **before** softmax, never zero them after. Same discipline, same reasons, worked
+> through in
+> [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) §6.
+> Sampling itself is board 11:
+> [../../4.nlp/03_sequence_models/07_decoding_strategies.md](../../4.nlp/03_sequence_models/07_decoding_strategies.md).
+
+---
+
+## 0. It is NOT distribution-preserving — and that is the point
+
+Three results elsewhere in this arc are **exact**: the KV cache (`0.000e+00`), Flash Attention
+(`1.665e-16`), and speculative decoding (lossless, `0.000e+00`). **Constrained decoding is not, by
+design.**
+
+Taking a real distribution and allowing only three tokens:
+
+```
+vocab    <bos>    bank  approved     the    loan  granted rejected   <eos>
+free   [0.0876, 0.0221,  0.1083, 0.1033, 0.3844,  0.1507,  0.0660, 0.0775]
+                          ^^^^^^  ^^^^^^          ^^^^^^      allowed by the grammar
+masked [0.0000, 0.0000,  0.2989, 0.2851, 0.0000,  0.4159,  0.0000, 0.0000]
+
+deleted mass         = 0.637602   (63.8% of the model's belief)
+survivors rescaled by = 2.7594×
+```
+
+**You are imposing a hard prior, not optimising.** If the grammar is wrong, the model has no way to
+tell you — it will emit the most likely *valid* string, however bad. That is the trade, and §5.1 is
+its failure mode.
+
+---
 > Force LLM output to satisfy a grammar or schema at every decode step — not via prompt engineering, but by masking invalid tokens in the logits. Guarantees syntax-valid output by construction.
 
 ---
@@ -149,7 +181,14 @@ def constrained_step(model, emitted, grammar_state):
 
 2. **Pre-filled tokens collide with grammar** — system prompt or chat template includes `<|assistant|>` followed by space; grammar template might expect `{`. Tokenization mismatch. Fix: tokenizer-aware schema construction.
 
-3. **Performance regression at long contexts** — building the mask is O(vocab × grammar_state_depth). On 100K-token contexts with deep nested JSON, the mask construction can dominate. Cache compiled grammars.
+3. **Compilation cost, not per-step cost** — a common misstatement. Outlines' contribution
+   (Willard & Louf 2023) is precisely that it **precomputes an FSM index** mapping each grammar
+   state to its allowed-token set, making the per-step mask a **lookup, not a scan** — close to
+   `O(1)` in the vocabulary rather than `O(vocab × depth)`.
+
+   The real costs are **one-time grammar compilation** and the **memory** the index occupies, which
+   grows with grammar complexity. So: cache compiled grammars across requests, and be wary of
+   *dynamically generated* schemas, which defeat the cache and pay compilation on every call.
 
 4. **Hallucinated structure** — model outputs valid JSON but with wrong field values (`"age": -50`). Constrained decoding enforces SYNTAX, not SEMANTICS. Add a Pydantic validation layer on top.
 

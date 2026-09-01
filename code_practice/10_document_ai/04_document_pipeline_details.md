@@ -1,7 +1,7 @@
 # Session 4 — Full ICE-Style Document Pipeline (Portfolio Project)
 Status: `🔧 Code-built`
 
-Theory: [../../../9.multimodal/02_document_ai.md](../../../9.multimodal/02_document_ai.md) · [../../../9.multimodal/06_layoutlm_end_to_end.md](../../../9.multimodal/06_layoutlm_end_to_end.md)
+Theory: [../../../9.multimodal/02_document_ai.md](../../9.multimodal/02_document_ai.md) · [../../../9.multimodal/06_layoutlm_end_to_end.md](../../9.multimodal/06_layoutlm_end_to_end.md)
 
 **Portfolio milestone:** pin this to GitHub, add to resume:
 > "Built end-to-end document AI pipeline (ingest → OCR → classify → extract → QA) for mortgage document processing; production upgrade path through LayoutLMv3 → Donut → ColPali + RAG."

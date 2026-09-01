@@ -1,5 +1,11 @@
 # LLM Evaluation
 
+> **Board 21 arithmetic is in [04b_evaluation_end_to_end.md](04b_evaluation_end_to_end.md)**:
+> why perplexity is a bad headline metric (not covered below), multiple-choice floors,
+> contamination detection — and a correction to the `pass@k` example in "Code: pass@k" below,
+> whose two lines are both labelled `pass@1` and give different values. For `n=20, c=8` the
+> correct figures are `pass@1 = 0.4000` and `pass@10 = 0.9996`.
+
 > LLM evaluation requires a metric battery, not a single score. Automatic metrics: ROUGE for summarization, exact match for extraction, pass@k for code. LLM-as-judge for open-ended quality assessment — always control for position bias and verbosity bias. Standard benchmarks (MMLU, HumanEval) for general capability; task-specific metrics for production use cases. RAGAS for RAG pipelines. Human eval is gold standard — do it for at least 100 examples before any major model decision.
 
 ---

@@ -1,5 +1,17 @@
 # Attention Mechanism
 
+> **Scope note.** This file is the **reference**: formulas, shapes, variants, code. The mechanism is
+> hand-computed with real numbers in
+> [../../4.nlp/03_sequence_models/05_attention_end_to_end.md](../../4.nlp/03_sequence_models/05_attention_end_to_end.md)
+> (attention alone) and
+> [06b_transformer_encoder_multihead.md](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md)
+> (two real heads at `d_model=4`, backward checked against `torch.autograd`).
+> If you have worked those, skip §1–§2 here.
+>
+> Masking, the KV cache and Flash Attention have their own boards —
+> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) and
+> [04b attention at scale](../02_models/04b_attention_at_scale_end_to_end.md).
+
 > The core operation of all transformers. QK^T/√d_k computes similarity scores, softmax converts to weights, weighted sum of V produces output. Everything else in transformers (BERT, GPT, T5) is built on top of this one operation.
 
 ---
@@ -52,7 +64,38 @@ flowchart TD
 
 Without scaling: dot products grow large as d_k increases → softmax saturates into near-one-hot → gradients vanish.
 
-Proof: if Q, K have unit-variance entries, dot product Q·K has variance d_k. Dividing by √d_k normalizes variance back to 1 → softmax stays in non-saturated region during training.
+If `Q, K` have unit-variance entries, `q · k` has variance `d_k`. Dividing by `√d_k` returns it to 1.
+
+**Measured** (200,000 random pairs per row):
+
+```
+    d_k    var(q·k)   predicted    var after / √d_k
+      8        8.00           8              0.9998
+     64       63.83          64              0.9974
+    128      128.13         128              1.0010
+    512      511.89         512              0.9998
+```
+
+**Why that matters — the saturation it prevents.** Mean over 2,000 draws, 64 keys:
+
+```
+    d_k   max p unscaled   max p scaled    Σ p(1−p) unscaled    scaled
+      8           0.4269         0.1071               0.7175    0.9594
+     64           0.7870         0.1069               0.2979    0.9608
+    128           0.8536         0.1075               0.2064    0.9609
+    512           0.9272         0.1072               0.1041    0.9613
+```
+
+**Unscaled, the attention row goes near one-hot as `d_k` grows** — max weight `0.4269 → 0.9272` —
+and the softmax Jacobian mass `Σ p(1−p)` collapses by **6.9×**. Gradients through the attention
+weights vanish, so `W_q` and `W_k` stop learning.
+
+**Scaled, both are flat and `d_k`-independent** (`0.107` and `0.961` across a 64× range). That
+invariance is the whole point: you can widen heads without retuning anything.
+
+> Scale by **`√d_head`**, never `√d_model`. With `d_model=768` and 12 heads it is `√64 = 8`, not
+> `√768 ≈ 27.7`. T5 omits the division entirely and folds it into initialisation — see
+> [../02_models/07_t5_end_to_end.md](../02_models/07_t5_end_to_end.md) §4 for what that costs.
 
 ### Step-by-step computation
 
@@ -310,7 +353,17 @@ def causal_mask(seq_len, device):
 
 ## 6. Flash Attention
 
-IO-aware implementation — computes attention in tiles to avoid materializing the O(n²) matrix. Trades compute for memory: recomputes attention during backward pass.
+IO-aware implementation — computes attention in tiles so the `O(n²)` matrix is never written to HBM.
+
+**Flash is faster, not slower.** It does *more* arithmetic (the backward pass recomputes attention
+rather than storing it), but attention at length is **memory-bandwidth bound**, so removing the
+write-then-read of the `n²` matrix wins easily. Saying "it trades compute for memory" invites the
+wrong conclusion — the trade is FLOPs for *memory traffic*, and memory traffic is the binding
+constraint.
+
+**It is also exact** — bit-for-bit the same attention, verified to `1.665e-16` in
+[../02_models/04b_attention_at_scale_end_to_end.md](../02_models/04b_attention_at_scale_end_to_end.md) §5,
+which also derives the online-softmax rescaling that makes the tiling valid.
 
 ```python
 # Flash Attention: compute attention in tiles to avoid materializing O(n²) matrix

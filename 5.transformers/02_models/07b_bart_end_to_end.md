@@ -204,7 +204,7 @@ For scale against the siblings in this arc:
 BART-base      139,420,416      6 enc + 6 dec
 BART-large     406,291,456     12 enc + 12 dec
 T5-Base        222,903,552     12 enc + 12 dec       (07_t5_end_to_end.md §11)
-BERT-base      108,770,304     12 enc                (05_bert_end_to_end.md §16)
+BERT-base      108,891,648     12 enc                (05_bert_end_to_end.md §16)
 GPT-2 small    124,439,808     12 dec                (06b_gpt2_end_to_end.md §14)
 ```
 

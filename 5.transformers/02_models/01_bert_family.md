@@ -1,5 +1,10 @@
 # BERT Family (Encoder Models)
 
+> **Scope note.** This file owns the **family**: BERT → RoBERTa → DeBERTa → DistilBERT → ELECTRA,
+> what each changed, and how to fine-tune them. The BERT **block itself** is hand-computed at
+> `d_model=4` with two real heads, MLM + NSP and a verified backward pass in
+> [05_bert_end_to_end.md](05_bert_end_to_end.md).
+
 > BERT = bidirectional transformer encoder pretrained on MLM. RoBERTa fixed BERT's training recipe (remove NSP, dynamic masking, more data) — use RoBERTa as default. DeBERTa adds disentangled attention for best accuracy. DistilBERT when speed matters. Fine-tuning recipe: LR 2e-5, linear decay, 6% warmup; 3 epochs — this works for 90% of downstream tasks..
 
 ---
@@ -52,10 +57,16 @@ timeline
 ### BERT (Devlin et al. 2018)
 
 ```
-BERT-base:  12 layers, 12 heads, d_model=768,  d_ff=3072 → 110M params
-BERT-large: 24 layers, 16 heads, d_model=1024, d_ff=4096 → 340M params
+BERT-base:  12 layers, 12 heads, d_model=768,  d_ff=3072 → 108,891,648  ("110M")
+BERT-large: 24 layers, 16 heads, d_model=1024, d_ff=4096 → 334,092,288  ("340M")
 Vocab: 30,522 WordPiece tokens
-Max sequence: 512 tokens
+Max sequence: 512 tokens   (a hard cap — the position table has no row 513)
+```
+
+Counts include biases and LayerNorm parameters. Full breakdown, and why the embedding table is
+**21.6%** of BERT-base, in [05_bert_end_to_end.md](05_bert_end_to_end.md) §16.
+
+```
 ```
 
 ### Pretraining Objectives
@@ -146,10 +157,22 @@ Key changes from BERT:
 ```
 1. Remove NSP — NSP found to be harmful, train with full sentences only
 2. Dynamic masking — generate new mask each epoch (BERT used static mask)
-3. Larger batches — 256 → 2048 sequences per batch
+3. Larger batches — 256 → 8,000 sequences per batch
 4. More data — 160GB text vs 16GB in BERT (Books + CC-News + OpenWebText + Stories)
-5. Longer training — 10× more steps (500K vs 1M but with 2K batch)
-6. BPE tokenizer — 50K vocab (same as GPT-2) vs BERT's WordPiece 30K
+5. **More tokens, not more steps** — see below
+6. Byte-level BPE — 50,265 vocab (GPT-2's tokenizer family) vs BERT's 30,522 WordPiece
+
+**On point 5, precisely** — this is commonly stated backwards:
+
+```
+  model        steps      batch    seq        total tokens
+  BERT     1,000,000        256    512     131,072,000,000
+  RoBERTa    500,000      8,000    512   2,048,000,000,000
+```
+
+**RoBERTa used HALF the optimisation steps and saw 16× the tokens.** Saying "RoBERTa trained for
+more steps" is wrong in both directions — the multiplier belongs to tokens and compute, not steps.
+That distinction is the whole RoBERTa result: BERT was **under-trained**, not badly designed.
 
 Results: +3-5 points on GLUE, SQUAD vs BERT-large
 Usage: drop-in replacement for BERT in most tasks

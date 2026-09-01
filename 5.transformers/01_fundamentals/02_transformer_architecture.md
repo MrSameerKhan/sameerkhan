@@ -1,5 +1,12 @@
 # Transformer Architecture
 
+> **Scope note.** This file is the **reference**: block structure, shapes, variants, parameter
+> counting. The blocks are hand-computed with real numbers in
+> [06b encoder](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md) and
+> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md);
+> pre-LN vs post-LN is computed both ways in
+> [../02_models/06b_gpt2_end_to_end.md](../02_models/06b_gpt2_end_to_end.md) §6.1.
+
 > The transformer is: [MHA → FFN] × N with residuals and LayerNorm. The three architectural choices that matter most in practice: Pre-LN (stable training), SwiGLU FFN (better performance), RoPE positional encoding (length generalization). Everything else — BERT, GPT, T5, LLaMA — is this same skeleton with different: (1) attention masking strategy, (2) pretraining objective, (3) scale.
 
 ---
@@ -215,7 +222,10 @@ class SwiGLU(nn.Module):
         # SiLU(x) = x × sigmoid(x)  (smooth version of ReLU)
 ```
 
-Note: SwiGLU uses ~2.67× expansion (not 4×) to keep param count equal.
+Note: SwiGLU uses **three** matrices, so `d_ff ≈ 8/3 · d_model = 2.67×` keeps the parameter count
+equal to a 2-matrix FFN at `4×`. Llama 2 sits at `2.6875×`; **Llama 3 deliberately went to `3.5×`**,
+spending real extra parameters on the MLP — see
+[../02_models/08b_llama3_end_to_end.md](../02_models/08b_llama3_end_to_end.md) §4.
 
 ---
 
@@ -224,12 +234,30 @@ Note: SwiGLU uses ~2.67× expansion (not 4×) to keep param count equal.
 ### Formula
 
 ```
-LayerNorm(x) = γ · (x - μ) / (σ + ε) + β
+LayerNorm(x) = γ · (x − μ) / √(σ² + ε) + β
+                                ^^^^^^^
+                    ε goes INSIDE the square root, added to the VARIANCE
 
-μ = mean over hidden dimensions (not batch)
-σ = std over hidden dimensions
-γ, β = learned scale and shift parameters (initialized to 1 and 0)
+μ  = mean over the hidden dimensions (not the batch)
+σ² = variance over the hidden dimensions
+γ, β = learned scale and shift (initialised to 1 and 0)
 ```
+
+**The `ε` placement is not cosmetic.** Writing `(x − μ)/(σ + ε)` is a common slip, and it breaks
+exactly the case `ε` exists for — vanishing variance:
+
+```
+     var(x)     correct: /√(σ²+ε)     wrong: /(σ+ε)     ratio
+      1e+00               0.999995         0.999990     1.000
+      1e-04               0.953463         0.999001     1.048
+      1e-06               0.301511         0.990099     3.284
+      1e-08               0.031607         0.909091    28.762
+```
+
+At `var = 1e-8` the correct form returns `0.0316` — the output **shrinks**, which is the intended
+safety behaviour when a row is nearly constant. The incorrect form returns `0.9091` and barely
+clips at all. With `ε` outside the root it cannot bound the output, because it is being compared
+against `σ` rather than `σ²`.
 
 ### LayerNorm vs BatchNorm for transformers
 
@@ -240,13 +268,31 @@ LayerNorm(x) = γ · (x - μ) / (σ + ε) + β
 ### Pre-LN vs Post-LN
 
 ```
-Original (Post-LN):  x + Sublayer(x) → LayerNorm(x + sublayer_output)
-Modern  (Pre-LN):    x + LayerNorm → Sublayer(x) → x + sublayer_output
+Post-LN  (2017, GPT-1, BERT, BART)      h = LayerNorm( x + Sublayer(x) )
+Pre-LN   (GPT-2 onward, T5, LLaMA)      h = x + Sublayer( LayerNorm(x) )
+                                        ... and one FINAL LayerNorm after the last block
 ```
 
-- Post-LN: better final performance (original paper), but training unstable (large gradient variance early)
-- Pre-LN: more stable training, easier to scale; now standard in GPT, LLaMA, etc.
-  - Downside: slight performance gap vs Post-LN (usually negligible at large scale)
+**The final LayerNorm is part of the definition of pre-LN**, and it is the half people drop. In
+post-LN every block ends with a norm, so the stack output is already normalised. In pre-LN nothing
+normalises the residual stream, so it grows with depth and the logits would scale with the number
+of layers — `ln_f` is where it is brought back.
+
+| | Post-LN | Pre-LN |
+|---|---|---|
+| Residual stream | renormalised every block | **untouched — a clean identity path** |
+| LR warmup | **required** (GPT-1 used 2,000 steps) | not required |
+| Final LayerNorm | none | **one, after the stack** |
+| Companion change | — | scale residual output weights by `1/√N` |
+
+**Why warmup:** in post-LN the path from the loss back to the embeddings passes through two
+LayerNorms per layer — 24 in a 12-layer model — which attenuates early-layer gradients and makes the
+first few thousand steps unstable. Pre-LN's identity path removes that, which is why GPT-2 could
+drop warmup and go deeper.
+
+Both orderings computed on the same weights — a `max|diff|` of **1.245** on the output, so they are
+genuinely different networks — in
+[../02_models/06b_gpt2_end_to_end.md](../02_models/06b_gpt2_end_to_end.md) §6.1.
 
 ### RMSNorm (LLaMA): LayerNorm without mean subtraction — simpler, faster
 
@@ -314,6 +360,25 @@ bert_base = count_transformer_params(768, 3072, 12, 12, 30522, 512)
 gpt3 = count_transformer_params(12288, 49152, 96, 96, 50257, 2048)
 # print(f"GPT-3: ~{gpt3/1e9:.0f}B params") → ~175B
 ```
+
+**Verified outputs of that function:**
+
+```
+BERT-base   108,768,768   = 108.8M      quoted as "110M"
+GPT-3       174,588,899,328 = 174.6B    quoted as "175B"
+```
+
+It omits biases and LayerNorm parameters, as its comment says. Including them:
+
+```
+BERT-base   108,891,648            (05_bert_end_to_end.md §16)
+GPT-3       174,604,259,328        (06c_gpt3_end_to_end.md §2)
+```
+
+**The `2 · d_model · d_ff` term assumes a 2-matrix FFN.** SwiGLU uses **three**, so for a Llama-style
+model the FFN term is `3 · d_model · d_ff` — which is why `d_ff` drops to `≈ 8/3 · d_model` to keep
+the count matched. Exact Llama 3 arithmetic in
+[../02_models/08b_llama3_end_to_end.md](../02_models/08b_llama3_end_to_end.md) §4.
 
 ---
 

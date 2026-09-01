@@ -1,5 +1,13 @@
 # GPT Family (Decoder Models)
 
+> **Scope note.** This file owns the **family arc** — what each generation changed and why. Each
+> model is hand-computed separately, with exact parameter counts and a verified backward pass:
+> [GPT-1](06_gpt1_end_to_end.md) (post-LN, weight tying) ·
+> [GPT-2](06b_gpt2_end_to_end.md) (pre-LN, `1/√N` init, byte-level BPE) ·
+> [GPT-3](06c_gpt3_end_to_end.md) (sparse attention, in-context learning) ·
+> [Llama 3](08b_llama3_end_to_end.md) (GQA, RoPE 500k, reading a model card).
+> KV-cache and quantisation arithmetic: [04b](04b_attention_at_scale_end_to_end.md).
+
 > GPT = decoder-only transformer trained with next-token prediction. Scale unlocks emergent capabilities: few-shot learning (GPT-3), instruction following (GPT-4). LLaMA 3 is the modern open-source go-to. Generation quality knobs: temperature (randomness), top-p (vocabulary diversity). Production knobs: KV cache (speed), GQA (memory), 4-bit quantization (fits on consumer GPU). The fundamental limit: inference is one-token-at-a-time, memory-bandwidth bound.
 
 ---
@@ -14,7 +22,7 @@
 | GPT-3.5 / 4 / 4o | closed | 128K | RLHF, multimodal, function calling |
 | LLaMA family | 7B-405B | 4K-128K | Open-weight GPT-style; later versions add GQA + YARN |
 
-Other modern open decoders (Mistral / Mistral / Qwen2.5 / Gemma 2 / Phi-3.5 / DeepSeek-V3): full comparison table with layer counts, GQA/MLA config, and FFN/MoE details lives in `../../2.deep_learning/02_architectures/08_architecture_comparison.md`. For reasoning-tuned models (o1, DeepSeek-R1, RLVR), see `14_reasoning_models.md`.
+Other modern open decoders (Mistral / Mistral / Qwen2.5 / Gemma 2 / Phi-3.5 / DeepSeek-V3): full comparison table with layer counts, GQA/MLA config, and FFN/MoE details lives in `../../2.deep learning/02_architectures/00_architecture_comparison.md`. For reasoning-tuned models (o1, DeepSeek-R1, RLVR), see `14_reasoning_models.md`.
 
 ```mermaid
 timeline
@@ -244,7 +252,11 @@ for step in range(max_new_tokens):
     current_token = next_token.unsqueeze(0)
 
 # Memory usage: 2 × num_layers × 2 × batch × seq_len × num_heads × head_dim × bytes_per_element
-# LLaMA 7B: seq=4096, batch=1, bf16: ~0.5GB just for KV cache
+# Llama-2-7B: seq=4096, batch=1, bf16 -> 2.00 GiB of KV cache
+#   2 (K,V) x 32 layers x 32 kv-heads x 128 d_head x 4096 x 2 bytes = 2,147,483,648
+#   Llama-2-7B is MHA (32 KV heads). 0.5 GiB would require 8 KV heads, i.e. GQA.
+#   Llama-3-8B IS GQA (8 KV heads) -> 1.00 GiB at its full 8192 context.
+#   Full arithmetic: 04b_attention_at_scale_end_to_end.md
 ```
 
 ---
@@ -285,7 +297,9 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     device_map="auto",         # auto-distributes across available GPUs
 )
-# LLaMA 7B: 14GB (fp16) + 3.5GB (8-bit) → fits on single consumer GPU
+# Llama 7B weights:  fp16 14.0 GB  |  int8 7.0 GB  |  int4 3.5 GB
+#   (3.5 GB is FOUR-bit, not 8-bit. int8 halves fp16; int4 quarters it.)
+#   NF4 vs uniform int4, measured: 09b_lora_qlora_end_to_end.md §7
 
 # Load with Flash Attention 2 for long contexts
 model = AutoModelForCausalLM.from_pretrained(

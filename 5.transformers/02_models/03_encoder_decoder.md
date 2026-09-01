@@ -109,13 +109,12 @@ Relative position biases (not absolute): add scalar to attention scores based on
     → Better for tasks requiring relative understanding
 
 Variants:
-    T5-small:  60M params
-    T5-base:   220M params
-    T5-large:  770M params
-    T5-XL:     3B params
-    T5-XXL:    11B params
-    T5-11B:    11B params
-    Flan-T5:   T5 instruction-tuned on 1800+ tasks
+    T5-small       60,506,624      "60M"
+    T5-base       222,903,552      "220M"
+    T5-large      737,668,096      "770M"  <- paper rounds up; HF t5-large is 737M
+    T5-XL       2,851,598,336      "3B"
+    T5-XXL     11,307,321,344      "11B"   (T5-11B is the SAME model, not a sixth size)
+    Flan-T5    the above, instruction-tuned on 1,836 tasks
 ```
 
 ### Pretraining: Span Corruption
@@ -211,8 +210,11 @@ T5:   relative position bias, RMSNorm, no biases
 BART: absolute position embeddings (learned), GeLU, biases like standard transformer
 Both: encoder + decoder + cross-attention
 
-BART-base:  6+6 layers, 140M params
-BART-large: 12+12 layers, 400M params
+BART-base:   6 encoder + 6 decoder layers    139,420,416   ("140M")
+BART-large: 12 encoder + 12 decoder layers   406,291,456   ("400M")
+
+Both match the released `facebook/bart-*` checkpoints. Note `L` counts layers **per stack** —
+BART-large is 24 layers in total.
 ```
 
 ```python
@@ -239,11 +241,16 @@ summary = tokenizer.batch_decode(summary_ids, skip_special_tokens=True)[0]
 
 ---
 
-## 4. Flan-T5 (Wei et al. 2022)
+## 4. Flan-T5 (Chung et al. 2022)
 
 ```
 Flan = Finetuned Language Net
-T5 instruction-tuned on 1836 tasks formatted as natural language instructions
+T5 instruction-tuned on 1,836 tasks formatted as natural language instructions.
+
+> **Attribution:** Flan-T5 is **Chung et al. 2022**, *"Scaling Instruction-Finetuned Language
+> Models"*. **Wei et al. 2021**, *"Finetuned Language Models Are Zero-Shot Learners"*, is the
+> original FLAN paper — the idea, on a different model. Easy to conflate; they are different papers,
+> different years, different models.
 
 Standard T5:  "translate English to German: The cat sat."
 Flan-T5:      Can handle: "Please translate the following sentence from English to German:

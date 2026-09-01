@@ -38,7 +38,7 @@ Tier 1 and Tier 3 **link to** Tier 2 — they never re-explain. Tier 4 describes
 | Theory files | `NN_topic_name.md` (two-digit zero-padded) |
 | End-to-end pair | `02b_topic_end_to_end.md` paired with `02_topic.md` |
 | Folder names | `N.topic_name/` (lowercase snake_case after the dot) |
-| Cross-reference links | `[../4.nlp/01_fundamentals/01_tokenization.md](../4.nlp/01_fundamentals/01_tokenization.md)` — relative paths, always with extension |
+| Cross-reference links | `[../4.nlp/01_fundamentals/03_tokenization.md](../4.nlp/01_fundamentals/03_tokenization.md)` — relative paths, always with extension |
 
 Never use bare URLs — always use markdown link syntax. Verify every path resolves before committing.
 

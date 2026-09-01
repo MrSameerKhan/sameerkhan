@@ -1,7 +1,7 @@
 # Session 2 — Structured Extraction with Pydantic + Instructor
 Status: `✅ Run`
 
-Theory: [../../../4.nlp/04_applications/03_information_extraction.md](../../../4.nlp/04_applications/03_information_extraction.md)
+Theory: [../../../4.nlp/04_applications/03_information_extraction.md](../../4.nlp/04_applications/03_information_extraction.md)
 
 ---
 

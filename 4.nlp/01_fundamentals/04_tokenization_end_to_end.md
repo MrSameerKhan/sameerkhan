@@ -1,5 +1,9 @@
 # Tokenization — End-to-End
 
+> This file owns **text → token IDs**. The next step, **token IDs → vectors** (the embedding
+> matrix, weight tying, vocabulary economics), is
+> [05_embedding_lookup_end_to_end.md](05_embedding_lookup_end_to_end.md).
+
 > Every merge step computed. BPE built from scratch.
 
 ---

@@ -1,7 +1,7 @@
 # Session 1 — LayoutLM v3: Key-Value Extraction
 Status: `🔧 Code-built`
 
-Theory: [../../../9.multimodal/06_layoutlm_end_to_end.md](../../../9.multimodal/06_layoutlm_end_to_end.md)
+Theory: [../../../9.multimodal/06_layoutlm_end_to_end.md](../../9.multimodal/06_layoutlm_end_to_end.md)
 
 ---
 

@@ -30,7 +30,7 @@
 | Speculative Decoding / Medusa / EAGLE | Generation too slow | Requires draft model or extra heads |
 | MoE | Scale without compute cost | Expert routing overhead, full-model VRAM |
 
-For attention-kernel depth (FlashAttention 1→3 internals, RoPE / YARN / ALiBi): see `../../2.deep_learning/01_fundamentals/05_modern_components.md`. For long-context engineering depth see `13_long_context_scaling.md`. For speculative decoding variants see `12_speculative_decoding.md`.
+For attention-kernel depth (FlashAttention 1→3 internals, RoPE / YARN / ALiBi): see `../../2.deep learning/01_fundamentals/05_modern_components.md`. For long-context engineering depth see `13_long_context_scaling.md`. For speculative decoding variants see `12_speculative_decoding.md`.
 
 ```mermaid
 graph TD

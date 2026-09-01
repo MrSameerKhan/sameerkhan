@@ -18,7 +18,7 @@
 
 **Decision rule (2025):** Try prompting + constrained decoding first. If prompting fails (consistent format, domain vocab, behavior), use QLoRA on a strong open base. For an extra ~1% with the same compute, switch to DoRA. After SFT, layer DPO / ORPO / KTO for preference alignment (`06_alignment_follow_ups.md`).
 
-**Modern open base models:** Llama 3.1 (8B/70B/405B), Mistral / Mistral, Qwen2.5, Gemma 2, Phi-3.5, DeepSeek-V3. Full comparison table with layer counts, GQA/MLA config, and context lengths: `../../2.deep_learning/02_architectures/08_architecture_comparison.md`.
+**Modern open base models:** Llama 3.1 (8B/70B/405B), Mistral / Mistral, Qwen2.5, Gemma 2, Phi-3.5, DeepSeek-V3. Full comparison table with layer counts, GQA/MLA config, and context lengths: `../2.deep learning/02_architectures/00_architecture_comparison.md`.
 
 ---
 

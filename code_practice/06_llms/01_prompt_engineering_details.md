@@ -1,7 +1,7 @@
 # Session 1 — Prompt Engineering
 Status: `✅ Run`
 
-Theory: [../../../6.llms/01_prompting.md](../../../6.llms/01_prompting.md)
+Theory: [../../../6.llms/01_prompting.md](../../6.llms/01_prompting.md)
 
 ---
 

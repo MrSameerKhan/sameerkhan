@@ -948,10 +948,10 @@ Three practical reasons: (1) Parallelism — LSTM step t requires step t-1's out
 
 | This file | Links to | Why |
 |---|---|---|
-| Vanishing gradients in depth | `../../2.deep_learning/01_fundamentals/07_training_stability.md` | Gradient math |
-| Attention mechanism full math | `../../2.deep_learning/01_fundamentals/05_modern_components.md` | Q/K/V, scaled dot-product, FlashAttention, RoPE / YARN / ALiBi |
-| Transformer architecture | `../../2.deep_learning/architectures/04_transformer.md` | LSTM → Transformer evolution |
-| Mamba / SSMs (2024 alternative to attention) | `../../2.deep_learning/architectures/03_rnn_lstm_gru.md` | 3-way comparison: RNN vs Transformer vs Mamba |
+| Vanishing gradients in depth | `../../2.deep learning/01_fundamentals/03_training_stability.md` | Gradient math |
+| Attention mechanism full math | `../../2.deep learning/01_fundamentals/05_modern_components.md` | Q/K/V, scaled dot-product, FlashAttention, RoPE / YARN / ALiBi |
+| Transformer architecture | `../../2.deep learning/02_architectures/04_transformer.md` | LSTM → Transformer evolution |
+| Mamba / SSMs (2024 alternative to attention) | `../../2.deep learning/02_architectures/03_rnn_lstm_gru.md` | 3-way comparison: RNN vs Transformer vs Mamba |
 | Scaling laws and emergent abilities | `08_scaling_laws_emergent.md` | Why scale changes which architecture wins |
 | BiLSTM for NER | `../04_applications/02_ner_and_tagging.md` | BiLSTM + CRF for tagging |
 | Word embeddings as input | `../02_embeddings/01_word_embeddings.md` | Embedding layer feeds into LSTM |

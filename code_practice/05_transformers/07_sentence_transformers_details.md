@@ -1,7 +1,7 @@
 # Session 7 — Sentence Transformers: Semantic Document Search
 Status: `✅ Run`
 
-Theory: [../../../4.nlp/02_embeddings/02_sentence_embeddings.md](../../../4.nlp/02_embeddings/02_sentence_embeddings.md)
+Theory: [../../../4.nlp/02_embeddings/02_sentence_embeddings.md](../../4.nlp/02_embeddings/02_sentence_embeddings.md)
 
 ---
 

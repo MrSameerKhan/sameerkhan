@@ -1,7 +1,7 @@
 # Session 3 — Synthetic Dataset Preparation
 Status: `🔧 Code-built`
 
-Theory: [../../../6.llms/07_dataset_preparation.md](../../../6.llms/07_dataset_preparation.md)
+Theory: [../../../6.llms/07_dataset_preparation.md](../../6.llms/07_dataset_preparation.md)
 
 ---
 

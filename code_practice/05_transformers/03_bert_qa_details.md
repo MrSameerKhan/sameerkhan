@@ -1,7 +1,7 @@
 # Session 3 — BERT Extractive Question Answering
 Status: `✅ Run`
 
-Theory: [../../../5.transformers/02_models/01_bert_family.md](../../../5.transformers/02_models/01_bert_family.md)
+Theory: [../../../5.transformers/02_models/01_bert_family.md](../../5.transformers/02_models/01_bert_family.md)
 
 ---
 

@@ -1,7 +1,7 @@
 # Session 5 — T5 Neural Machine Translation
 Status: `✅ Run`
 
-Theory: [../../../5.transformers/02_models/03_encoder_decoder_family.md](../../../5.transformers/02_models/03_encoder_decoder_family.md)
+Theory: [../../../5.transformers/02_models/03_encoder_decoder_family.md](../../5.transformers/02_models/03_encoder_decoder.md)
 
 ---
 

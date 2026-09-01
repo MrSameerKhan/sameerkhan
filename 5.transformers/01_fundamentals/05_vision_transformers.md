@@ -1,5 +1,13 @@
 # Vision Transformers
 
+> **Scope note.** This file owns **ViT and Swin as architectures**. The multimodal applications —
+> CLIP, Donut, LayoutLM — live in `9.multimodal/`.
+>
+> **Résumé-relevant:** the Donut/Swin encoder is a live claim on the CV
+> (*"Donut / Swin encoder, 75M parameters fully fine-tuned"*), and §9 plus
+> [../02_models/07b_bart_end_to_end.md](../02_models/07b_bart_end_to_end.md) are the two halves of
+> it — Swin encoder, BART decoder. See §10.
+
 > ViT = standard transformer applied to image patches. Only difference from NLP transformer: patch linear projection replaces token embedding lookup. [CLS] token aggregates global image info across 12 layers. Needs large data (no spatial inductive bias). DeiT: add distillation token, trains on ImageNet-1K only. DINO: self-supervised via student-teacher EMA — attention heads naturally segment objects. Swin: window attention O(n) for high-res images, hierarchical features, preferred for document AI and dense prediction.
 
 > **2024-25 notes:** DINOv2 has largely replaced supervised ImageNet ViT as the off-the-shelf vision backbone. Self-supervised, no labels, SOTA frozen features. Vision Mamba / MambaVision are emerging O(n) alternatives.
@@ -115,6 +123,25 @@ Output: class logits (1, 1000)
 | ViT-B/16 | 16 | 197 | 12 | 12 | 768 | 3072 | 86M |
 | ViT-L/16 | 16 | 197 | 24 | 16 | 1024 | 4096 | 307M |
 | ViT-H/14 | 14 | 257 | 32 | 16 | 1280 | 5120 | 632M |
+
+**Verified** (patch-embed + CLS + position + blocks + final LN; the published figures also include a
+classification head, which is the small residual difference):
+
+```
+  model        seq        computed       published
+  ViT-T/16     197       5,524,416            5.7M
+  ViT-S/16     197      21,665,664             22M
+  ViT-B/16     197      85,798,656             86M
+  ViT-L/16     197     303,301,632            307M
+  ViT-H/14     257     630,764,800            632M
+```
+
+**Sequence length is `(img/P)² + 1`:** `224/16 = 14 → 14² = 196 + 1 = 197`, and
+`224/14 = 16 → 16² = 256 + 1 = 257`.
+
+**A coincidence worth not over-reading:** for `P=16`, a patch is `16×16×3 = 768` raw values — which
+happens to equal ViT-B's `d_model`. The projection is still a learned `Linear(768, 768)`, not an
+identity, and for `P=14` the patch is `588` values into `d=1280`.
 
 ---
 
@@ -277,7 +304,7 @@ Attention matrix: 19,200² = 368M entries → infeasible
 Patch size 4: 640×480 = 307,200 patches
 Window size 7×7 = 49 tokens per window
 Only attend WITHIN windows: 49² = 2,401 entries per window
-Total windows: 307,200/49 ≈ 6,278 windows
+Total windows: 307,200 / 49 ≈ 6,269 windows
 Complexity: O(n) not O(n²)
 ```
 
@@ -320,11 +347,46 @@ ViT: global attention from layer 1, best with very large pre-training data (JFT-
 
 ## Connections
 
-- **Full ViT dry-run with numbers:** `../9.multimodal/03_vision_transformers.md`
-- **ViT in CLIP:** `../9.multimodal/04_clip_finetuning_end_to_end.md`
-- **Swin in Donut:** `../9.multimodal/05_donut_end_to_end.md`
-- **Transformer fundamentals:** `5.transformers/81_fundamentals/02_transformer_architecture.md`
-- **BERT (CLS token parallel):** `5.transformers/02_models/81_bert_family.md`
+- **Full ViT dry-run with numbers:** [../../9.multimodal/03_vision_transformers.md](../../9.multimodal/03_vision_transformers.md)
+- **ViT in CLIP:** [../../9.multimodal/04_clip_finetuning_end_to_end.md](../../9.multimodal/04_clip_finetuning_end_to_end.md)
+- **Swin in Donut:** [../../9.multimodal/05_donut_end_to_end.md](../../9.multimodal/05_donut_end_to_end.md)
+- **Transformer fundamentals:** [02_transformer_architecture.md](02_transformer_architecture.md)
+- **BERT ([CLS] parallel):** [../02_models/01_bert_family.md](../02_models/01_bert_family.md)
+- **BART — Donut's decoder half:** [../02_models/07b_bart_end_to_end.md](../02_models/07b_bart_end_to_end.md)
+
+---
+
+## 10. Donut = Swin encoder + BART decoder
+
+The one assembly to be able to draw, because it is on the résumé.
+
+```
+document image
+     │  Swin encoder (§9)          hierarchical windows, patch merging
+     ▼
+  visual feature sequence          <- this is the MEMORY
+     │  cross-attention            K,V from the encoder, Q from the decoder
+     ▼
+  BART decoder                     causal self-attn + cross-attn + FFN
+     │
+     ▼
+  structured text  (JSON, key-value pairs)
+```
+
+**Why it is called OCR-free:** there is no text-recognition stage. The decoder reads the *image
+features* directly through cross-attention and emits structured text, so OCR errors cannot propagate
+— because there is no OCR.
+
+Each half is already hand-computed:
+
+- **Swin encoder** — §9 above
+- **Cross-attention** — [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) §8, the rectangular `L_tgt × L_src` matrix with K/V from the encoder
+- **BART decoder** — [../02_models/07b_bart_end_to_end.md](../02_models/07b_bart_end_to_end.md)
+
+**The question to expect:** *"which half is Swin and which is BART?"* — Swin is the encoder (image
+in), BART is the decoder (text out), and cross-attention is the join. If you can draw
+[06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md)'s decoder and swap the
+text encoder for Swin, you have drawn Donut.
 
 ---
 

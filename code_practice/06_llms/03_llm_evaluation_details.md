@@ -1,7 +1,7 @@
 # Session 3 — LLM Evaluation: A/B Testing Two Prompt Strategies
 Status: `✅ Run`
 
-Theory: [../../../6.llms/04_evaluation.md](../../../6.llms/04_evaluation.md)
+Theory: [../../../6.llms/04_evaluation.md](../../6.llms/04_evaluation.md)
 
 ---
 

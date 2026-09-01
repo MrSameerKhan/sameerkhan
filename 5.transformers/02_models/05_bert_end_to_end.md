@@ -709,18 +709,28 @@ points worse. Fine-tuning the encoder is the entire reason BERT displaced static
 token embeddings      30522 × 768              =  23,440,896
 position embeddings     512 × 768              =     393,216
 segment embeddings        2 × 768              =       1,536
+embedding LayerNorm       2 × 768              =       1,536
                                                   ──────────
-                                                  23,835,648   (21.9%)
+                                                  23,837,184   (21.9%)
 
 per layer:
-  attention   4 × d²        = 4 × 768²         =   2,359,296
-  FFN         2 × d × d_ff  = 2 × 768 × 3072   =   4,718,592
+  attention  4 × (768² + 768)                  =   2,362,368
+  LayerNorm            2 × 768                 =       1,536
+  FFN in     768 × 3072 + 3072                 =   2,362,368
+  FFN out    3072 × 768 +  768                 =   2,360,064
+  LayerNorm            2 × 768                 =       1,536
                                                   ──────────
-                                                   7,077,888
-× 12 layers                                    =  84,934,656   (78.1%)
+                                                   7,087,872
+× 12 layers                                    =  85,054,464   (78.1%)
                                                   ──────────
-TOTAL                                          = 108,770,304   ✓ ("110M")
+TOTAL (encoder)                                = 108,891,648   ✓ ("110M")
+  + pooler  768 × 768 + 768                    =     590,592
+TOTAL (HF `bert-base-uncased`)                 = 109,482,240
 ```
+
+*(Biases and LayerNorm gains/biases included. The commonly quoted simplified formula
+`4d² + 2·d·d_ff` per layer gives `7,077,888` and a total of `108,768,768` — fine for
+order-of-magnitude work, but do not mix it with a full embedding count.)*
 
 Two things people get wrong:
 

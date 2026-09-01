@@ -84,7 +84,7 @@ Boards 1–5 (RNN → Transformer encoder) are complete: `4.nlp/03_sequence_mode
 | # | Board | What is NEW on this board | G1 | Theory (canonical) |
 |---|-------|---------------------------|----|--------------------|
 | 6 | **Transformer Decoder** | Masked self-attention · **cross-attention** · teacher forcing vs autoregressive | 25 | `4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md` |
-| 7 | **Tokenization → Embedding** | BPE merges · vocab → embedding matrix · weight tying | 15 | `4.nlp/01_fundamentals/03_tokenization.md` + `04_tokenization_end_to_end.md` |
+| 7 | **Tokenization → Embedding** | BPE merges · vocab → embedding matrix · weight tying · fertility economics | 15 | `4.nlp/01_fundamentals/04_tokenization_end_to_end.md` (tokens) + `05_embedding_lookup_end_to_end.md` (vectors) |
 | 8 | **BERT** | Encoder-only · MLM · `[CLS]`/`[SEP]` · segment embeddings | 20 | `5.transformers/02_models/05_bert_end_to_end.md` |
 | 9 | **GPT** | Causal LM · weight tying · **no cross-attention** · post-LN vs pre-LN | 20 | `5.transformers/02_models/06_gpt1_end_to_end.md` + `06b_gpt2_end_to_end.md` + `06c_gpt3_end_to_end.md` |
 | 10 | **T5 / BART** | T5: relative position bias · RMSNorm · span corruption. BART: denoising, full-document target. **BART's decoder is Donut's.** | 25 | `5.transformers/02_models/07_t5_end_to_end.md` + `07b_bart_end_to_end.md` |
@@ -100,10 +100,10 @@ Boards 1–5 (RNN → Transformer encoder) are complete: `4.nlp/03_sequence_mode
 | # | Board | What is NEW on this board | G1 | Theory (canonical) |
 |---|-------|---------------------------|----|--------------------|
 | 17 | **Pretraining + scaling laws** | Next-token objective at scale · Chinchilla · what "emergence" is | 20 | `5.transformers/01_fundamentals/04_pretraining_objectives.md` + `4.nlp/03_sequence_models/08_scaling_laws_emergent.md` |
-| 18 | **SFT / instruction tuning** | Prompt masking in the loss · chat templates · dataset shape | 20 | `6.llms/02_finetuning.md` + `02b_finetuning_end_to_end.md` + `07_dataset_preparation.md` |
-| 19 | **LoRA / QLoRA** | Low-rank ΔW · where it attaches · rank/alpha · what NF4 quantizes | 20 | `5.transformers/02_models/09_parameter_efficient_tuning.md` |
-| 20 | **RLHF → DPO** | Reward model · PPO loop · why DPO deletes it | 25 | `6.llms/03_alignment.md` + `03b_alignment_end_to_end.md` + `06_alignment_follow_ups.md` |
-| 21 | **Evaluation** | Perplexity vs benchmarks · LLM-as-judge · contamination | 20 | `6.llms/04_evaluation.md` |
+| 18 | **SFT / instruction tuning** | Prompt masking in the loss · chat templates · dataset shape | 20 | `6.llms/02c_sft_end_to_end.md` (arithmetic) + `07_dataset_preparation.md` (formats) |
+| 19 | **LoRA / QLoRA** | Low-rank ΔW · where it attaches · rank/alpha · merging · what NF4 quantizes | 20 | `5.transformers/02_models/09b_lora_qlora_end_to_end.md` (arithmetic) + `09_parameter_efficient_tuning.md` (landscape) |
+| 20 | **RLHF → DPO** | Reward model · PPO loop · **the Z(x) cancellation** · why DPO deletes it | 25 | `6.llms/03c_dpo_end_to_end.md` (derivation) + `03_alignment.md` + `06_alignment_follow_ups.md` |
+| 21 | **Evaluation** | Perplexity vs benchmarks · pass@k · MC floors · LLM-as-judge · contamination | 20 | `6.llms/04b_evaluation_end_to_end.md` (arithmetic) + `04_evaluation.md` (metrics) |
 
 **Ordering logic:** 6 completes the original paper, so 8/9/10 become *subtractions* from something
 already owned rather than new constructions. 9 must follow 6 so that "GPT is decoder-only but has
@@ -128,7 +128,7 @@ existing numbering rather than restarting.
 | # | Ask yourself, out loud |
 |---|---|
 | 6 | Where do K and V come from in cross-attention vs self-attention? Why is training parallel but inference sequential? |
-| 7 | Why does BPE beat word-level on OOV? Why is token count ≠ word count for billing? |
+| 7 | Why does BPE beat word-level on OOV, and why can byte-level BPE never emit `<UNK>`? Why is token count ≠ word count for billing? What fraction of GPT-2 small is the embedding table, and of GPT-3? Why does Llama 3 decline a 6.5% saving by untying? |
 | 8 | Why mask 15%? Why is BERT useless for generation? Where does `[CLS]` meaning come from? |
 | 9 | What exactly does the LM head tie to, and why? What does the causal mask actually sever? Pre-LN vs post-LN — which is GPT-2, and what else changed with it? |
 | 10 | Draw Donut on top of this board. Which half is Swin, which is BART? How does T5's target differ from BART's, and why does that make T5's decoder cheaper? |
@@ -136,13 +136,13 @@ existing numbering rather than restarting.
 | 12 | Compute KV cache size for 7B, 4k context, batch 8 — and is it bigger or smaller than the weights? Does Flash Attention change the output? Why is decode memory-bound but prefill compute-bound? |
 | 13 | Why did pre-LN remove the need for LR warmup? What does GQA trade away, and why is it worth it? Given a config.json, derive param count, d_head, KV cache and the tokenizer family. Why is Llama 3's d_ff 3.5x d_model and not 8/3? |
 | 14 | Why does RoPE extrapolate when learned positions cannot? What breaks first at 128k — and how many dimensions is it? Why does NTK beat PI? What does YaRN's ramp key off? |
-| 15 | Why is a 47B MoE cheaper to serve than 47B dense? What is load-balancing loss preventing? |
-| 16 | Why is speculative decoding lossless rather than an approximation? What kills the speedup? |
-| 17 | Why is 7B on 3T tokens better than 70B on 300B? What exactly "emerges", and what is the honest counter-argument? |
-| 18 | Why mask the prompt out of the loss? What breaks at inference if the chat template is wrong? |
-| 19 | What does LoRA actually add, and to which matrices? Why does rank 8 usually suffice? |
-| 20 | Why did DPO replace PPO in practice? What is the KL term stopping? |
-| 21 | Why is perplexity a bad headline metric? How would you detect benchmark contamination? |
+| 15 | Why is a 47B MoE cheaper to serve than 47B dense — cheaper in WHAT exactly, and what is unchanged? Why is 8x7B not 56B? Why is L_aux a PRODUCT f_i*P_i? |
+| 16 | Why is speculative decoding lossless rather than an approximation — write the identity. What does the residual distribution do? Why is expected-tokens NOT the speedup, and when does K=8 make things SLOWER? |
+| 17 | Why is 7B on 3T better than 70B on 300B — better in WHAT, and cheaper how? What are the Chinchilla exponents (not the rounded ones)? What exactly "emerges", and why is p^K the counter-argument? |
+| 18 | Why mask the prompt out of the loss — and is masking just a rescale? Why -100 and not 0? What are the TWO distinct template failures, and which one is the most common SFT bug? |
+| 19 | What does LoRA add, and to which matrices? Why is B initialised to zero and A not — what breaks if both are zero? Why does rank 8 suffice, and when does it NOT? What is QLoRA's biggest memory win — weights or optimizer state? |
+| 20 | Derive DPO: why does beta*log Z(x) cancel, and what property of Bradley-Terry makes that work? What is the KL term stopping, and what happens as beta -> 0? How many models does PPO hold vs DPO? What does DPO GIVE UP? |
+| 21 | Give THREE independent reasons perplexity is a bad headline metric. Write pass@k and say what it rewards. What does 27% on MMLU actually mean? How do you detect contamination with no training-data access? |
 
 ---
 

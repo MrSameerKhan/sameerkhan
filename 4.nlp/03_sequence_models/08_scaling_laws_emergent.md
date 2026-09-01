@@ -1,245 +1,291 @@
-# Scaling Laws + Emergent Abilities + In-Context Learning
+# 08 — Scaling Laws and Emergent Abilities
 
-> The reason LLMs went from "neat NLP toy" to "global infrastructure" between 2018 and 2024. Chinchilla, the GPT-3 inflection, instruction tuning.
+> Board 17. Pretraining objectives themselves live in
+> [../../5.transformers/01_fundamentals/04_pretraining_objectives.md](../../5.transformers/01_fundamentals/04_pretraining_objectives.md);
+> this file is **how much model, how much data, and what actually happens as both grow**.
+>
+> Instruction tuning, RLHF and DPO are boards 18 and 20 — see
+> [../../6.llms/02_finetuning.md](../../6.llms/02_finetuning.md) and
+> [../../6.llms/03_alignment.md](../../6.llms/03_alignment.md). They are not covered here.
+
+---
+
+## 1. The functional form
+
+```
+L(N, D)  =  E  +  A / N^α  +  B / D^β
+
+  N = parameters          α = 0.34        A = 406.4
+  D = training tokens     β = 0.28        B = 410.7
+  E = 1.69                                (Hoffmann et al. 2022, Approach 3)
+```
+
+Three terms, and each means something distinct:
+
+- **`E` is the irreducible loss** — the entropy of natural language itself. No amount of scale goes
+  below it. At 1.69 nats, that is a perplexity floor of `e^1.69 ≈ 5.4`.
+- **`A/N^α`** is what you lose by having a model too small to represent the function.
+- **`B/D^β`** is what you lose by not having seen enough text.
+
+**Both are power laws, so both have diminishing returns, and neither ever reaches zero.** Scaling
+is a straight line on a log-log plot — which is exactly what makes it *predictable*, and why labs
+can forecast a run's final loss before starting it.
+
+> A note on symbols: `C` is **compute** (`C ≈ 6ND` FLOPs), never the irreducible term. Some write-ups
+> reuse `C` for both, which makes the equations unreadable.
 
 ---
 
 ## Table of Contents
 
-1. Objective
-2. Kaplan scaling laws → Chinchilla
-3. The GPT-3 inflection — in-context learning
-4. Emergent abilities
-5. Instruction tuning and alignment
-6. Failure modes
-7. Interview questions (5)
-8. Further reading
+1. The functional form
+2. Kaplan vs Chinchilla
+3. Deriving the compute-optimal split
+4. The 20:1 rule — and the caveat
+5. Real models against the rule
+6. **The killer question: 7B on 3T vs 70B on 300B**
+7. Why everyone now over-trains
+8. **Emergence — and the mirage argument**
+9. Quick reference
 
 ---
 
-## 1. Objective
+## 2. Kaplan vs Chinchilla
 
-The leap from BERT (2018) to ChatGPT (2022) wasn't a single algorithm — it was a sequence of scaling discoveries:
+```
+Kaplan et al. 2020        N ∝ C^0.73     D ∝ C^0.27     -> "make the model bigger"
+Chinchilla 2022           N ∝ C^0.46     D ∝ C^0.54     -> "scale both, roughly equally"
+```
 
-1. Performance scales predictably with parameters, data, and compute (Kaplan 2020)
-2. Above ~7B params, NEW capabilities emerge — in-context learning, multi-step reasoning
-3. Compute-optimal scaling — Chinchilla (2022): more DATA matters more than more PARAMS
-4. Instruction tuning + RLHF turns base models into useful assistants
+**Kaplan's exponents put nearly three times more of a new compute budget into parameters than into
+data.** OpenAI followed that, and it gave GPT-3: 175B parameters on only 300B tokens.
 
-Senior interview Q: "What is the Chinchilla scaling law and why did it change LLM development?"
+DeepMind re-ran the sweep with a crucial fix — Kaplan had used a **fixed learning-rate schedule**
+across model sizes, which systematically disadvantaged the smaller-model / more-data runs. With the
+schedule tuned per run, the optimum moved sharply toward data.
+
+**Chinchilla itself was the demonstration:** 70B parameters on 1.4T tokens beat GPT-3's 175B on
+300B, on most benchmarks, at **2.5× fewer parameters**.
 
 ---
 
-## Scaling Discoveries Timeline
+## 3. Deriving the compute-optimal split
 
-```mermaid
-timeline
-    title Key Scaling Discoveries
-    2020 : Kaplan Scaling Laws
-         : Loss ∝ N^α + D^β + C^γ
-         : Bigger model = predictably better
-         : Early models under-trained on data
-    2022 : Chinchilla  Hoffmann et al. 
-         : Optimal: N tokens ≈ 20 × N params
-         : GPT-3 needed 6× more training data
-         : LLaMA-1 proved: smaller model + more data wins
-    2022 : GPT-3 Inflection
-         : >7B params → in-context learning emerges
-         : Few-shot without any gradient update
-         : Emergent abilities appear at scale thresholds
-    2022 : ChatGPT / InstructGPT
-         : RLHF turns raw capability → useful assistant
-         : Alignment multiplies usability by 10×
-    2024 : Test-time compute scaling
-         : More inference tokens = better answers
-         : o1 / DeepSeek-R1: think longer on hard problems
-         : New scaling axis beyond pretraining
-```
-
-## 2. Kaplan Scaling Laws → Chinchilla
-
-### Kaplan et al. 2020 — "Scaling Laws for Neural Language Models"
-
-The first formal scaling law:
+Minimise `L(N, D)` subject to `C = 6ND`. Substituting `D = C/(6N)`:
 
 ```
-Loss ∝  N^(-α) + D^(-β) + C
-where  N = parameters, D = training tokens
-       α, β fitted from experiments
+L(N) = E + A·N^(−α) + B·(6N/C)^β
+
+dL/dN = 0   ->   αA·N^(−α−1) = βB·6^β·N^(β−1)/C^β
+
+              ->   N^(α+β) = αA·C^β / (βB·6^β)
+
+              ->   N ∝ C^(β/(α+β)),   D ∝ C^(α/(α+β))
 ```
 
-Implication: loss scales predictably with size. Doubling N gives a predictable loss reduction. Same for D.
-
-**Kaplan's key conclusion: train BIG models on less data.** With a fixed compute budget, prefer bigger model.
-
-OpenAI used this to scale GPT-2 (1.5B) → GPT-3 (175B). Worked spectacularly.
-
-### Chinchilla (Hoffmann et al. 2022) — the correction
-
-DeepMind re-ran the experiments more carefully. They found Kaplan UNDER-estimated the value of data. The correct compute-optimal recipe:
-
 ```
-For a fixed compute budget C = 6 × N × D:
-  Optimal N ∝ C^0.5    (scale params with square root of compute)
-  Optimal D ∝ C^0.5    (scale data with square root of compute)
-  N and D should scale together — roughly equally.
-
-The optimal ratio is roughly D/N ≈ 20.
+β/(α+β) = 0.28/0.62 = 0.4516        N ∝ C^0.4516
+α/(α+β) = 0.34/0.62 = 0.5484        D ∝ C^0.5484
 ```
 
-GPT-3: 175B params, 300B tokens. Ratio of D/N = 1.7. **Chinchilla recipe says optimal: D/N = 20.** GPT-3 was 10× under-trained on data.
-
-DeepMind trained Chinchilla: 70B params, 1.4T tokens (D/N=20). It BEAT GPT-3 on most benchmarks despite being 2.5× smaller.
-
-### The post-Chinchilla landscape
-
-- **LLaMA-2 7B**: 7B params, 2T tokens — D/N = 285 (Meta SCALED PAST Chinchilla optimal)
-- **LLaMA-3 8B**: 8B params, 15T tokens — D/N = 1875
-
-For inference cost reasons, modern open models train BEYOND Chinchilla optimal. The marginal loss reduction per token decreases, but inference is dirt cheap per token, so the over-trained smaller models are economically dominant.
-
-**Senior interview answer:** "Chinchilla says scale data and params equally; Llama-3 ignored this and trained smaller models on MUCH more data because inference cost dominates total LLM economics."
+**The exponents are not `0.5` and `0.5` — they are `0.46` and `0.54`.** "Scale them equally" is the
+rounded takeaway, not the fit. Data should grow *slightly faster* than parameters.
 
 ---
 
-## 3. The GPT-3 Inflection — In-Context Learning
+## 4. The 20:1 rule — and the caveat
 
-GPT-2 (2019) was a language model. You could fine-tune it for downstream tasks.
+The famous number: **roughly 20 training tokens per parameter**, from Chinchilla's own 70B / 1.4T
+recommendation.
 
-GPT-3 (Brown et al. 2020) showed something new: **without fine-tuning, with just FEW-SHOT EXAMPLES in the prompt, the model performs reasonably on new tasks.**
+Chinchilla reached that through three approaches:
 
 ```
-Prompt: "Translate to French.
-  sea otter => loutre de mer
-  peppermint => menthe poivrée
-  cheese => "
-
-GPT-3 completion: "fromage"
+1. fix model size, vary tokens      a = 0.50, b = 0.50
+2. IsoFLOP profiles                 a = 0.49, b = 0.51
+3. parametric fit (the L above)     a = 0.46, b = 0.54
 ```
 
-No fine-tuning. The model learned to do translation just from 2 examples. This was qualitatively new.
+**Be aware of a real problem here.** Evaluating the *published Approach-3 parameters* at Chinchilla's
+own compute budget (`C = 5.76e23`) gives:
 
-### Why this matters
+```
+  N_opt = 32.2B     D_opt = 2.98T     D/N = 93
+  but the paper's own recommendation at that budget was 70B / 1.4T  ->  D/N = 20
+```
 
-**Before GPT-3:** every new task required a labeled dataset and fine-tuning. **After GPT-3:** you can write a prompt and get usable results. The model adapts to the task at inference time.
+The published parametric fit does not reproduce the paper's own headline. Besiroglu et al. (2024),
+*"Chinchilla Scaling: A replication attempt"*, refit that data and found the original Approach-3 fit
+describes it poorly.
 
-This is **in-context learning (ICL)** — the model "learns" from examples in its context window, without weight updates.
+**Practical position:** use **20:1** as the operational rule — it comes from Approaches 1 and 2,
+which are directly empirical. Treat the parametric fit's absolute predictions with suspicion; its
+*relative* comparisons (§6) still track what practitioners observe.
 
-### Where ICL emerges
-
-GPT-3 paper showed ICL improves dramatically from 1B → 13B → 175B. Small models can't do ICL effectively; big models can.
-
-The "learning" happens in the forward pass — the model conditions on examples in its context to infer the task pattern. Emerges around 7B+ parameters; absent in smaller models.
-
-It's an emergent ability, which leads to...
+Knowing the replication exists is a strong signal in an interview. Quoting `A = 406.4` as gospel is
+the opposite.
 
 ---
 
-## 4. Emergent Abilities
+## 5. Real models against the rule
 
-Wei et al. 2022 ("Emergent Abilities of Large Language Models"): some capabilities appear suddenly at a critical model size and are basically absent below.
+```
+  model             N          D       D/N     vs 20:1
+  GPT-3         175.0B      0.30T       1.7       0.1×     badly UNDER-trained
+  Chinchilla     70.0B      1.40T      20.0       1.0×     the reference point
+  Llama-2 7B      7.0B      2.00T     285.7      14.3×     deliberately over
+  Llama-3 8B      8.0B     15.00T    1868.0      93.4×     extremely over
+  Llama-3 70B    70.6B     15.00T     212.5      10.6×
+```
 
-**Examples:**
-- **Arithmetic (3-digit addition)** — near-zero at < 10B params, then sharp jump
-- **Chain-of-thought reasoning** — requires ~60B+ to work reliably
-- **Multi-step instruction following** — emerges around 100B+
-- **Code generation** — improves smoothly with scale
-
-### The controversy
-
-Schaeffer et al. 2023 ("Are Emergent Abilities a Mirage?") argued: emergent abilities are ARTIFACTS of using discrete metrics (e.g., exact-match accuracy). When you use continuous metrics, performance scales smoothly.
-
-This is the more nuanced 2023+ view. Some capabilities still appear to have phase transitions; others were measurement artifacts.
-
-### Practical takeaway
-
-Don't expect a 1B model to do chain-of-thought. Some capabilities need scale. Pick the model size based on whether your target capability has emerged at that size.
+**GPT-3 and Llama 3 are opposite errors — and only one of them was an error.** GPT-3 was
+under-trained because Kaplan's law said to be. Llama 3 is over-trained *on purpose*, for the reason
+in §7.
 
 ---
 
-## 5. Instruction Tuning and Alignment
+## 6. The killer question: 7B on 3T vs 70B on 300B
 
-GPT-3 was a base model — completed text but didn't follow instructions well.
-
-```
-Base model prompt: "How do I bake a cake?"
-Base model output: "How do I bake a cake? How do I make bread? How do I ..."  (continuation)
-```
-
-It just predicted what tokens follow. Not a useful assistant.
-
-### Instruction tuning (Wei et al. 2021, "FLAN")
-
-Fine-tune the model on (instruction, response) pairs across many tasks. Result: the model learns to FOLLOW instructions rather than continue them.
+Both use the same compute:
 
 ```
-Base + instruction tuning: "How do I bake a cake?"
-Response: "1. Preheat oven to 350°F. 2. Mix flour, sugar, eggs..."
+  A:  N = 7B   D = 3T     C = 6ND = 1.260e23 FLOPs
+  B:  N = 70B  D = 300B   C = 6ND = 1.260e23 FLOPs
 ```
 
-This is the SFT phase in modern LLM training. Datasets used: FLAN, Super-NaturalInstructions, Self-Instruct.
+Under the fitted surface:
 
-### RLHF (Ouyang et al. 2022, "InstructGPT")
+```
+  L(A) = 2.0045
+  L(B) = 2.0246          A is better by 0.0202 nats
+```
 
-After SFT, the model is helpful but not always preferred by humans. RLHF aligns outputs to human preference:
+**A wins on loss at identical training cost** — and then wins again at inference, where it is **10×
+cheaper to serve, forever**.
 
-1. Train a reward model on (prompt, response_A, response_B, human_preference) triples
-2. Use PPO to fine-tune the LLM to maximize reward model scores: 3 + KL constraint to stay close to the SFT model (avoid reward hacking)
+That is the complete answer: *the same compute buys a better model when spent on data rather than
+parameters, and the resulting model is also the cheaper one to run.* GPT-3 sat at option B; every
+open-weights model since sits far past option A.
 
-InstructGPT's surprising finding: **a 1.3B InstructGPT-tuned model was preferred over the 175B GPT-3 base.** Alignment > scale for usefulness.
-
-This was the recipe behind ChatGPT.
-
-### DPO replaces RLHF
-
-2023+: DPO (Rafailov et al. 2023) achieves the same alignment without PPO's complexity. Modern open-source pipelines almost all use DPO instead. See `6.llms/06_alignment_follow_ups.md` for ORPO/KTO/IPO.
+> Take the `0.0202` as directional, not exact — §4's caveat applies to the absolute numbers. The
+> *ordering* is what Chinchilla established empirically and what Llama demonstrated in production.
 
 ---
 
-## 6. Failure Modes
+## 7. Why everyone now over-trains
 
-1. **Loss is going down — must be improving capability** — not always. Loss reduction can come from format / fluency improvements while ICL capability stays flat. Always measure downstream tasks, not just loss.
+Chinchilla answers *"what minimises loss for a fixed training budget?"* That is the wrong question
+for anyone who will actually deploy the model.
 
-2. **Following Chinchilla too literally on inference-optimized models** — LLaMA-3 etc. deliberately over-train for inference economics. Chinchilla-optimal is for compute-budget-bound training, not for deployment.
+```
+TRAINING     paid once
+INFERENCE    paid per request, forever
+```
 
-3. **Assuming all "emergent" abilities are real** — many were artifacts of discontinuous metrics. Re-measure with continuous proxies (likelihood of correct tokens, partial credit) before claiming emergence.
+A model served billions of times should be **as small as possible for a given quality**, even if
+reaching that quality costs far more training compute than "optimal". Training past the
+compute-optimal point buys quality at a poor exchange rate — and it is still worth it, because every
+parameter you avoid is paid back on every request for the model's whole life.
 
-4. **Instruction tuning on narrow data** — destroys general capability. Always mix domain data with general instruction data (FLAN, Alpaca-mix).
+```
+Chinchilla-optimal   minimises TRAINING compute
+Llama 3              minimises INFERENCE cost, accepting 93× the "optimal" data
+```
 
-5. **Reward hacking in RLHF** — model produces overly-long, hedged, polite responses that humans rate highly but are less useful. KL constraint helps; DPO is more stable.
-
----
-
-## 7. Interview Questions (5)
-
-**Q1: What's the Chinchilla scaling law?**
-
-For a fixed compute budget C = 6ND (N = params, D = training tokens), the compute-optimal allocation is N ∝ √C and D ∝ √C — scale them equally. The optimal ratio is roughly D/N ≈ 20. GPT-3 had D/N = 1.7, so it was 10× under-trained. DeepMind's Chinchilla (70B, 1.4T tokens) beat GPT-3 (175B, 300B tokens) despite being 2.5× smaller.
-
-**Q2: Why do modern open models like LLaMA-3 ignore Chinchilla?**
-
-Inference cost matters more than training cost over a model's lifetime. A smaller model trained on more data has same/similar quality but is much cheaper to serve. LLaMA-3 8B trained on 15T tokens (D/N=1875, far above Chinchilla's 20) — quality close to 70B Chinchilla, inference cost ~10× lower.
-
-**Q3: What is in-context learning?**
-
-GPT-3 showed that with just FEW-SHOT EXAMPLES in the prompt, a large model can perform new tasks without weight updates — the model conditions on examples in its context to infer the task pattern. Emerges around 7B+ parameters; absent in smaller models.
-
-**Q4: What are "emergent abilities" and what's the controversy?**
-
-Some LLM capabilities (arithmetic, multi-step reasoning) appear absent below a certain size, then sharply emerge above. Wei et al. 2022 documented this. Schaeffer et al. 2023 challenged the framing: many "emergent" abilities are artifacts of using discrete accuracy metrics — using continuous metrics (likelihood-based), many scaling curves are smooth. Some emergence may be real; much is measurement artifact.
-
-**Q5: Walk me through the recipe that made ChatGPT from scratch.**
-
-(1) Pretrain a base LLM on internet text (next-token prediction, billions of tokens; scaling-law optimized). (2) Supervised Fine-Tune (SFT) on instruction-response pairs across many tasks (FLAN, Self-Instruct). (3) Train a reward model on human preference pairs (prompt, response_A, response_B, human label). (4) RLHF — use PPO to fine-tune the LLM against the reward model, with KL constraint to the SFT model. The 1.3B SFT model was preferred over 175B base GPT-3 — alignment beats scale for usefulness.
+**Both statements are correct; they optimise different things.** Being able to say that is the
+complete answer. Reciting "20 tokens per parameter" without it is the incomplete one.
 
 ---
 
-## 8. Further Reading
+## 8. Emergence — and the mirage argument
 
-- Kaplan et al. 2020 — "Scaling Laws for Neural Language Models" — arXiv:2001.08361
-- Brown et al. 2020 / GPT-3 — "Language Models are Few-Shot Learners" — arXiv:2005.14165
-- Hoffmann et al. 2022 / Chinchilla — "Training Compute-Optimal Large Language Models" — arXiv:2203.15556
-- Wei et al. 2022 — "Emergent Abilities of Large Language Models" — arXiv:2206.07682
-- Schaeffer et al. 2023 — "Are Emergent Abilities a Mirage?" — arXiv:2304.15004
-- Ouyang et al. 2022 / InstructGPT — arXiv:2203.02155 — RLHF recipe
-- Wei et al. 2021 / FLAN — arXiv:2109.01652 — instruction tuning origin
+**The claim:** certain abilities (multi-step arithmetic, word unscrambling, chain-of-thought) are
+absent in small models and appear *abruptly* past a scale threshold — not gradually.
+
+**The counter-argument (Schaeffer, Miranda & Koyejo, 2023 — *"Are Emergent Abilities of Large
+Language Models a Mirage?"*): the discontinuity is in the *metric*, not the model.**
+
+Here is the mechanism, computed. Suppose per-token accuracy `p` improves perfectly smoothly with
+scale. Exact-match accuracy on a `K`-token answer is `p^K` — and *that* is what gets plotted.
+
+```
+ model scale   per-token p      p^1       p^5      p^10       p^20
+        1.0×          0.30    0.300    0.0024   0.00001   0.000000
+        3.2×          0.45    0.450    0.0185   0.00034   0.000000
+       10.0×          0.60    0.600    0.0778   0.00605   0.000037
+       31.6×          0.70    0.700    0.1681   0.02825   0.000798
+      100.0×          0.78    0.780    0.2887   0.08336   0.006949
+      316.2×          0.85    0.850    0.4437   0.19687   0.038760
+     1000.0×          0.90    0.900    0.5905   0.34868   0.121577
+     3162.3×          0.94    0.940    0.7339   0.53862   0.290106
+    10000.0×          0.97    0.970    0.8587   0.73742   0.543794
+    31622.8×          0.99    0.990    0.9510   0.90438   0.817907
+```
+
+**Read the `p` column: it climbs smoothly, 0.30 → 0.99, with no jump anywhere.**
+
+Now read `p^20`: `0.000798` → `0.038760` → `0.290106` → `0.817907`. Flat at zero for four orders of
+magnitude, then a near-vertical rise. **On a chart that is indistinguishable from a phase
+transition** — and it is generated by a perfectly smooth underlying improvement.
+
+```
+exact-match / multiple-choice accuracy   DISCONTINUOUS metric  -> emergence appears
+token edit distance, Brier score, log-prob   CONTINUOUS metrics -> smooth curves
+```
+
+**The honest position** — and what to say when asked:
+
+1. The *measured phenomenon* is real: on these benchmarks, with these metrics, capability does jump.
+   That matters practically, because those metrics are often what users experience (a wrong step
+   ruins the whole answer).
+2. The *interpretation* is contested. There is no established evidence of a discontinuity in the
+   underlying model; the sharpness is largely attributable to metric choice.
+3. So: **"emergent" describes a plot, not a mechanism.** Treat claims that a specific capability
+   will "emerge" at some future scale as speculation, not extrapolation — scaling laws predict
+   *loss*, and loss is smooth.
+
+---
+
+## 9. Quick reference
+
+```
+L(N,D) = E + A/N^alpha + B/D^beta      E = irreducible entropy of text (1.69)
+C ~ 6ND FLOPs                          (2 per MAC forward, x3 for fwd+bwd)
+
+Kaplan 2020     N ~ C^0.73  D ~ C^0.27      -> bigger models
+Chinchilla 2022 N ~ C^0.46  D ~ C^0.54      -> ~20 tokens/param
+                (derived: beta/(alpha+beta) = 0.4516)
+
+training compute-optimal  != inference-optimal
+Llama 3 8B: 1,868 tokens/param = 93x past Chinchilla, deliberately
+
+emergence: exact-match on K tokens = p^K. Smooth p, discontinuous-LOOKING p^K.
+```
+
+**The seven things to be able to say cold:**
+
+1. **`L = E + A/N^α + B/D^β`.** `E ≈ 1.69` is the **irreducible** loss — the entropy of text. Scaling
+   is a straight line on log-log, which is why final loss is forecastable before a run starts.
+2. **Kaplan said `N ∝ C^0.73`; Chinchilla said `N ∝ C^0.46`.** The fix was tuning the LR schedule
+   per run — Kaplan's fixed schedule penalised the small-model/more-data configurations.
+3. **The exponents are 0.46/0.54, not 0.5/0.5.** Data should grow slightly *faster* than parameters.
+4. **~20 tokens per parameter**, from Chinchilla's empirical approaches. Know that the published
+   *parametric* fit does not reproduce it (it implies ~93:1 at their own budget) and that
+   Besiroglu et al. 2024 found that fit poorly describes the data.
+5. **7B on 3T beats 70B on 300B at identical compute** — better loss *and* 10× cheaper to serve.
+   GPT-3 was the second option.
+6. **Chinchilla optimises training compute; deployment optimises inference cost.** Llama 3 sits 93×
+   past "optimal" on purpose. Both are right about different objectives.
+7. **Emergence is a property of the metric.** `p^20` looks like a phase transition when `p` is
+   perfectly smooth: `0.000798 → 0.038760 → 0.290106 → 0.817907`. Continuous metrics show no jump.
+   "Emergent" describes a plot, not a mechanism.
+
+---
+
+## See also
+
+- [../../5.transformers/01_fundamentals/04_pretraining_objectives.md](../../5.transformers/01_fundamentals/04_pretraining_objectives.md) — the objectives themselves: CLM, MLM, span corruption
+- [../../5.transformers/02_models/06c_gpt3_end_to_end.md](../../5.transformers/02_models/06c_gpt3_end_to_end.md) — GPT-3's `3.14e23` FLOPs, and in-context learning
+- [../../5.transformers/02_models/08b_llama3_end_to_end.md](../../5.transformers/02_models/08b_llama3_end_to_end.md) — Llama 3's 15T tokens, the deliberate over-training
+- [../../6.llms/02_finetuning.md](../../6.llms/02_finetuning.md) — board 18: what happens after pretraining
+- [../../6.llms/04_evaluation.md](../../6.llms/04_evaluation.md) — board 21: the metrics §8 is about

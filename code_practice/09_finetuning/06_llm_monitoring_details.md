@@ -1,7 +1,7 @@
 # Session 6 — Production LLM Observability
 Status: `🔧 Code-built`
 
-Theory: [../../../10.mlops/11_llm_observability.md](../../../10.mlops/11_llm_observability.md)
+Theory: [../../../10.mlops/11_llm_observability.md](../../10.mlops/11_llm_observability.md)
 
 ---
 

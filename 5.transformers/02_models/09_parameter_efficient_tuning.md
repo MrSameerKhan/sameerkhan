@@ -1,5 +1,10 @@
 # Parameter-Efficient Fine-Tuning (PEFT)
 
+> **Scope note.** This file owns the **PEFT landscape** — adapters, prefix tuning, prompt tuning,
+> IA³, and when to use which. The LoRA/QLoRA **arithmetic** (why `B=0` at init, the `α/r` scaling,
+> exact merge verification, and NF4 measured against uniform INT4) is board 19:
+> [09b_lora_qlora_end_to_end.md](09b_lora_qlora_end_to_end.md).
+
 > Why it matters: Fine-tuning a 7B LLM with full gradients needs 4× model size in optimizer states (~112GB). LoRA does the same with ~1% of parameters and fits on a single GPU.
 
 ---
@@ -13,16 +18,25 @@ GPT-3 (175B params):
   Adam optimizer:  1,400 GB (m + v moments)
   Total VRAM needed: 2,800 GB  ← impossible on any single machine
 
-LLaMA-7B:
-  FP16 weights:    14 GB
+LLaMA-7B  (mixed precision: bf16 weights, fp32 gradients and optimizer):
+  BF16 weights:    14 GB
   FP32 gradients:  28 GB
-  Adam states:     56 GB
+  Adam states:     56 GB   (m + v, fp32)
   Total VRAM needed: 98 GB   ← needs 2+ A100 80GB
 
-With LoRA (r=16):
-  Trainable params: ~40M of 7B = 0.57%
-  Extra VRAM:       ~0.3 GB
+  (The "~112 GB" in the header above is the ALL-FP32 variant: 28 + 28 + 56.
+   Both are right; they assume different weight precision. State which you mean.)
+
+With LoRA (r=16 on attention + MLP):
+  Trainable params: 39,976,960 of 7B = 0.5711%
+  Extra VRAM:       ~0.4 GB   (fp16 adapters + their Adam states)
   Total VRAM needed: ~18 GB  ← fits on 1× A100 40GB or 1× RTX 4090
+
+  Target set matters — for 32 layers at d=4096:
+    r=8  on q,v        =  4,194,304   (0.0599%)   <- the common PEFT default
+    r=16 on q,v        =  8,388,608   (0.1198%)
+    r=16 on attn+MLP   = 39,976,960   (0.5711%)   <- the row above
+  "1% of parameters" is a range, not a constant.
 ```
 
 ---
@@ -190,6 +204,8 @@ lora_config = LoraConfig(
 model = get_peft_model(model, lora_config)
 model.print_trainable_parameters()
 # trainable params: 4,194,304 || all params: 6,742,609,920 || trainable%: 0.0622%
+#   ^ this is r=8 on q,v only -- NOT the same config as the ~40M figure above.
+#     Always read the target_modules before comparing two "trainable%" numbers.
 
 # Training — same as standard fine-tuning
 from transformers import TrainingArguments, Trainer

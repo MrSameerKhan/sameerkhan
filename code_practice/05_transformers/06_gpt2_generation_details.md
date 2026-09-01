@@ -1,7 +1,7 @@
 # Session 6 — GPT-2 Causal Language Modeling + Text Generation
 Status: `✅ Run`
 
-Theory: [../../../5.transformers/02_models/02_gpt_family.md](../../../5.transformers/02_models/02_gpt_family.md)
+Theory: [../../../5.transformers/02_models/02_gpt_family.md](../../5.transformers/02_models/02_gpt_family.md)
 
 ---
 

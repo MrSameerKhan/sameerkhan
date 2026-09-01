@@ -1,5 +1,14 @@
 # Fine-Tuning End to End — Full Fine-Tuning, LoRA, and RLHF with Numbers
 
+> **Board 19 is [../5.transformers/02_models/09b_lora_qlora_end_to_end.md](../5.transformers/02_models/09b_lora_qlora_end_to_end.md)** —
+> it carries the LoRA/QLoRA arithmetic: the `α/r` scaling, exact merge verification, and NF4
+> measured against uniform INT4.
+>
+> *Two earlier errors in this file have been corrected in place:* §3.3's `B` initialisation now
+> reads `B = [[0.0],[0.0]]` (which is what makes `ΔW = 0` at step 0), and §4.3's NF4 comparison is
+> now a **measurement** — `2.14×` lower MSE than uniform INT4 — rather than the previously stated
+> `6×`, which came from stipulated example values.
+
 > Same sentence throughout: **"cat sat on mat"**. Same 2D embeddings throughout: cat = [1.0, 0.5], sat = [0.2, 0.3], on = [0.1, 0.1], mat = [0.2, 0.4]
 
 ---
@@ -49,7 +58,10 @@ Take a pretrained model, add a task-specific head (e.g., linear classifier on to
 
 **Task:** "cat sat on mat" → sentiment (positive=1, negative=0). Label: positive (y=1)
 
-**From the BERT file:** after attention + FFN, [CLS] hidden state is:
+**A self-contained 2-dimensional example.** (The BERT walkthrough now runs at `d_model=4` — its
+`[CLS]` output is `[1.1302, −1.3576, −0.5396, 0.7670]` and its own fine-tuning head is worked in
+[../5.transformers/02_models/05_bert_end_to_end.md](../5.transformers/02_models/05_bert_end_to_end.md) §15.
+The `d=2` figures below are kept because the arithmetic stays hand-checkable.)
 
 ```
 x_cls = [1.386, 2.019]
@@ -233,8 +245,8 @@ W_Q = [[0.1, 0.2],
 **LoRA parameters (trainable):**
 
 ```
-A = [[0.2, 0.11]]    shape: 1×2   (r×d)
-B = [[0.8],          shape: 2×1   (d×r)
+A = [[0.2, 0.11]]    shape: 1×2   (r×d)   random init
+B = [[0.0],          shape: 2×1   (d×r)   ZERO init — this is the point
      [0.0]]
 
 Initialization rule: A initialized with small random values (Gaussian with σ = 1/r). B initialized to ZERO.
@@ -253,9 +265,9 @@ q_original = x_cat @ W_Q
            = [0.100+0.450, 0.200+0.600]
            = [0.550, 0.800]
 
-x @ B = [1.000, 1.500] @ [[0.8], [0.0]] = [0.800]
-lora_output = [0.800] @ A = [0.800] @ [[0.2, 0.11]] = [0.000, 0.000]
-                           ↑ B=0 at init, so lora_output = 0
+x @ B = [1.000, 1.500] @ [[0.0], [0.0]] = [0.000]
+lora_output = [0.000] @ A = [0.000] @ [[0.2, 0.11]] = [0.000, 0.000]
+                           ↑ B = 0 at init, so the product is 0 -- exactly, not approximately
 
 q_lora = q_original + lora_output = [0.550, 0.800]
 At initialization, LoRA adds nothing — model starts from pretrained behavior.
@@ -284,8 +296,8 @@ New ΔW:
       [-0.020]]
    = [[0.050×0.2, 0.050×0.11],
       [-0.020×0.2, -0.020×0.11]]
-   = [[0.010, 0.005],
-      [-0.004, -0.002]]
+   = [[ 0.0100,  0.0055],
+      [-0.0040, -0.0022]]
 
 This is a rank-1 matrix (one row of B scaled by one row of A).
 
@@ -394,15 +406,27 @@ NF4:                     more levels near 0 (where most weights cluster)
                          fewer levels at the extremes
 ```
 
-**Quantization error example:**
+**Quantization error — measured, not stipulated:**
 
 ```
-Original weight: 0.1
-Uniform 4-bit:  nearest level might be 0.133  → error = 0.033
-NF4:            nearest level might be 0.105  → error = 0.005
+2,000,000 samples from N(0,1), absmax-normalised, quantised to 16 levels:
 
-NF4 gives 6× better representation for typical weight distributions.
+  NF4            MSE = 6.932011e-04     mean|err| = 2.264185e-02
+  uniform INT4   MSE = 1.480951e-03     mean|err| = 3.332406e-02
+
+  NF4 is 2.14x lower MSE on Gaussian weights.
 ```
+
+The levels differ where it matters:
+
+```
+  spacing near 0:   NF4 0.0796   INT4 0.1333    <- NF4 is FINER where the mass is
+  spacing at edge:  NF4 0.2770   INT4 0.1333    <- and coarser where it is not
+```
+
+*(An earlier version of this file claimed "6x better", derived from stipulated example values
+rather than a measurement. The real figure is 2.14x — still a clear win, and worth quoting
+accurately. Full derivation: [../5.transformers/02_models/09b_lora_qlora_end_to_end.md](../5.transformers/02_models/09b_lora_qlora_end_to_end.md) §7.)*
 
 ---
 

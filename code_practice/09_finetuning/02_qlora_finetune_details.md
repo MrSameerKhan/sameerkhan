@@ -1,7 +1,7 @@
 # Session 2 — QLoRA Fine-tuning
 Status: `🔧 Code-built`
 
-Theory: [../../../6.llms/02_finetuning.md](../../../6.llms/02_finetuning.md) · [../../../5.transformers/02_models/09_parameter_efficient_tuning.md](../../../5.transformers/02_models/09_parameter_efficient_tuning.md)
+Theory: [../../../6.llms/02_finetuning.md](../../6.llms/02_finetuning.md) · [../../../5.transformers/02_models/09_parameter_efficient_tuning.md](../../5.transformers/02_models/09_parameter_efficient_tuning.md)
 
 ---
 

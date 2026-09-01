@@ -564,7 +564,7 @@ Bi-encoder (SBERT): encode each sentence independently. Pre-compute corpus embed
 |---|---|
 | Sentence embeddings | RAG retrieval (bi-encoder stage) |
 | Cosine similarity | All semantic search |
-| Triplet/contrastive loss | `2.deep_learning/06_specialized_losses.md` |
+| Triplet/contrastive loss | `../../2.deep learning/01_fundamentals/06_specialized_losses.md` |
 | Cross-encoder reranking | `7.rag/01b_rag_end_to_end.md` |
 | Mean pooling | Any sentence embedding model |
 | MNRL | OpenAI text-embedding-*, Cohere embeddings |

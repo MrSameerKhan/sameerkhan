@@ -33,9 +33,28 @@ Both are essential. Either alone is incomplete.
 
 ### The waste in naive serving
 
-For each request, the LLM allocates a KV cache: a tensor of shape `[layers, 2, max_seq_len, n_kv_heads, head_dim]`. For Llama-3 8B with max_seq=4096: **~2 GB per request**.
+For each request, the LLM allocates a KV cache: a tensor of shape
+`[layers, 2, max_seq_len, n_kv_heads, head_dim]`.
 
-**Problem:** you don't know how long the response will be. Naive serving allocates the FULL `max_seq_len` upfront. If the response is only 50 tokens, you've allocated 4096 tokens of memory and used 50. **~99% memory waste per request.**
+```
+Llama-3 8B is GQA — 8 KV heads, not 32:
+  2 (K,V) × 32 layers × 8 kv-heads × 128 head_dim × 4096 tokens × 2 bytes
+  = 536,870,912 bytes = 0.50 GiB per request
+
+  (if it were MHA with 32 KV heads it would be 2.00 GiB — that is Llama-2-7B,
+   and it is the figure people mistakenly attach to Llama-3.)
+```
+
+Full arithmetic: [../5.transformers/02_models/04b_attention_at_scale_end_to_end.md](../5.transformers/02_models/04b_attention_at_scale_end_to_end.md) §3.
+GQA's effect on it: [../5.transformers/02_models/08b_llama3_end_to_end.md](../5.transformers/02_models/08b_llama3_end_to_end.md) §5.
+
+**Problem:** you don't know how long the response will be. Naive serving allocates the FULL
+`max_seq_len` upfront. If the response is only 50 tokens, you allocated 4096 and used 50 —
+**98.8% waste on that request.**
+
+Measured across a realistic batch (16 sequences, avg length 300, `max_seq_len` 2048):
+fragmentation falls from **85.4% to 1.3%** with 16-token paged blocks — worked in
+[../5.transformers/02_models/04b_attention_at_scale_end_to_end.md](../5.transformers/02_models/04b_attention_at_scale_end_to_end.md) §7.
 
 **Compounding:** at any time, the GPU holds N requests. Each with its own pre-allocated max-length cache. GPU memory limits how many requests you can batch. Fewer batched = lower throughput.
 

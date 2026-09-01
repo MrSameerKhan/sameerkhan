@@ -25,8 +25,6 @@ mindmap
       Continuous batching
 ```
 
-> Note: `00_roadmap.md` is the legacy navigation file. This README supersedes it; `00_roadmap.md` will be archived in Phase 8.
-
 ---
 
 ## Reading Order
@@ -34,10 +32,10 @@ mindmap
 | If you're learning... | Read in order |
 |-----------------------|---------------|
 | **Prompting** | `01_prompting` (covers CoT / few-shot / Self-Consistency / Reflexion / CoVe / reasoning-model prompting) |
-| **Fine-tuning** | `02_finetuning` → `02b_finetuning_end_to_end` + cross-ref `../5.transformers/02_models/09_parameter_efficient_tuning.md` |
-| **Dataset preparation** | `07_dataset_preparation` (ChatML, instruction formats, synthetic data, DPO/KTO formats) |
-| **Alignment** | `03_alignment` → `03b_alignment_end_to_end` → `06_alignment_follow_ups` (DPO/KTO/ORPO/GRPO depth) |
-| **Evaluation** | `04_evaluation` |
+| **SFT (board 18)** | `02c_sft_end_to_end` (prompt masking computed, chat templates, the two template failures) → `07_dataset_preparation` (ChatML, formats, synthetic data) |
+| **Fine-tuning / PEFT (board 19)** | `02_finetuning` → `02b_finetuning_end_to_end` → **`../5.transformers/02_models/09b_lora_qlora_end_to_end.md`** (the arithmetic) |
+| **Alignment (board 20)** | `03_alignment` → `03b_alignment_end_to_end` → **`03c_dpo_end_to_end`** (the `Z(x)` cancellation — the step the other two skip) → `06_alignment_follow_ups` |
+| **Evaluation (board 21)** | `04b_evaluation_end_to_end` (perplexity, pass@k, MC floors, contamination) → `04_evaluation` (BLEU/ROUGE/BERTScore/RAGAS) |
 | **Serving** | `05_vllm_internals` (vLLM, paged attention, prefill/decode, continuous batching) |
 
 ---

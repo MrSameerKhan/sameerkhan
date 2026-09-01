@@ -1,5 +1,10 @@
 # LLM Dataset Preparation
 
+> This file owns the **formats**: ChatML, dataset sizing, synthetic generation, tool traces.
+> The **arithmetic** — what prompt masking does to the loss and the gradient, template token
+> overhead, and the two template-mismatch failures — is in
+> [02c_sft_end_to_end.md](02c_sft_end_to_end.md) (board 18).
+
 > Data format and quality dominate fine-tuning outcomes. Default to ChatML + `tokenizer.apply_chat_template`. Mask user tokens to -100 to prevent model from learning user turns. Quality > quantity (1K clean > 50K noise). Use synthetic (Magpie, Evol-Instruct) to bootstrap. For tool use, structure function-call traces as assistant → tool → assistant. Match dataset format to model usage: ChatML for instruction-tuned, plain text for CPT, preference pairs for DPO, unary for KTO.
 
 ---

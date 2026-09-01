@@ -1,7 +1,7 @@
 # Session 4 — BART Abstractive Summarization
 Status: `✅ Run`
 
-Theory: [../../../5.transformers/02_models/03_encoder_decoder_family.md](../../../5.transformers/02_models/03_encoder_decoder_family.md)
+Theory: [../../../5.transformers/02_models/03_encoder_decoder_family.md](../../5.transformers/02_models/03_encoder_decoder.md)
 
 ---
 

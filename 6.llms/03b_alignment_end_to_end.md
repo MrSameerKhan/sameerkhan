@@ -414,6 +414,11 @@ flowchart TD
 ```
 > The derivation chain: RLHF → closed-form r → BT model → DPO loss. Skip RM + PPO entirely.
 
+> **The missing step below is derived in [03c_dpo_end_to_end.md](03c_dpo_end_to_end.md) §5** (board 20):
+> this section states `r = beta*log(pi*/pi_ref) + beta*log Z(x)` and then jumps to the DPO loss.
+> Why the intractable `beta*log Z(x)` disappears — it is identical for `y_w` and `y_l`, and
+> Bradley-Terry uses only their difference — is the whole derivation.
+
 RLHF requires training a separate reward model, then running complex PPO. Can we skip both?
 
 Yes. The key insight is that the optimal RLHF policy π* has a closed-form relationship with the reward:

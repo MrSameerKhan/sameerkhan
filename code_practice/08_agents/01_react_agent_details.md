@@ -1,7 +1,7 @@
 # Session 1 — ReAct Agent from Scratch
 Status: `✅ Run`
 
-Theory: [../../../8.agents/01_agents.md](../../../8.agents/01_agents.md) · [../../../8.agents/06_planner_executor_patterns.md](../../../8.agents/06_planner_executor_patterns.md)
+Theory: [../../../8.agents/01_agents.md](../../8.agents/01_agents.md) · [../../../8.agents/06_planner_executor_patterns.md](../../8.agents/06_planner_executor_patterns.md)
 
 ---
 
