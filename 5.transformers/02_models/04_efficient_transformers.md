@@ -1,5 +1,12 @@
 # Efficient Transformers
 
+> **Scope note.** This file is a **survey**. The board-12 arithmetic — KV cache sizing and its
+> exactness, Flash's online softmax, PagedAttention fragmentation, and memory- vs compute-bound
+> reasoning — is worked out in
+> [04b_attention_at_scale_end_to_end.md](04b_attention_at_scale_end_to_end.md).
+> Note also that the LoRA/QLoRA and MoE sections below overlap boards 19 and 15, whose canonical
+> homes are `09_parameter_efficient_tuning.md` and `10_mixture_of_experts.md`.
+
 > Four efficiency axes: (1) Attention — Flash Attention for memory, sparse/local for long context; (2) Model size — distillation for smaller models, quantization for inference; (3) Fine-tuning — LoRA/QLoRA for training large models with small GPU budget; (4) Scaling — MoE for capacity without proportional compute. In practice: QLoRA + Flash Attention is the standard recipe for fine-tuning any modern LLM on limited hardware..
 
 ---

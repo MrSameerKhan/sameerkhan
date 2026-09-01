@@ -1,4 +1,9 @@
-# Modern LLM Architecture — LLaMA vs GPT-2
+# Modern LLM Architecture
+
+> **Scope note.** This file owns the **mechanisms** — pre-norm, RMSNorm, RoPE, SwiGLU, GQA —
+> hand-computed as a diff from GPT-2. **Llama 3's specific configs, exact parameter arithmetic,
+> RoPE base 500,000, the 128,256 vocabulary and the model-card exercise** live in
+> [08b_llama3_end_to_end.md](08b_llama3_end_to_end.md). — LLaMA vs GPT-2
 
 > Every change explained with numbers. Same 4-word vocabulary throughout.
 

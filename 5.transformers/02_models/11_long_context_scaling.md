@@ -1,204 +1,278 @@
-# Long-Context Scaling — RoPE, YARN, ALiBi, Sliding Window
+# 11 — Long Context: RoPE Scaling, ALiBi, Sliding Window
 
-> How modern LLMs handle 100K+ tokens when the model was trained on 4K. The techniques behind Gemini 2M, Claude 200K, GPT-4 128K.
+> Board 14. Continues [08b_llama3_end_to_end.md §6](08b_llama3_end_to_end.md), where Llama 3 raised
+> the RoPE base from 10,000 to 500,000. This file is **why that works**, and what the alternatives
+> are when you cannot retrain.
+>
+> Everything is computed for `d_head = 128`, `base = 10,000`, trained at `L = 4096` — Llama-2-7B's
+> configuration — extending to 32,768 (`s = 8`).
+
+---
+
+## 1. The problem, stated precisely
+
+RoPE rotates dimension pair `i` by `m · θ_i`, with `θ_i = base^(−2i/d)`. Each pair has a
+**wavelength** `2π/θ_i` — the number of positions before it returns to its starting phase.
+
+```
+ pair i       theta_i     wavelength   status at L = 4096
+      0    1.00000000            6.3   fully rotated (model saw every phase)
+      8    0.31622777           19.9   fully rotated
+     16    0.10000000           62.8   fully rotated
+     24    0.03162278          198.7   fully rotated
+     32    0.01000000          628.3   fully rotated
+     40    0.00316228        1,986.9   fully rotated
+     48    0.00100000        6,283.2   NEVER completes a cycle
+     56    0.00031623       19,869.2   NEVER completes a cycle
+     63    0.00011548       54,410.1   NEVER completes a cycle
+```
+
+**46 of the 64 pairs complete at least one full rotation within 4096 tokens. The other 18 never do.**
+
+That split is the whole subject:
+
+- The 46 short-wavelength pairs have seen **every phase angle** during training. Asking them about
+  position 20,000 is fine — the angle is one they have seen before.
+- The 18 long-wavelength pairs have only ever seen a **fraction of one rotation**. At position
+  20,000 they are asked to produce an angle that never occurred in training. The model has no idea
+  what it means.
+
+**Extrapolation fails on those 18 dimensions specifically.** Every method below is a different
+answer to "what do we do about them?"
 
 ---
 
 ## Table of Contents
 
-1. Objective
-2. Core concept — why context length is hard
-3. Variants / comparison
-4. When to use which technique
-5. Code / formula
-6. Failure modes
-7. Interview questions (5)
-8. Further reading
+1. The problem, stated precisely
+2. Position Interpolation — and why it costs precision
+3. NTK-aware scaling
+4. YaRN — treat each band by what it needs
+5. ALiBi — no positions at all
+6. Sliding window — depth as context
+7. Comparison
+8. Quick reference
 
 ---
 
-## 1. Objective
+## 2. Position Interpolation (PI)
 
-Three independent problems live under "long-context":
-1. **Compute** — attention is O(n²); 100K tokens = 100× the compute of 1K tokens.
-2. **Memory** — KV cache scales linearly with sequence length; 100K tokens × N layers can exceed GPU memory.
-3. **Generalization** — a model trained on 4K positions doesn't natively understand position 50K.
+Chen et al., 2023. Compress every position into the trained range:
 
-Each technique below attacks one or two of these. Senior interview Q: "Walk me through how Llama-3-8B-Instruct goes from 8K trained → 128K served."
-
----
-
-```mermaid
-graph LR
-    subgraph problem["3 Problems in Long Context"]
-        direction TB
-        P1["Compute\nO·n² attention\n100K = 100× of 1K"]
-        P2["Memory\nKV cache ∝ seq_len × layers\nexceeds GPU RAM"]
-        P3["Generalization\ntrained on 4K\nposition 50K is unseen"]
-    end
-
-    subgraph fixes["Techniques — which problem solved"]
-        direction TB
-        F1["ALiBi\ndistance bias · no PE\n✅ extrapolates natively"]
-        F2["RoPE + PI\nrescale positions 0..N into 0..L_train\n✅ generalize · needs fine-tune"]
-        F3["YARN\nNTK-aware + frequency scaling\n✅ 4K→128K no full retrain\nLLaMA-3 default"]
-        F4["Sliding Window Attention\nonly attend to local W tokens\n✅ compute O·n·W"]
-        F5["FlashAttention 2/3\nIO-aware tiling\n✅ memory O·n not O·n²"]
-    end
-
-    P3 --> F1
-    P3 --> F2
-    P3 --> F3
-    P2 --> F4
-    P1 & P2 --> F5
-
-    style F3 fill:#27ae60,color:#fff
-    style F5 fill:#2980b9,color:#fff
+```
+m  ->  m / s        s = L_target / L_train = 32768 / 4096 = 8
 ```
 
-## 2. Core concept — why context length is hard
+Equivalently, every wavelength is multiplied by `s`:
 
-**Generalization is the deepest issue.** A transformer trained on sequence length L learns position embeddings (or rotation frequencies for RoPE) that work well in [0, L]. Run it at position 4L and the position encoding looks like nothing it's seen — outputs degrade catastrophically. You see this empirically: perplexity remains low until exactly the trained context length, then explodes.
-
-The fixes split into three categories:
-
-**A. Re-parametrize position encoding so it extrapolates.** ALiBi (Press 2021): no positional embedding at all; instead, add a *linear* bias to attention scores proportional to token distance. Distant tokens get penalized. Extrapolates naturally to any length.
-
-**B. Re-scale RoPE at inference** (Chen et al. 2023) — squeeze positions 0..N_new into the range 0..N_trained. Token at position 32000 (model was trained on 4096) is treated as if it were at position 32000 × 4096/N_new.
-
-**C. NTK-aware RoPE scaling** — only rescale the LOW frequencies (high-dim pairs); leave the HIGH frequencies alone. Preserves local structure.
-
-**YARN** (Peng et al. 2023) — combines NTK-aware scaling with a "ramp" function that softly transitions. The de-facto standard for 2024-2025 long-context fine-tunes.
-
-**C. Avoid attending to every token.** — **Sliding window attention** (Mistral 7B 2023): each token only attends to the previous W tokens, e.g., W=4096. Memory and compute drop from O(n²) to O(n·W). Information still propagates across windows in deeper layers. — **Sparse attention patterns** (Longformer, BigBird): mix local + global tokens. — **Sink tokens** (StreamingLLM): always attend to the first 1-4 tokens. Combined with sliding window, enables infinite generation.
-
----
-
-## 3. Variants / Comparison
-
-| Technique | Fixes | Compute | Quality cost | Used in (2024) |
-|-----------|-------|---------|-------------|----------------|
-| ALiBi | generalization | O(n²) | low; trained from scratch | MPT, BLOOMZ |
-| Position Interpolation | generalization | O(n²) | small after fine-tune | Llama-2 32K (Together) |
-| NTK-aware RoPE | generalization | O(n²) | minimal | many community Llama variants |
-| YARN | generalization | O(n²) | minimal after fine-tune | Llama-3-128K, Qwen2.5 long |
-| Sliding window | memory + compute | O(n·W) | local-only context | Mistral-7B (W=4096) |
-| Sliding window + sinks | memory + compute | O(n·W) | small | Streaming LLM |
-| Sparse attention | memory + compute | O(n·k) | task-dependent | Longformer, BigBird (older) |
-| Ring attention | memory across GPUs | O(n²) total, partitioned | none | Gemini long-context training |
-
-**The 2024-2026 production stack:** RoPE + YARN scaling + sliding window in some layers + KV cache. That's how a base model trained at 8K serves at 128K reliably.
-
----
-
-## 4. When to use which technique
-
-| Situation | Pick |
-|-----------|------|
-| Training a new model from scratch | RoPE + sliding window (or ALiBi) baked in |
-| Fine-tuning to extend context (e.g., 4K → 32K) | YARN or Position Interpolation + continued training on long examples |
-| Inference-time hack, no retraining | NTK-aware RoPE scaling — works decently without fine-tune |
-| Need infinite/streaming generation | Streaming LLM (sliding window + sink tokens) |
-| Need full attention across very long inputs (research) | Ring attention (multi-GPU) |
-| Budget-constrained — need speed at length | Sliding window (Mistral approach) |
-
-**Senior signal:** know that YARN = Position Interpolation + NTK-aware + ramp. Many recruiters know this.
-
----
-
-## 5. Code / formula
-
-### RoPE in one line
-
-```python
-# For dim-2k pair, position m:
-RoPE[x,m]_2k   = x_m * cos(θ_k * m) - x_{m+1} * sin(θ_k * m)
-RoPE[x,m]_2k+1 = x_m * sin(θ_k * m) + x_{m+1} * cos(θ_k * m)
-# where θ_k = 10000^(-2k/d)
+```
+ pair i    wavelength     after PI (×8)
+      0           6.3              50.3
+     16          62.8             502.7
+     32         628.3           5,026.5
+     48       6,283.2          50,265.5
+     63      54,410.1         435,281.1
 ```
 
-### Position Interpolation
+**It works — and it is blunt.** PI stretches *every* wavelength by 8×, including the short,
+high-frequency pairs that were already perfectly fine. Pair 0's wavelength goes from 6.3 to 50.3
+positions, so the dimension that used to distinguish "1 token apart" from "2 tokens apart" now
+barely separates 8 tokens from 16.
 
-Simply rescale the position before the rotation:
+**PI buys long-range capability by spending short-range precision.** It needs fine-tuning
+(~1000 steps) to recover, and even then local tasks degrade measurably.
 
-```python
-def pi_rope(x, position, scale_factor):
-    rescaled_position = position / scale_factor
-    return apply_rope(x, rescaled_position)
-# scale_factor = N_new / N_trained, e.g., 8 for 4K → 32K
+---
+
+## 3. NTK-aware scaling
+
+The insight: do not touch positions — change the **base**, so the stretch is applied *unevenly*.
+
+```
+base  ->  base · s^(d/(d−2))  =  10,000 · 8^(128/126)  =  82,685
 ```
 
-### NTK-aware scaling
-
-Adjust the BASE (10000), not the position:
-
-```python
-def ntk_aware_rope(x, position, scale_factor, dim):
-    base = 10000 * (scale_factor ** (dim / (dim - 2)))
-    # Use this base in θ_k = base^(-2k/d)
-    return apply_rope_with_base(x, position, base)
+```
+ pair i       old wl          new wl    stretch
+      0          6.3             6.3      1.00x     <- untouched
+     16         62.8           106.5      1.70x
+     32        628.3         1,806.7      2.88x
+     48      6,283.2        30,637.2      4.88x
+     63     54,410.1       435,281.1      8.00x     <- full stretch
 ```
 
-### Sliding window attention
+**The stretch is 1.00× on the highest frequency and 8.00× on the lowest.** Exactly inverted from
+PI, which applied 8× everywhere. Short-range resolution is preserved; only the dimensions that
+actually needed help get stretched.
 
-```python
-mask = torch.zeros(n, n)
-for i in range(n):
-    mask[i, max(0, i-W):i+1] = 1   # only attend to W tokens before + self
+The exponent `d/(d−2)` is chosen so the *lowest* frequency receives precisely the factor `s`. That
+is the whole derivation.
+
+**NTK-aware often works zero-shot** — no fine-tuning — which is why it spread through the
+open-weights community as a config-file change before anyone retrained anything.
+
+---
+
+## 4. YaRN — treat each band by what it needs
+
+Peng et al., 2023. PI interpolates everything; NTK scales smoothly. YaRN makes the split
+**explicit**, using the rotation count `r_i = L_train / wavelength_i`:
+
+```
+r > β (32)   the dim rotated many times in training   ->  EXTRAPOLATE, leave it alone
+r < α (1)    the dim never completed one rotation     ->  INTERPOLATE fully (÷ s)
+otherwise                                             ->  linear ramp between the two
 ```
 
----
+```
+ pair i   wavelength   r = L/wl                  YaRN action
+      0          6.3     651.90      extrapolate (untouched)
+      8         19.9     206.15      extrapolate (untouched)
+     16         62.8      65.19      extrapolate (untouched)
+     24        198.7      20.61       ramp, 37% interpolated
+     30        471.2       8.69       ramp, 75% interpolated
+     34        837.9       4.89       ramp, 87% interpolated
+     38      1,490.0       2.75       ramp, 94% interpolated
+     42      2,649.6       1.55       ramp, 98% interpolated
+     48      6,283.2       0.65       interpolate fully (÷8)
+     56     19,869.2       0.21       interpolate fully (÷8)
+     63     54,410.1       0.08       interpolate fully (÷8)
 
-## 6. Failure modes
+ totals: 21 extrapolated · 25 ramped · 18 fully interpolated
+```
 
-1. **Forgot to fine-tune after extending context** — Position Interpolation / YARN works much better after a few hundred steps of LM training on long examples. Cold (no fine-tune) gives noisy outputs at extreme lengths.
+**The 18 fully-interpolated dimensions are exactly the 18 from §1 that never complete a rotation.**
+`r < 1` *means* "wavelength longer than the training context". YaRN did not pick them by hand — the
+criterion falls out of the same quantity.
 
-2. **Sliding window breaks tasks needing global retrieval** — "what's the name mentioned 50K tokens ago?" Sliding window can lose it. Mitigation: sink tokens or attention sinks every K layers.
+YaRN also rescales attention temperature:
 
-3. **Lost-in-the-middle** (Liu et al. 2023) — even at trained context, models attend most to the START and END of context. Middle gets ignored. Long-context capability ≠ uniform attention.
+```
+1/t = 0.1 · ln(s) + 1 = 1.207944       (s = 8)
+logits are multiplied by 1/t = 0.827853
+```
 
-4. **KV cache OOM** — extending context to 128K doesn't help if KV cache eats all GPU memory. Pair with quantized KV cache (INT8 K/V) or GQA.
+Interpolation flattens attention — squeezing positions together makes neighbours look more alike —
+so YaRN sharpens the logits back. It is a small correction with a measurable effect.
 
-5. **Benchmark-driven illusion** — "needle in haystack" benchmarks impressive but only test single-fact retrieval. Real-world long-context (summarize a 50K-token transcript) is much harder.
-
----
-
-## 7. Interview questions (5)
-
-**Q1: A model is trained on 4K context but you need 32K. What do you do?**
-
-Fine-tune with YARN (or Position Interpolation + NTK-aware) for 500-1000 steps on long examples. Without YARN, attention degrades smoothly until ~5K and then breaks down.
-
-**Q2: Why doesn't standard RoPE extrapolate beyond trained length?**
-
-Because the rotation frequencies θ_k are tied to specific position values seen during training. At unseen positions, the model's learned attention patterns no longer apply — sinusoidal extrapolation is mathematically defined but doesn't match learned weights.
-
-**Q3: What's the difference between sliding window attention and sparse attention?**
-
-Sliding window is uniform: every token attends to W previous tokens. Sparse attention (Longformer/BigBird) is heterogeneous: most tokens use local + global + random attention patterns, layered for full coverage. Sliding window is simpler and is what Mistral uses; sparse is more flexible but older.
-
-**Q4: What is "lost in the middle" and how do you mitigate?**
-
-LLMs over-attend to start and end of context, ignoring middle. Mitigation: (1) place critical info at the prompt edges, (2) use re-ranking in RAG so most relevant chunks land at the prompt edges, (3) for very long docs, use hierarchical summarization (summarize sections, then summarize summaries).
-
-**Q5: What's YARN and how is it different from Position Interpolation?**
-
-Position Interpolation rescales ALL frequencies uniformly. YARN = NTK-aware (only rescale low frequencies, leave high alone) + a "ramp" smoothing function between the trained range and extended range. YARN preserves local structure better, hence higher quality at extended length.
+**YaRN reaches longer contexts with ~10× less fine-tuning than PI** (roughly 400 steps), which is
+why it became the default extension recipe.
 
 ---
 
-## 8. Further reading
+## 5. ALiBi — no positional encoding at all
 
-- RoFormer / RoPE (Su et al. 2021) — arXiv:2104.09864
-- ALiBi (Press et al. 2021) — "Train short, test long"
-- Position Interpolation (Chen et al. 2023) — arXiv:2306.15595
-- YARN (Peng et al. 2023) — arXiv:2309.00071
-- Lost in the Middle (Liu et al. 2023) — arXiv:2307.03172
-- Mistral 7B (Jiang et al. 2023) — sliding window attention in practice
-- StreamingLLM (Xiao et al. 2023) — attention sinks for infinite generation
+Press et al., 2021. Add nothing to the embeddings and rotate nothing. Instead, penalise distance
+directly in the attention logits:
+
+```
+score(i, j) = qᵢ · kⱼ  −  m_h · (i − j)
+                          ↑
+                          fixed per-head slope, NOT learned
+```
+
+Slopes form a geometric sequence, `m_h = 2^(−8h/H)`:
+
+```
+H = 8    0.500000, 0.250000, 0.125000, 0.062500, 0.031250, 0.015625, 0.007812, 0.003906
+         ratio between consecutive heads = 0.5000
+
+H = 16   0.707107, 0.500000, 0.353553, 0.250000, 0.176777, 0.125000, 0.088388, 0.062500, …
+         ratio = 0.7071  ( = 2^−0.5 )
+```
+
+**Different heads get different decay rates.** The steepest head (0.5) effectively sees only a few
+tokens back; the shallowest (0.0039) barely decays at all and stays near-global. One layer therefore
+covers many ranges at once.
+
+```
+ALiBi has ZERO positional parameters. No embedding table, no rotation, nothing to extend.
+```
+
+Extrapolation is free — the bias is defined for any distance. Its weakness is that the decay is
+**monotonic and fixed**: ALiBi can never attend strongly to something far away, which caps it on
+retrieval-style tasks where the answer sits at position 50,000. That is why RoPE + scaling won for
+general-purpose LLMs, and ALiBi persists mainly where strict locality is acceptable.
 
 ---
 
-## Code Practice — Wired by Phase 6
+## 6. Sliding window — depth as context
 
-- `code_practice/02_transformers/04_pos_enc/` — sinusoidal / learned / RoPE comparison
+Mistral 7B. Restrict each layer to a fixed window (4096), but let **depth compose**:
+
+```
+after  1 layer : receptive field  =   4,096 tokens
+after  2 layers:                  =   8,192
+after  4 layers:                  =  16,384
+after  8 layers:                  =  32,768
+after 16 layers:                  =  65,536
+after 32 layers:                  = 131,072
+```
+
+**32 layers × a 4096 window = 131,072 tokens of effective context.** The same argument as GPT-3's
+banded attention ([06c §4](06c_gpt3_end_to_end.md)): reach grows linearly with depth.
+
+The trade is identical too. Information from token 0 reaching token 131,071 must pass through 32
+hops, each a lossy weighted average. It is *reachable*, not *directly attendable* — which is why
+sliding-window models underperform on tasks needing exact recall across the full span, and why
+Mistral pairs the window with a rolling KV cache rather than claiming true 128k attention.
+
+---
+
+## 7. Comparison
+
+| Method | What it changes | Short-range precision | Fine-tuning needed |
+|---|---|---|---|
+| **PI** | positions `m → m/s` | **degraded** (all wavelengths ×8) | yes, ~1k steps |
+| **NTK-aware** | base `10,000 → 82,685` | preserved (1.00× on pair 0) | often none |
+| **YaRN** | per-band ramp + temperature | preserved by construction | yes, ~400 steps |
+| **ALiBi** | linear logit bias, no RoPE | n/a — no positions | trained in from scratch |
+| **Sliding window** | the mask, not positions | full within the window | trained in from scratch |
+
+**PI, NTK and YaRN are post-hoc** — applied to an already-trained RoPE model, sometimes as a config
+change. **ALiBi and sliding window are architectural** — you commit at pretraining.
+
+---
+
+## 8. Quick reference
+
+```
+wavelength_i = 2*pi / theta_i,  theta_i = base^(-2i/d)
+  dims with wavelength <= L_train  saw every phase   -> extrapolate safely
+  dims with wavelength >  L_train  never completed   -> THESE are what breaks
+
+PI        m -> m/s              every wavelength x s      blunt, costs local precision
+NTK       base -> base*s^(d/(d-2))  1.00x .. s, graded    preserves local precision
+YaRN      ramp by r = L/wl      + attention temperature   explicit, least fine-tuning
+ALiBi     score -= m_h*(i-j)    m_h = 2^(-8h/H)           zero positional parameters
+SWA       window W, L layers    receptive field = L*W      reach, not direct attention
+```
+
+**The seven things to be able to say cold:**
+
+1. RoPE breaks at long context because **the low-frequency dimensions never complete a rotation
+   during training** — at `d=128`, `base=10k`, `L=4096`, that is **18 of 64 pairs**. The other 46
+   extrapolate fine.
+2. **PI compresses every position by `s`**, multiplying *all* wavelengths by 8 — including the
+   short ones that were already fine. It works, and it costs short-range precision.
+3. **NTK-aware changes the base instead** (`10,000 → 82,685` for `s=8`), stretching the lowest
+   frequency 8× and the highest **1.00×**. Often works zero-shot.
+4. **YaRN splits dimensions by rotation count `r = L_train/wavelength`** — extrapolate above 32,
+   interpolate fully below 1, ramp between. The 18 dims it fully interpolates are exactly the 18
+   that never complete a rotation.
+5. YaRN also **rescales attention temperature** (`1/t = 0.1·ln(s)+1 = 1.207944` at `s=8`), because
+   interpolation flattens attention.
+6. **ALiBi has zero positional parameters** — a fixed per-head slope `2^(−8h/H)` subtracted from the
+   logit. Free extrapolation, but monotonic decay caps it on long-range retrieval.
+7. **Sliding window buys reach through depth**: `32 layers × 4096 window = 131,072`. Reachable via
+   32 lossy hops, not directly attendable — the same trade as GPT-3's banded attention.
+
+---
+
+## See also
+
+- [08b_llama3_end_to_end.md](08b_llama3_end_to_end.md) — Llama 3's base 500,000, and why it was raised
+- [08_modern_llm_architecture.md](08_modern_llm_architecture.md) — RoPE itself, hand-computed
+- [06c_gpt3_end_to_end.md](06c_gpt3_end_to_end.md) — banded sparse attention, the same depth-vs-reach trade
+- [04b_attention_at_scale_end_to_end.md](04b_attention_at_scale_end_to_end.md) — what long context costs in KV cache
+- [../../6.llms/05_vllm_internals.md](../../6.llms/05_vllm_internals.md) — serving long context in practice

@@ -3,6 +3,7 @@
 > Encoder-decoder = bidirectional understanding (encoder) + autoregressive generation (decoder), connected via cross-attention. T5 unifies all NLP tasks as text-to-text — one model, one loss. Flan-T5 adds instruction tuning — use this over raw T5. BART excels at denoising tasks (summarization). For production: `flan-t5-large` or `bart-large-cnn` for summarization; `opus-mt` for translation. The architectural insight: cross-attention is what allows the decoder to condition generation on the full encoded input.
 
 > Decoder mechanism hand-computed end-to-end: [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md).
+> Per-model worked files: [07_t5_end_to_end.md](07_t5_end_to_end.md) (T5) and [07b_bart_end_to_end.md](07b_bart_end_to_end.md) (BART).
 
 ---
 

@@ -87,10 +87,10 @@ Boards 1–5 (RNN → Transformer encoder) are complete: `4.nlp/03_sequence_mode
 | 7 | **Tokenization → Embedding** | BPE merges · vocab → embedding matrix · weight tying | 15 | `4.nlp/01_fundamentals/03_tokenization.md` + `04_tokenization_end_to_end.md` |
 | 8 | **BERT** | Encoder-only · MLM · `[CLS]`/`[SEP]` · segment embeddings | 20 | `5.transformers/02_models/05_bert_end_to_end.md` |
 | 9 | **GPT** | Causal LM · weight tying · **no cross-attention** · post-LN vs pre-LN | 20 | `5.transformers/02_models/06_gpt1_end_to_end.md` + `06b_gpt2_end_to_end.md` + `06c_gpt3_end_to_end.md` |
-| 10 | **T5 / BART** | Nothing new — full assembly. **This is the Donut decoder.** | 25 | `5.transformers/02_models/07_t5_end_to_end.md` |
-| 11 | **Decoding** ← *moved up from 15* | Greedy / beam / top-k / top-p / temperature | 20 | `4.nlp/03_sequence_models/07_decoding_strategies.md` |
-| 12 | **Attention at scale** ← *now before the modern block* | **KV cache growth** · Flash Attention (tiling, SRAM vs HBM) · PagedAttention | 25 | `5.transformers/02_models/04_efficient_transformers.md` + `6.llms/05_vllm_internals.md` |
-| 13 | **Modern LLM block** ← *was 11* | **pre-LN vs post-LN** · RMSNorm · SwiGLU · RoPE · MHA→MQA→GQA | 25 | `5.transformers/02_models/08_modern_llm_architecture.md` |
+| 10 | **T5 / BART** | T5: relative position bias · RMSNorm · span corruption. BART: denoising, full-document target. **BART's decoder is Donut's.** | 25 | `5.transformers/02_models/07_t5_end_to_end.md` + `07b_bart_end_to_end.md` |
+| 11 | **Decoding** ← *moved up from 15* | Greedy / beam / top-k / top-p / min-p / typical · repetition + length penalty | 20 | `4.nlp/03_sequence_models/07_decoding_strategies.md` |
+| 12 | **Attention at scale** ← *now before the modern block* | **KV cache growth** · Flash Attention (tiling, SRAM vs HBM) · PagedAttention · memory- vs compute-bound | 25 | `5.transformers/02_models/04b_attention_at_scale_end_to_end.md` (arithmetic) + `04_efficient_transformers.md` (survey) + `6.llms/05_vllm_internals.md` |
+| 13 | **Modern LLM block / Llama 3** ← *was 11* | **pre-LN vs post-LN** · RMSNorm · SwiGLU · RoPE · MHA→MQA→GQA · reading a model card | 25 | `5.transformers/02_models/08_modern_llm_architecture.md` (mechanisms) + `08b_llama3_end_to_end.md` (Llama 3 configs + arithmetic) |
 | 14 | **Long context** | RoPE scaling — PI / NTK / YaRN · ALiBi · sliding window | 20 | `5.transformers/02_models/11_long_context_scaling.md` |
 | 15 | **Mixture of Experts** | Router · top-k experts · load-balancing loss | 20 | `5.transformers/02_models/10_mixture_of_experts.md` |
 | 16 | **Speculative decoding** ← *split out of old 15* | Draft model · verify / reject · why it needs a KV cache | 15 | `5.transformers/02_models/13_speculative_decoding.md` |
@@ -131,11 +131,11 @@ existing numbering rather than restarting.
 | 7 | Why does BPE beat word-level on OOV? Why is token count ≠ word count for billing? |
 | 8 | Why mask 15%? Why is BERT useless for generation? Where does `[CLS]` meaning come from? |
 | 9 | What exactly does the LM head tie to, and why? What does the causal mask actually sever? Pre-LN vs post-LN — which is GPT-2, and what else changed with it? |
-| 10 | Draw Donut on top of this board. Which half is Swin, which is BART? |
-| 11 | Why does beam search hurt open-ended generation? What does temperature do to the logits, precisely? |
-| 12 | Compute KV cache size for 7B, 4k context, batch 8. Does Flash Attention change the output? |
-| 13 | Why did pre-LN remove the need for LR warmup? What does GQA trade away, and why is it worth it? |
-| 14 | Why does RoPE extrapolate when learned positions cannot? What breaks first at 128k? |
+| 10 | Draw Donut on top of this board. Which half is Swin, which is BART? How does T5's target differ from BART's, and why does that make T5's decoder cheaper? |
+| 11 | Why does beam search hurt open-ended generation? What does temperature do to the logits, precisely (and what does it NOT change)? Which method can drop the most-probable token, and why can't top-p? Does length_penalty > 0 reward long or short outputs? |
+| 12 | Compute KV cache size for 7B, 4k context, batch 8 — and is it bigger or smaller than the weights? Does Flash Attention change the output? Why is decode memory-bound but prefill compute-bound? |
+| 13 | Why did pre-LN remove the need for LR warmup? What does GQA trade away, and why is it worth it? Given a config.json, derive param count, d_head, KV cache and the tokenizer family. Why is Llama 3's d_ff 3.5x d_model and not 8/3? |
+| 14 | Why does RoPE extrapolate when learned positions cannot? What breaks first at 128k — and how many dimensions is it? Why does NTK beat PI? What does YaRN's ramp key off? |
 | 15 | Why is a 47B MoE cheaper to serve than 47B dense? What is load-balancing loss preventing? |
 | 16 | Why is speculative decoding lossless rather than an approximation? What kills the speedup? |
 | 17 | Why is 7B on 3T tokens better than 70B on 300B? What exactly "emerges", and what is the honest counter-argument? |

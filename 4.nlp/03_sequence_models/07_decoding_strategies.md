@@ -1,525 +1,400 @@
-# Decoding Strategies
+# 07 — Decoding Strategies: End-to-End
 
-> How does an LLM pick the next token? The decoding strategy controls quality, diversity, and speed of generated text.
+> Board 11. Every number below is computed on **one complete 8-token distribution** — the real
+> output of the GPT-1 walkthrough in
+> [../../5.transformers/02_models/06_gpt1_end_to_end.md](../../5.transformers/02_models/06_gpt1_end_to_end.md) §11,
+> position 3. Because the vocabulary is complete, **every probability row sums to exactly 1** and
+> every claim here is checkable by hand.
+>
+> Beam search and the length penalty are run through the actual model, autoregressively.
+
+---
+
+## The distribution everything below uses
+
+Context: `bank approved the loan`. The model must emit the next token.
+
+```
+vocab :   <bos>     bank  approved      the     loan  granted rejected    <eos>
+logits: [ 0.0000, -1.3766,  0.2125,  0.1652,  1.4789,  0.5428, -0.2831, -0.1221]
+probs : [ 0.0876,  0.0221,  0.1083,  0.1033,  0.3844,  0.1507,  0.0660,  0.0775]
+
+sum = 1.000000        entropy = 1.803281 nats        uniform would be log 8 = 2.0794
+```
 
 ---
 
 ## Table of Contents
 
-1. The Core Problem
-2. Greedy Decoding
-3. Beam Search
-4. Temperature Sampling
-5. Top-K Sampling
-6. Top-P (Nucleus) Sampling
-7. Combining Temperature + Top-P (Production Config)
-8. Repetition Penalty
-9. Speculative Decoding (Speed Optimization)
-10. Constrained / Structured Decoding
-11. min-p Sampling & DRY Penalty
-12. Comparison Table
-13. Key Numbers
-14. Interview Q&A
-15. Connections
-16. Key Takeaway
-17. Code Practice
+1. The core problem
+2. Greedy
+3. Temperature
+4. Top-k
+5. Top-p (nucleus)
+6. min-p
+7. Typical sampling
+8. Repetition penalty
+9. **Beam search** — run for real
+10. **Length penalty** — and the exact crossover
+11. Which to use
+12. Comparison table
+13. Quick reference
 
 ---
 
-## Which Strategy to Use
+## 1. The core problem
 
-```mermaid
-flowchart TD
-    A([Choose decoding strategy]) --> B{Need deterministic\nreproducible output?}
-    B -->|Yes| C{Best single answer?}
-    C -->|Yes · short output| D["Greedy\nAlways pick highest-prob token\nFast · no diversity"]
-    C -->|Yes · long / complex| E["Beam Search\nKeep top-K beams\nBetter quality · slower"]
-    B -->|No · need diversity| F{Output type?}
-    F -->|Structured output\nJSON · code · extraction| G["Constrained decoding\noutlines / Instructor\nGuarantees schema validity"]
-    F -->|Creative · chat · generation| H{Temperature?}
-    H -->|High creativity\nbrainstorming| I["temp=0.8-1.2 + Top-P=0.95\nNucleus sampling\nDiverse · coherent"]
-    H -->|Balanced| J["temp=0.7 + Top-P=0.9\nProduction default\nQuality + diversity"]
-    H -->|Focused · factual| K["temp=0.1-0.3\nLow randomness\nFactual QA · extraction"]
-    G --> L["✅ Chosen"]
-    D & E & I & J & K --> L
-    style G fill:#8e44ad,color:#fff
-    style J fill:#27ae60,color:#fff
-    style L fill:#2980b9,color:#fff
-```
+The model gives you a distribution over the vocabulary at every step. Decoding is the question of
+what to *do* with it — and it is entirely separate from the model. **No decoding strategy changes a
+single weight.** Same model, different decoder, different text.
 
-## 1. The Core Problem
-
-At each step t, the LLM outputs a probability distribution over the vocabulary:
+Two failure modes bound the space:
 
 ```
-P(token | context) = σ([V])   (|V| = 32,000 tokens for LLaMA)
-
-Example — predicting next token after "The capital of France is":
-  "Paris"   → 0.82
-  "Lyon"    → 0.06
-  "London"  → 0.03
-  "the"     → 0.02
-  ...       → 0.07 (remaining 31,996 tokens)
-
-Question: which token do we pick?
-  Always pick "Paris" (0.82)?  → deterministic, boring
-  Sample randomly?             → incoherent
-  Something smarter?           → a decoding strategy
+too deterministic  ->  repetition, generic "safe" text, degenerate loops
+too random         ->  incoherence, hallucinated tokens, drift
 ```
+
+Everything below is a way of cutting between them.
 
 ---
 
-## 2. Greedy Decoding
+## 2. Greedy
 
-Pick the highest-probability token at every step.
-
-```python
-At step t: token_t = argmax P(token | token_{1:t-1})
-
-Example:
-  Step 1: "Paris" (0.82)  ✓ selected
-  Step 2: " is"  (0.71)   ✓ selected
-  Step 3: " the" (0.65)   ✓ selected
-Output: "Paris is the capital and the city is the most..."
-```
-
-**Problem:** greedy can get stuck in repetition loops.
+Take the argmax, every step.
 
 ```
-"the the the the..." — each "the" makes next "the" even more likely
+argmax -> loan   (p = 0.3844)
 ```
 
-**Use when:** exact, deterministic output needed (classification, code with one correct answer). Never for open-ended generation.
+Deterministic, zero-temperature, no randomness. Its failure mode is not theoretical — generate from
+this very model and watch it:
+
+```
+greedy from 'bank'   ->  bank bank bank bank
+```
+
+**It locks on.** Feeding the argmax back makes the same token more likely next step, and the loop
+closes. Compare three sampled runs at `T = 1.0` from the same start:
+
+```
+seed 0  ->  bank the  bank  <bos>
+seed 1  ->  bank bank <eos> bank
+seed 2  ->  bank bank bank  rejected
+```
+
+**Use greedy when there is one right answer** — classification, extraction, structured output — and
+essentially never for open-ended text.
 
 ---
 
-## 3. Beam Search
+## 3. Temperature
 
-Keep top-B sequences ("beams") at each step instead of just top-1.
+Divide the logits **before** softmax: `p = softmax(logits / T)`.
 
 ```
-B = 3 beams, vocabulary simplified to 4 tokens for illustration
-
-Step 0 — Start: [<BOS>]
-
-Step 1 — Expand each beam:
-  "Paris"  (0.82)
-  "Lyon"   (0.06)
-  "London" (0.03)
-  Keep top-3 beams by cumulative log-prob
-
-Step 2 (cumulative):
-  "Paris is" = log(0.82) + log(0.71) = -0.198 + (-0.343) = -0.541
-  "Paris was"= log(0.82) + log(0.12) = -0.198 + (-2.120) = -2.318
-  "Lyon is"  = -2.813 + (-0.412) = -3.206
-  "London is"= ...
-  Keep top-3: ("Paris is" (-0.541), "Paris was" (-2.318), "Lyon is" (-3.206))
-
-Step 3: Continue until EOS or max_length
-Final: pick beam with highest cumulative log-prob
-
-vs Greedy: both pick "Paris is" at step 2, but beam may diverge later
+    T    <bos>    bank approved     the    loan granted rejctd   <eos>     sum   entropy
+ 0.25   0.0026  0.0000   0.0061  0.0050  0.9611  0.0227 0.0008  0.0016  1.0000   0.2134
+ 0.50   0.0363  0.0023   0.0555  0.0505  0.6989  0.1075 0.0206  0.0284  1.0000   1.1170
+ 0.70   0.0637  0.0089   0.0862  0.0806  0.5264  0.1382 0.0425  0.0535  1.0000   1.5337
+ 1.00   0.0876  0.0221   0.1083  0.1033  0.3844  0.1507 0.0660  0.0775  1.0000   1.8033
+ 1.50   0.1049  0.0419   0.1208  0.1171  0.2811  0.1506 0.0868  0.0967  1.0000   1.9559
+ 2.00   0.1122  0.0564   0.1247  0.1218  0.2349  0.1471 0.0974  0.1055  1.0000   2.0099
 ```
 
-**Code:**
-```python
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+Three things to read off this table:
 
-tokenizer = AutoTokenizer.from_pretrained("t5-base")
-model = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
-
-inputs = tokenizer("translate English to French: The capital of France", return_tensors="pt")
-
-# Beam search (num_beams=5)
-outputs = model.generate(
-    **inputs,
-    num_beams=5,
-    max_new_tokens=50,
-    early_stopping=True,      # stop when all beams hit EOS
-    no_repeat_ngram_size=3,   # prevent 3-gram repetition
-    num_return_sequences=3,   # return top-3 beams
-)
-for out in outputs:
-    print(tokenizer.decode(out, skip_special_tokens=True))
-# "La capitale de la France est Paris."
-# "La capitale française est Paris."
-# "Paris est la capitale française de la France."
-```
-
-**Dry run — beam scores:**
-```
-B=3, step-by-step log probabilities:
-
-Step 1:
-  Beam 1a: log P("Paris")  = log(0.82) = -0.198
-  Beam 2a: log P("Lyon")   = log(0.06) = -2.813
-  Beam 3a: log P("London") = log(0.03) = -3.507
-
-Step 2 (cumulative):
-  Beam 1a: "Paris is"  = -0.198 + log(0.71) = -0.198 + (-0.343) = -0.541
-  Beam 1b: "Paris was" = -0.198 + log(0.12) = -0.198 + (-2.120) = -2.318
-  Beam 2a: "Lyon is"   = -2.813 + (-0.412) = -3.206
-  Keep top-3: ("Paris is" (-0.541), "Paris was" (-2.318), "Lyon is" (-3.206))
-
-Final sequence: "Paris is the most visited..." (beam 1a wins)
-```
-
-**When to use:** translation, summarization — tasks with a "correct" answer. B=4-6 typical. B>10 gives diminishing returns.
-
-**Weakness:** tends to produce generic, "safe" text. High beam count → shorter outputs (length penalty needed).
+- **Entropy moves monotonically** from `0.2134` to `2.0099`, ceiling `log 8 = 2.0794`.
+- `T → 0` approaches greedy; at `T = 0.25` the leader already holds `0.9611`.
+- **Temperature never changes the ranking.** `loan` is first at every `T`. It only changes how much
+  mass the leader keeps. That is the key distinction from truncation methods (§4–§7), which
+  *remove* tokens.
 
 ---
 
-## 4. Temperature Sampling
+## 4. Top-k
 
-Instead of argmax, sample from a scaled distribution.
-
-```
-Logits: h = [2.1, 0.8, -1.2, 0.4, ...]   (raw model outputs before softmax)
-
-Standard softmax:   P(token_i) = exp(h_i) / Σ exp(h_i)
-
-Temperature scaling: P(token_i) = exp(h_i/T) / Σ exp(h_i/T)
-
-T < 1 (e.g., 0.7): divide logits → amplify differences → sharper distribution
-  + fewer tokens get high probability → more focused/deterministic
-  T → 0: approaches greedy (all mass on argmax)
-
-T > 1 (e.g., 1.5): flatten differences → broader distribution
-  + more tokens get non-trivial probability → more random/creative
-  T → ∞: approaches uniform distribution
-
-T = 1: standard softmax (default)
-```
-
-**Dry Run — Temperature Effect:**
+Keep the `k` highest logits, set the rest to `−∞`, renormalise.
 
 ```
-Logits (top 5): [2.1, 1.4, 0.8, 0.3, -0.2]
-
-T=0.5 (low):
-  Scaled: [4.2, 2.8, 1.6, 0.6, -0.4]
-  Probs: [0.728, 0.180, 0.054, 0.026, 0.014]
-  → Token 0 dominates (72.8%)
-
-T=1.0 (default):
-  Probs: [0.465, 0.235, 0.129, 0.079, 0.048]  (+ residual)
-  → Token 0 at 46.5%
-
-T=1.5 (high):
-  Scaled: [1.4, 0.93, 0.53, 0.20, -0.13]
-  Probs: [0.299, 0.186, 0.127, 0.089, 0.065]  (+ residual)
-  → Token 0 at 29.9%, more diversity
+k=1  loan                                   [0.0000 … 1.0000 …]              = greedy
+k=2  loan, granted                          loan 0.7183   granted 0.2817
+k=3  loan, granted, approved                loan 0.5974   granted 0.2343   approved 0.1684
+k=5  + the, <bos>                           loan 0.4607   granted 0.1807   approved 0.1298
+                                            the  0.1238   <bos>   0.1050
 ```
 
-```python
-def sample_with_temperature(logits: torch.Tensor, temperature: float) -> int:
-    if temperature == 0:
-        return logits.argmax().item()
-    probs = logits / temperature
-    probs = torch.softmax(probs, dim=-1)
-    return torch.multinomial(probs, num_samples=1).item()
-```
+**The weakness is that `k` is fixed while the distribution is not.** When one token deserves 0.99,
+`k=50` admits 49 tokens that should be impossible. When fifty are genuinely plausible, `k=5` throws
+away good ones. Top-p fixes exactly this.
 
 ---
 
-## 5. Top-K Sampling
+## 5. Top-p (nucleus)
 
-Only sample from the top-K most probable tokens; redistribute probability mass.
-
-```
-Full vocabulary: 32,000 tokens
-Most have P(token) ≈ 0 → sampling from them adds pure noise
-
-Top-K=50:
-  Keep top 50 tokens by probability
-  Renormalize probabilities to sum to 1
-  Sample from this reduced set
-
-Example:
-  Full distribution: P("Paris")=0.82, P("Lyon")=0.06, ..., P("zzz")=0.000001
-  Top-50: ["Paris", "Lyon", "London", ..., 47 more plausible tokens]
-  Renormalized: sum to 1.0 across only these 50 tokens
-  Sample: "Lyon" might be chosen (adds diversity without picking nonsense)
-```
-
-```python
-def top_k_sampling(logits: torch.Tensor, k: int = 50) -> int:
-    top_k_logits, top_k_indices = logits.topk(k)
-    # Zero out all but top-k
-    filtered = torch.full_like(logits, float('-inf'))
-    filtered.scatter_(0, top_k_indices, top_k_logits)
-    probs = torch.softmax(filtered, dim=-1)
-    return torch.multinomial(probs, num_samples=1).item()
-```
-
-**Problem with Top-K:** K is fixed regardless of distribution shape.
+Sort descending, keep the shortest prefix whose cumulative mass reaches `p`.
 
 ```
-Flat distribution:  top-50 covers 50/32000 = 0.16% of probability mass → too restrictive
-Peaked distribution: top-5 distributes 99.9% of mass → maybe too many low-quality tokens
-"cat" context: top-50 includes many plausible next words → good
-"the" context: flat distribution → top-50 may not even capture 50% of mass
+rank  token      prob   cumulative
+   0  loan     0.3844      0.3844
+   1  granted  0.1507      0.5351     <- p=0.5 cutoff
+   2  approved 0.1083      0.6434
+   3  the      0.1033      0.7468     <- p=0.7 cutoff
+   4  <bos>    0.0876      0.8344
+   5  <eos>    0.0775      0.9119     <- p=0.9 cutoff
+   6  rejected 0.0660      0.9779     <- p=0.95 cutoff
+   7  bank     0.0221      1.0000
 ```
+
+```
+p=0.50   2 tokens   loan 0.7183  granted 0.2817
+p=0.70   4 tokens   loan 0.5147  granted 0.2019  approved 0.1451  the 0.1384
+p=0.90   6 tokens   loan 0.4215  granted 0.1653  approved 0.1188  the 0.1133  <bos> 0.0961  <eos> 0.0850
+p=0.95   7 tokens   loan 0.3931  granted 0.1541  approved 0.1108  the 0.1057  <bos> 0.0896  <eos> 0.0793  rejected 0.0675
+```
+
+**The nucleus is 6 tokens wide at `p=0.9` here because this distribution is flat** (entropy 1.80 of
+a possible 2.08). On a confident step it would be 1–2 tokens. That adaptivity is why top-p replaced
+top-k as the default.
 
 ---
 
-## 6. Top-P (Nucleus) Sampling
+## 6. min-p
 
-Instead of fixed K, keep the smallest set of tokens whose cumulative probability ≥ p.
+Keep every token with `p ≥ min_p × p_max`. Threshold scales with the *leader*, not with a rank or a
+cumulative mass.
 
 ```
-p = 0.9 (nucleus):
-  Sort tokens by probability descending
-  Accumulate until sum ≥ 0.90
-  Sample from this "nucleus"
+p_max = 0.3844
 
-Example:
-  "Paris"  → 0.82 → cumsum = 0.82 → 0.82 < 0.90 No
-  "Lyon"   → 0.06 → cumsum = 0.88 → 0.88 < 0.90 No
-  "London" → 0.03 → cumsum = 0.91 → 0.91 ≥ 0.90 Yes → nucleus = {Paris, Lyon, London}
-  Renormalize: [0.82/0.91, 0.06/0.91, 0.03/0.91] = [0.901, 0.066, 0.033]
-  Sample from 3 tokens
-
-Flat distribution (32,000 roughly equal P ≈ 0.00003):
-  Need ~30,000 tokens to reach 0.90 cumsum
-  → almost all tokens in nucleus (diverse output)
-
-Peaked distribution:
-  "Paris" alone = 0.82 → after "Lyon" cumsum = 0.88, after "London" = 0.91
-  → only 3 tokens in nucleus (focused output)
+min_p=0.05   threshold 0.019218   ->  8 tokens  (everything survives)
+min_p=0.10   threshold 0.038437   ->  7 tokens  (drops 'bank' at 0.0221)
+min_p=0.20   threshold 0.076873   ->  6 tokens  (also drops 'rejected' at 0.0660)
 ```
 
-```python
-def top_p_sampling(logits: torch.Tensor, p: float = 0.9) -> int:
-    probs = torch.softmax(logits, dim=-1)
-    sorted_probs, sorted_indices = probs.sort(descending=True)
-    cumulative = sorted_probs.cumsum(dim=-1)
-
-    # Remove tokens once cumsum exceeds p
-    remove_mask = cumulative - sorted_probs > p
-    sorted_probs[remove_mask] = 0.0
-    sorted_probs /= sorted_probs.sum()   # renormalize
-
-    # Sample
-    sampled_idx = torch.multinomial(sorted_probs, num_samples=1).item()
-    return sorted_indices[sampled_idx].item()
-```
-
-**Top-P is more adaptive than Top-K. Used by default in most modern LLM APIs.**
+**On a confident step min-p becomes very aggressive automatically.** If the leader held `0.95`, then
+`min_p=0.1` would require `0.095` — cutting almost everything — while top-p at 0.9 would keep only
+the leader anyway and top-k at 50 would keep 49 junk tokens. min-p is the 2023-era answer to
+"one knob that behaves sensibly at both extremes".
 
 ---
 
-## 7. Combining Temperature + Top-P (Standard Production Config)
+## 7. Typical sampling
 
-```python
-from transformers import pipeline
-
-generator = pipeline("text-generation", model="meta-llama/Llama-2-7b-chat-hf")
-
-# Creative writing
-output = generator(
-    "Write a poem about autumn:",
-    max_new_tokens=200,
-    do_sample=True,
-    temperature=0.9,   # some randomness
-    top_p=0.9,         # nucleus sampling
-    top_k=0,           # disable (use top_p only)
-    repetition_penalty=1.1,  # penalize repeated tokens
-)
-
-# Factual / code generation
-output = generator(
-    "Write a Python function to sort a list:",
-    max_new_tokens=200,
-    do_sample=True,
-    temperature=0.2,   # more focused
-    top_p=0.95,
-    top_k=0,
-)
-
-# Deterministic (classification, extraction)
-output = generator(
-    "Is this invoice or receipt? Document: INV-2024-0433...",
-    max_new_tokens=10,
-    do_sample=False,   # greedy
-)
-```
-
-**Production standard: Top-P=0.9 + Temperature=0.8-1.0.**
-
----
-
-## 8. Repetition Penalty
-
-Prevents the model from repeating the same tokens.
+Keep tokens whose **surprisal `−log p` is closest to the distribution's entropy `H`**, then take
+enough of them to reach mass `τ`.
 
 ```
-Standard logit for token i: h_i
+H = 1.803281 nats
 
-Repetition penalty (θ > 1):
-  If token i appeared in context:
-    h_i = h_i / θ   if h_i > 0
-    h_i = h_i × θ   if h_i < 0
-  (divides positive logits, multiplies negative logits → both push toward 0)
-
-θ = 1.0: no penalty (default)
-θ = 1.1: mild — only eliminates clear repetition loops
-θ = 1.3: moderate — reduces repetition significantly
-θ = 1.5: strong — may degrade coherence
+    token        p    -log p   |surprisal - H|
+  granted   0.1507    1.8922            0.0889   <- most "typical"
+ approved   0.1083    2.2226            0.4193
+      the   0.1033    2.2698            0.4666
+    <bos>   0.0876    2.4350            0.6317
+    <eos>   0.0775    2.5571            0.7538
+     loan   0.3844    0.9562            0.8471   <- the MODE, and it is atypical
+ rejected   0.0660    2.7181            0.9148
+     bank   0.0221    3.8116            2.0083   <- most surprising
 ```
 
-**DRY (Don't Repeat Yourself) penalty:** replaces fixed `no_repeat_ngram_size` with a continuous penalty that scales with repeated n-gram length. Better at long outputs because it doesn't hard-ban legitimately repeating words (names, common phrases). Available in oobabooga, llama.cpp, and most modern serving stacks.
-
-**Other modern sampling knobs to know:**
-- `logit_bias` (OpenAI-style): force include/exclude specific tokens
-- `typical_p`: filter tokens far from expected entropy
-- `mirostat`: target a constant surprise level
-
----
-
-## 9. Speculative Decoding (Speed Optimization)
-
-**Problem:** LLM generates ONE token per forward pass → slow for long outputs.
-
 ```
-Speculative decoding:
-1. Small "draft" model generates N tokens quickly (e.g., N=5)
-2. Large "verifier" model checks all N tokens in ONE forward pass
-   (parallel verification = same cost as generating 1 token)
-3. Accept tokens where draft = verifier; regenerate from first mismatch
-
-Result: 2-3× throughput improvement at identical output quality
-(no quality change — rejection sampling preserves exact distribution)
-
-Condition: draft model must be in the same model family
-(e.g., LLaMA-7B drafts for LLaMA-70B)
+tau=0.5   keeps 5:  granted, approved, the, <bos>, <eos>     <- 'loan' EXCLUDED
+tau=0.9   keeps 6:  the above plus loan
 ```
 
-**Modern variants:**
-- **Medusa**: multiple decoding heads on the same model — no separate draft
-- **EAGLE / EAGLE-2**: feature-level speculation — current SOTA for ~3-5× speedup
-- **Lookahead Decoding**: no draft model — uses Jacobi iteration
-- Deeper treatment: `../../5.transformers/02_models/13_speculative_decoding.md`
+**At `τ = 0.5` typical sampling drops `loan` — the most probable token in the distribution.**
+No amount of top-k or top-p tuning can do that; both are prefix-of-sorted-order methods and always
+keep the mode. Typical trims from *both* ends: too-predictable and too-surprising.
+
+The motivation is information-theoretic — human text sits near the model's entropy rather than at
+its mode, which is also why greedy reads flat and repetitive.
 
 ---
 
-## 10. Constrained / Structured Decoding (Modern Critical)
+## 8. Repetition penalty
 
-When you need the output to match a specific format (valid JSON, regex, grammar, function signature), **don't post-process — constrain the decoder**. At each step, mask logits of tokens that would violate the constraint.
-
-| Library | Constraint type | Notes |
-|---------|-----------------|-------|
-| outlines | Regex, JSON Schema, Pydantic, context-free grammar | Most popular; integrates with vLLM, HF |
-| lm-format-enforcer | JSON Schema, regex | Fast token-level mask; HF/vLLM/ExLlama |
-| guidance (Microsoft) | Templates with constrained slots | Procedural API |
-| xgrammar (MLC) | EBNF grammar | Fast (used by vLLM 0.5+, SGLang) |
-| Instructor / Marvin | Pydantic models via function-calling | Wraps OpenAI / Anthropic / local |
-| Native function calling | JSON schema | Built into OpenAI, Anthropic, Llama-3.1+ |
-
-```python
-# outlines — constrain to a Pydantic model
-import outlines
-from pydantic import BaseModel
-
-class Invoice(BaseModel):
-    invoice_id: str
-    total: float
-    line_items: list[str]
-
-model = outlines.models.transformers("meta-Llama/Llama-3.1-8B-Instruct")
-generator = outlines.generate.json(model, Invoice)
-result = generator("Extract invoice fields from: [invoice_text]")
-# result is a guaranteed-valid Invoice instance, no JSON parsing failures
-```
-
-**Why this matters in production:** free-form LLM JSON has a ~5-15% schema-violation rate (truncated outputs, hallucinated fields, missing brackets). Constrained decoding makes this 0%. Required for any pipeline where the LLM output feeds a parser, validator, or downstream system.
-
----
-
-## 11. min-p Sampling & DRY Repetition Penalty (2023-2024)
-
-**min-p sampling** (Minh et al., 2024): a practical alternative to top-p. Instead of "smallest set with cumulative ≥ p," keep tokens with `p(token) ≥ min_p × max_prob`. Adapts to the sharpness of the distribution:
+Divide the logit of any already-seen token by `θ` (or multiply, if the logit is negative — the sign
+rule matters and is easy to get wrong).
 
 ```
-Distribution sharp (model confident): only top few tokens pass threshold → focused
-Distribution flat (model uncertain):  many tokens pass → diverse
-
-Common defaults: min_p = 0.05-0.10  (then no top-p needed)
+if logit > 0:  logit /= theta          both cases push the logit DOWN
+else:          logit *= theta
 ```
 
-**DRY Repetition Penalty:** scales with repeated n-gram length rather than a binary flag. Better at long outputs — doesn't hard-ban legitimately repeating words (names, common phrases). Available in oobabooga, llama.cpp, and most modern serving stacks.
+Context already contains `the` and `loan`:
+
+```
+theta=1.0  logits  [0.0000, -1.3766, 0.2125, 0.1652, 1.4789, 0.5428, -0.2831, -0.1221]
+           probs   [0.0876,  0.0221, 0.1083, 0.1033, 0.3844, 0.1507,  0.0660,  0.0775]   p(loan) 0.3844
+
+theta=1.1  logits  [0.0000, -1.3766, 0.2125, 0.1502, 1.3444, 0.5428, -0.2831, -0.1221]
+           probs   [0.0922,  0.0233, 0.1140, 0.1071, 0.3537, 0.1587,  0.0695,  0.0816]   p(loan) 0.3537
+
+theta=1.5  logits  [0.0000, -1.3766, 0.2125, 0.1101, 0.9859, 0.5428, -0.2831, -0.1221]
+           probs   [0.1037,  0.0262, 0.1282, 0.1157, 0.2779, 0.1784,  0.0781,  0.0918]   p(loan) 0.2779
+```
+
+`p(loan)` falls `0.3844 → 0.3537 → 0.2779`, and every unseen token's probability rises to absorb it.
+
+**Greedy still picks `loan` at all three settings.** A repetition penalty biases; it does not
+forbid. To actually forbid, use `no_repeat_ngram_size`, which hard-masks any token completing a
+repeated n-gram — effective, but it will also block legitimate repeats like a name recurring in a
+summary.
 
 ---
 
-## 12. Comparison Table
+## 9. Beam search
 
-| Strategy | Deterministic? | Diversity | Speed | Best use |
-|----------|----------------|-----------|-------|----------|
-| Greedy | Yes | None | Fast | Code, exact extraction |
-| Beam search (B=4) | Yes | Low | Medium | Translation, summarization |
-| Temperature | No | Tunable | Fast | Creative, chat |
-| Top-K | No | Medium | Fast | Chat, story |
-| Top-P (nucleus) | No | Adaptive | Fast | Default for most generation |
-| Top-P + Temperature | No | Best | Fast | Production LLM serving |
+Keep the `B` best *sequences* by cumulative log-probability instead of the best single token. Run
+for real from `bank`, `B = 3`, through the model:
 
----
+```
+step 1: 8 candidates -> keep top 3
+   bank bank                          cum logprob  -0.796673    P = 0.450826
+   bank rejected                      cum logprob  -1.994152    P = 0.136129
+   bank <eos>                         cum logprob  -2.354425    P = 0.094948
+   (best discarded: bank <bos>        -2.377757)
 
-## 13. Key Numbers
+step 2: 24 candidates -> keep top 3
+   bank bank bank                     cum logprob  -1.612540    P = 0.199381
+   bank bank rejected                 cum logprob  -2.746881    P = 0.064128
+   bank rejected bank                 cum logprob  -2.999969    P = 0.049789
+   (best discarded: bank bank <bos>   -3.150799)
 
-| Hyperparameter | Typical range | Effect of increase |
-|----------------|---------------|--------------------|
-| Temperature | 0.1–1.5 | More random, diverse |
-| Top-K | 10–100 | More tokens to sample from |
-| Top-P | 0.7–0.95 | Larger nucleus |
-| Beam width | 1–10 | Better search, slower |
-| Repetition penalty | 1.0–1.3 | Less repetition |
+step 3: 24 candidates -> keep top 3
+   bank bank bank bank                cum logprob  -2.486812    P = 0.083175
+   bank bank bank rejected            cum logprob  -3.563370    P = 0.028343
+   bank rejected bank bank            cum logprob  -3.907871    P = 0.020083
+   (best discarded: bank bank rejected bank   -3.908375)
+```
 
-**Production defaults (Claude, GPT-4):**
-- Temperature: 1.0 (often tunable by user)
-- Top-P: 0.9–0.99
-- Top-K: disabled (use top_p only)
-- Repetition penalty: 1.0–1.1
+`B` beams × `V` tokens = `3 × 8 = 24` candidates per step, of which 3 survive. Cost is `B×` the
+forward passes of greedy.
 
----
+**Beam search is not a search for the most likely token — it is a search for the most likely
+sequence,** and those differ. A token that is second-best now can lead to a far better continuation.
+Greedy cannot recover from that; beam search can, up to `B` hypotheses deep.
 
-## 14. Interview Q&A
+**Where to use it:** translation, summarisation, ASR — tasks with a *correct* answer. `B = 4–6` is
+typical; beyond ~10 gains vanish.
 
-**Q: What is the difference between Top-K and Top-P sampling?**
-
-A: Top-K always keeps exactly K tokens regardless of distribution shape — problematic because a flat distribution needs many tokens to cover most probability mass while a peaked distribution may be over-sampled with K=50. Top-P (nucleus) keeps the smallest set of tokens whose cumulative probability reaches p (e.g., 0.9). For peaked distributions: 2-3 tokens may cover 90%; for flat distributions: thousands might be needed. Top-P adapts to the distribution shape, making it more robust. It's the default for most production LLM APIs.
-
-**Q: What does temperature do mathematically?**
-
-A: Temperature T divides the logits before softmax: P(token_i) = exp(h_i/T) / Σ exp(h_j/T). T<1 amplifies differences between logits (peaked distribution, model is more confident, greedy). T=0 is standard softmax. In practice: T=0.2-0.4 for factual/code tasks, T=0.8-1.2 for creative writing.
-
-**Q: Why is beam search bad for open-ended generation?**
-
-A: Beam search finds the highest-probability sequence, which tends to be short, generic, and repetitive — "the the the" is technically high probability in some contexts. Open-ended generation benefits from surprise and surprisal. Humans don't always say the highest-probability thing. Additionally, beam search gives identical output for identical inputs (no diversity), which makes chatbots feel robotic. Sampling-based methods (Top-P + temperature) better match human-like generation variability.
+**Where not to:** open-ended generation. Beam search optimises likelihood, and the most likely text
+is bland, hedged and repetitive. This is the well-documented result that high-likelihood text is not
+high-quality text — and the reason nucleus sampling exists at all.
 
 ---
 
-## 15. Connections
+## 10. Length penalty — and the exact crossover
 
-- **LLM inference:** `6.llms/` — production LLM serving uses these strategies
-- **vLLM:** `10.mlops/10_serving_optimization_end_to_end.md` — speculative decoding in vLLM
-- **RLHF training:** `6.llms/03b_alignment_end_to_end.md` — sampling during PPO rollout uses temperature
+Cumulative log-probability **strictly decreases** with every token added, because every log-prob is
+negative. The same prefix, extended:
+
+```
+ len  sequence                   cum logprob           P
+   2  bank bank                    -0.796673    0.450826
+   3  bank bank bank               -1.612540    0.199381
+   4  bank bank bank bank          -2.486812    0.083175
+```
+
+**So beam search structurally prefers shorter sequences.** A beam that emits `<eos>` at length 2
+beats one that keeps going, on raw score alone, regardless of quality. That is the bias the length
+penalty exists to correct:
+
+```
+score = cum_logprob / len^alpha
+```
+
+```
+  alpha       len 2       len 3       len 4   winner
+  0.000   -0.796673   -1.612540   -2.486812   len 2
+  0.500   -0.563333   -0.931000   -1.243406   len 2
+  1.000   -0.398336   -0.537513   -0.621703   len 2
+  1.500   -0.281666   -0.310333   -0.310852   len 2
+  1.642   -0.255264   -0.265508   -0.255306   len 2   <- crossover
+  2.000   -0.199168   -0.179171   -0.155426   len 4
+```
+
+**The crossover is exact:** len-4 overtakes len-2 when `2^alpha > 2.486812/0.796673 = 3.1215`, i.e.
+`alpha > 1.6422`.
+
+> **The sign trap.** Scores are **negative**, so dividing by a larger `len^alpha` makes them *less*
+> negative. **`alpha > 0` rewards longer sequences.** People routinely state this backwards.
+> HuggingFace's `length_penalty` defaults to `1.0`; tuned values usually sit in `0.6–2.0`.
 
 ---
 
-## 16. Key Takeaway
+## 11. Which to use
 
-**Decoding = how to pick next token from P(token|context).**
-- Greedy: argmax (deterministic, boring)
-- Beam: top-B sequences (good for translation)
-- Temperature: scale logits before softmax (T<1=focused, T>1=creative)
-- Top-K: sample from top K tokens (fixed)
-- Top-P: sample from smallest nucleus with cumulative prob ≥ p (adaptive, preferred)
-- **Production standard: Top-P=0.9 + Temperature=0.8-1.0.**
-- For factual tasks: T=0.2 or greedy.
+```
+FACTUAL / EXTRACTION / CODE      greedy, or T=0.0
+                                  one right answer; randomness is pure downside
+
+TRANSLATION / SUMMARISATION       beam search B=4-6, length_penalty ~1.0,
+                                  no_repeat_ngram_size=3
+
+GENERAL CHAT / ASSISTANT          T=0.7, top_p=0.9        <- the everyday default
+                                  apply temperature FIRST, then the nucleus cut
+
+CREATIVE WRITING                  T=0.9-1.1, top_p=0.95, repetition_penalty~1.1
+
+STRUCTURED OUTPUT (JSON, schema)  constrained decoding — mask invalid tokens at every
+                                  step so malformed output is IMPOSSIBLE, not just unlikely
+```
+
+**Order matters:** temperature scales the logits, then truncation cuts the scaled distribution.
+Reversing them changes the result.
 
 ---
 
-## 17. Code Practice — Wired by Phase 6
+## 12. Comparison table
 
-- `code_practice/09_llms/02_decoding/` — greedy / beam / top-k / top-p
+| Strategy | Cuts by | Adapts to the distribution | Can drop the mode | Deterministic |
+|---|---|---|---|---|
+| Greedy | — | — | ✗ | ✓ |
+| Temperature | nothing (rescales) | — | ✗ | ✗ |
+| Top-k | fixed rank | ✗ | ✗ | ✗ |
+| Top-p | cumulative mass | ✓ | ✗ | ✗ |
+| min-p | fraction of `p_max` | ✓ | ✗ | ✗ |
+| Typical | distance from entropy | ✓ | **✓** | ✗ |
+| Beam search | sequence log-prob | — | ✗ | ✓ |
+
+---
+
+## 13. Quick reference
+
+```
+temperature   p = softmax(logits / T)              rescales; RANKING UNCHANGED
+top-k         keep k highest logits                fixed count
+top-p         keep shortest prefix with mass >= p  adaptive count
+min-p         keep p_i >= min_p * p_max            adaptive, scales with confidence
+typical       keep |-log p_i - H| smallest         can drop the MODE
+rep. penalty  logit /= theta if >0 else *= theta   biases, does not forbid
+beam search   keep B best SEQUENCES by sum log p   B x compute
+length pen.   score = cum_logprob / len^alpha      alpha > 0 REWARDS length
+```
+
+**The seven things to be able to say cold:**
+
+1. **Decoding changes no weights.** Same model, different decoder, different text.
+2. **Temperature never changes the ranking** — only how much mass the leader keeps. Truncation
+   methods remove tokens; temperature does not.
+3. **Top-k is a fixed count, top-p is adaptive.** That is the whole reason top-p won.
+4. **Typical sampling can drop the most probable token** — verified above, `loan` at `τ=0.5`.
+   Top-k and top-p structurally cannot, because both keep a prefix of the sorted order.
+5. **Beam search searches sequences, not tokens** — and it is wrong for open-ended text, because the
+   most *likely* continuation is bland.
+6. **Cumulative log-prob always falls as length grows**, so beam search prefers short outputs. The
+   length penalty corrects it, and **`alpha > 0` rewards longer sequences** — the sign trips people.
+7. **Everyday default: `T=0.7`, `top_p=0.9`, temperature applied first.** Greedy for anything with
+   one correct answer.
+
+---
+
+## See also
+
+- [../../5.transformers/02_models/06_gpt1_end_to_end.md](../../5.transformers/02_models/06_gpt1_end_to_end.md) — where this distribution comes from, and the LM head that produces it
+- [06c_transformer_decoder_end_to_end.md](06c_transformer_decoder_end_to_end.md) — autoregressive generation, the KV cache, exposure bias
+- [../../5.transformers/02_models/13_speculative_decoding.md](../../5.transformers/02_models/13_speculative_decoding.md) — board 16: making any of these faster without changing the output
+- [../../5.transformers/02_models/12_constrained_decoding.md](../../5.transformers/02_models/12_constrained_decoding.md) — grammar/schema-constrained generation
+- [08_scaling_laws_emergent.md](08_scaling_laws_emergent.md) — board 17

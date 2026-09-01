@@ -11,8 +11,8 @@
 |-------|-------|
 | **Machine** | Mac |
 | **Date** | 28 August 2026 |
-| **What I did** | (1) `06c_transformer_decoder_end_to_end.md` written. (2) **Board track reordered** (12 before 13; decoding 15->11; parked half added as boards 17-21). (3) **`05_bert_end_to_end.md` rewritten** — old one had a softmax summing to 1.400, contradictory K/V tables, sinusoidal PE (BERT uses learned), no NSP. (4) **GPT SPLIT INTO TWO CLEAN FILES**: `06_gpt1_end_to_end.md` (post-LN, vocab 40478, ctx 512, 116,534,784 params, task fine-tuning w/ aux LM loss) and `06b_gpt2_end_to_end.md` (pre-LN + ln_f, 1/sqrt(N) residual init, byte-level BPE 50257 = 256+50000+1, ctx 1024, 124,439,808 params, zero-shot). (5b) `06c_gpt3_end_to_end.md` added — GPT-3's block IS GPT-2's (paper's own words), so the file covers only what differs: alternating dense/banded-sparse attention, ctx 2048, the 8-model ladder w/ the two Table 2.1 errata, in-context learning verified by identical weight hash across prompts, C=6ND reconciling to 3.14e23. Zero mixing — verified no file contains another's numbers. Param counts are EXACT incl. biases + LayerNorm and match the HF checkpoints. (5) Fixed stale citations of the OLD broken GPT numbers `(2.604, 3.101, 2.120)` in `04_pretraining_objectives.md` and `02b_finetuning_end_to_end.md`, and the old BERT `x_cls = [1.386, 2.019]`. |
-| **Files changed** | `4.nlp/03_sequence_models/06c_...md` (new), `5.transformers/02_models/05_bert_end_to_end.md` (rewritten), `06_gpt_end_to_end.md` -> `06_gpt1_end_to_end.md` (renamed + rewritten), `06b_gpt2_end_to_end.md` (new), `5.transformers/README.md`, `01_fundamentals/04_pretraining_objectives.md`, `6.llms/02b_finetuning_end_to_end.md`, `7.rag/01b_rag_end_to_end.md`, `06b_transformer_encoder_multihead.md` + `07_t5_end_to_end.md` + `03_encoder_decoder.md` (cross-refs), `MASTERY_PLAN.md` (reordered), `SYNC.md` |
+| **What I did** | Theory rewrite sweep across boards 8-10, all numerically audited + torch-checked. (1) `06c_transformer_decoder_end_to_end.md` written. (2) Board track reordered (12 before 13; decoding 15->11; parked half added as boards 17-21). (3) `05_bert_end_to_end.md` REWRITTEN — old one had a softmax summing to 1.400, sinusoidal PE (BERT uses learned), no NSP. (4) GPT split into THREE clean files: `06_gpt1_...` (post-LN, 116,534,784), `06b_gpt2_...` (pre-LN + ln_f, 1/sqrt(N), 124,439,808), `06c_gpt3_...` (sparse attn, 8-model ladder, in-context learning, 174,604,259,328). (5) T5/BART split into TWO: `07_t5_...` REWRITTEN (old one used W=I identity projections, never computed the relative position bias, never mentioned RMSNorm, and had BART in one line) and `07b_bart_...` NEW. (6) Fixed stale citations of old broken numbers `(2.604, 3.101, 2.120)` and `x_cls = [1.386, 2.019]` in 3 other files. All param counts EXACT vs HF checkpoints. Zero mixing between model files — verified. |
+| **Files changed** | NEW: `4.nlp/03_sequence_models/06c_...md`, `5.transformers/02_models/06b_gpt2_...md`, `06c_gpt3_...md`, `07b_bart_...md`. REWRITTEN: `05_bert_end_to_end.md`, `06_gpt_end_to_end.md`->`06_gpt1_end_to_end.md`, `07_t5_end_to_end.md`. TOUCHED: `5.transformers/README.md`, `01_fundamentals/04_pretraining_objectives.md`, `02_models/03_encoder_decoder.md`, `6.llms/02b_finetuning_end_to_end.md`, `7.rag/01b_rag_end_to_end.md`, `4.nlp/.../06b_...md`, `MASTERY_PLAN.md`, `SYNC.md` |
 
 > **Correction (25 Aug):** the blue placeholders in Naukri's draft (`Please mention if any`, `DD'MM'YY`) are **deliberate fill-in markers** — their cover email asks the customer to complete them. Earlier I called this a QC failure. It is not. Do not raise it.
 
@@ -45,6 +45,28 @@ Boards 8 and 9 theory rewritten and verified. Board 9 is now TWO files, no mixin
     `06_gpt1_end_to_end.md`      (GPT-1: post-LN, 116,534,784 params, fine-tuned per task)
     `06b_gpt2_end_to_end.md`     (GPT-2: pre-LN + ln_f, 1/sqrt(N) init, 124,439,808, zero-shot)
     `06c_gpt3_end_to_end.md`     (GPT-3: sparse attn, 8-model ladder, in-context learning)
+  Board 14 theory done: `5.transformers/02_models/11_long_context_scaling.md` REWRITTEN
+    (was 204 lines with 4 numeric lines; 'slope' and 'wavelength' appeared ZERO times despite
+     being ALiBi's defining feature and the reason PI/NTK/YaRN differ)
+    Key result: at d=128/base=10k/L=4096, exactly 18 of 64 RoPE pairs never complete a rotation
+    -- and those are EXACTLY the 18 YaRN fully interpolates. PI stretches all wavelengths 8x;
+    NTK stretches 1.00x..8.00x graded. SWA: 32 layers x 4096 = 131,072.
+  Board 13 theory done: `5.transformers/02_models/08b_llama3_end_to_end.md` NEW
+    (08_modern_llm_architecture.md AUDITS CLEAN -- RMSNorm/RoPE/SwiGLU arithmetic all correct,
+     the only file in this sweep that needed no fixing. Left as the mechanisms file + scope note.)
+    Llama 3 params exact: 8B=8,030,261,248  70B=70,553,706,496  405B=405,853,388,800.
+    RoPE base 10k->500k = 47x longer wavelength. 15T tokens = 93x past Chinchilla, deliberately.
+  Board 12 theory done: `5.transformers/02_models/04b_attention_at_scale_end_to_end.md` NEW
+    (04_efficient_transformers.md had ZERO worked numbers and 0 mentions of memory-bound /
+     arithmetic intensity; it also duplicates boards 15 and 19. Left as a survey + scope note.)
+    KV cache verified EXACT (0.000e+00) and Flash online softmax verified EXACT (1.665e-16).
+    Killer question answered: 7B/4k/batch8 = 16.00 GiB = 123% of the weights.
+  Board 11 theory done: `4.nlp/03_sequence_models/07_decoding_strategies.md` REWRITTEN
+    (old one had a beam-search addition error -2.813 + -0.412 = -3.206, should be -3.225,
+     and a temperature table whose T=0.5 row summed to 1.002 over an unstated vocabulary)
+  Board 10 theory also done, split in two:
+    `07_t5_end_to_end.md`        (T5: relative position bias, RMSNorm, span corruption)
+    `07b_bart_end_to_end.md`     (BART: denoising, full-document target, post-LN)
   All three were numerically broken before; every value is now audited + torch-checked.
 
 Also open:
