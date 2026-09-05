@@ -71,7 +71,7 @@ output = 0.598688 · E₃(x)  +  0.401312 · E₆(x)
 
 **Renormalisation matters.** Without it the gates sum to `0.676267` and the FFN output is silently
 scaled down by a token-dependent factor — the same failure as the masking bug in
-[06c §6.1](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md), and just as hard
+[06c §6.1](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md), and just as hard
 to spot.
 
 **The router's gradient path:** the gate weights multiply the expert outputs, so `dL/d(gate)` flows

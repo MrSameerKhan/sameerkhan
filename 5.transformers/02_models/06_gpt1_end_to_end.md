@@ -5,7 +5,7 @@
 > [06b_gpt2_end_to_end.md](06b_gpt2_end_to_end.md). Nothing here is mixed between the two.
 >
 > Arc: [06b encoder](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md) →
-> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) →
+> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) →
 > [05 BERT](05_bert_end_to_end.md) → **GPT-1** → [06b GPT-2](06b_gpt2_end_to_end.md).
 > Same dimensions throughout: `d_model=4`, `n_heads=2`, `d_head=2`, `√d_k=1.414`, `d_ff=8`,
 > same `Wq/Wk/Wv/W_o`.
@@ -215,7 +215,7 @@ V = X @ Wv
 
 Reshape into heads, `−∞` above the diagonal **before** softmax — mechanics and the reason it is
 `−∞` rather than zeroing afterwards are in
-[06c §5–6](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md).
+[06c §5–6](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md).
 
 ```
 masked scores head 0                    masked scores head 1
@@ -678,6 +678,6 @@ GPT-1 LAYER  (post-LN)
 - [06b_gpt2_end_to_end.md](06b_gpt2_end_to_end.md) — GPT-2: pre-LN, `1/√N` init, byte-level BPE, zero-shot
 - [06c_gpt3_end_to_end.md](06c_gpt3_end_to_end.md) — GPT-3: sparse attention, the 8-model ladder, in-context learning
 - [05_bert_end_to_end.md](05_bert_end_to_end.md) — the same block with the mask removed
-- [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) — the cross-attention block GPT deletes, and the KV cache
+- [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) — the cross-attention block GPT deletes, and the KV cache
 - [../../4.nlp/03_sequence_models/07_decoding_strategies.md](../../4.nlp/03_sequence_models/07_decoding_strategies.md) — §11 in full: beam search, repetition penalties
 - [02_gpt_family.md](02_gpt_family.md) — GPT-1 → 2 → 3 → 4, and what scaled

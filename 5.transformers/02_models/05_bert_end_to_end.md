@@ -1,7 +1,7 @@
 # 05 — BERT: End-to-End with Multi-Head Attention
 
 > Companion to [../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md)
-> (the encoder block) and [06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md)
+> (the encoder block) and [06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md)
 > (the decoder). **Same dimensions throughout the arc** — `d_model=4`, `n_heads=2`, `d_head=2`,
 > `√d_k=1.414`, `d_ff=8` — so every number here is comparable to those files.
 >
@@ -804,7 +804,7 @@ HEADS
 ## See also
 
 - [../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md) — the identical block, without BERT's boundaries
-- [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) — the causal mask this file removes, and cross-attention
+- [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) — the causal mask this file removes, and cross-attention
 - [01_bert_family.md](01_bert_family.md) — RoBERTa, ALBERT, DistilBERT, ELECTRA and what each changed
 - [06_gpt1_end_to_end.md](06_gpt1_end_to_end.md) — the same block with the mask kept
 - [06b_gpt2_end_to_end.md](06b_gpt2_end_to_end.md) — GPT-2: pre-LN, `1/√N` init, byte-level BPE

@@ -9,7 +9,7 @@
 > If you have worked those, skip §1–§2 here.
 >
 > Masking, the KV cache and Flash Attention have their own boards —
-> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) and
+> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) and
 > [04b attention at scale](../02_models/04b_attention_at_scale_end_to_end.md).
 
 > The core operation of all transformers. QK^T/√d_k computes similarity scores, softmax converts to weights, weighted sum of V produces output. Everything else in transformers (BERT, GPT, T5) is built on top of this one operation.

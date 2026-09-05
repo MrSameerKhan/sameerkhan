@@ -159,6 +159,65 @@ and head 1 influence each other.
 
 ## 5. Q, K, V
 
+Recall `X` from §3.3: `bank=[1.0000,1.8000,0.1000,1.1000]`, `approved=[1.1415,0.7403,0.4100,1.3000]`,
+`the=[1.0093,-0.3161,0.2200,1.1998]`, `loan=[0.2411,-0.8900,1.0300,1.8996]`.
+
+**Q = X @ Wq.** `Wq = diag(1.2,1.2,1.2,1.2)` (§4) — every off-diagonal entry is `0.0`, so this is
+just **multiply every entry by 1.2**, nothing else:
+```
+Q[bank]     = [1.0000,1.8000,0.1000,1.1000] × 1.2 = [1.2000, 2.1600, 0.1200, 1.3200]
+Q[approved] = [1.1415,0.7403,0.4100,1.3000] × 1.2 = [1.3698, 0.8884, 0.4920, 1.5600]
+Q[the]      = [1.0093,-0.3161,0.2200,1.1998] × 1.2 = [1.2112,-0.3793, 0.2640, 1.4398]
+Q[loan]     = [0.2411,-0.8900,1.0300,1.8996] × 1.2 = [0.2893,-1.0680, 1.2360, 2.2795]
+```
+
+**K = X @ Wk.** `Wk` is block-diagonal (dims 0-1 mix with each other via coefficients `1.0`/`0.2`;
+dims 2-3 mix with each other the same way) — every cell is a genuine **2-term** sum, not 4:
+```
+K[bank,0] = 1.0000×1.0 + 1.8000×0.2 = 1.0000+0.3600 = 1.3600
+K[bank,1] = 1.0000×0.2 + 1.8000×1.0 = 0.2000+1.8000 = 2.0000
+K[bank,2] = 0.1000×1.0 + 1.1000×0.2 = 0.1000+0.2200 = 0.3200
+K[bank,3] = 0.1000×0.2 + 1.1000×1.0 = 0.0200+1.1000 = 1.1200
+
+K[approved,0] = 1.1415×1.0 + 0.7403×0.2 = 1.1415+0.1481 = 1.2896
+K[approved,1] = 1.1415×0.2 + 0.7403×1.0 = 0.2283+0.7403 = 0.9686
+K[approved,2] = 0.4100×1.0 + 1.3000×0.2 = 0.4100+0.2600 = 0.6700
+K[approved,3] = 0.4100×0.2 + 1.3000×1.0 = 0.0820+1.3000 = 1.3820
+
+K[the,0] = 1.0093×1.0 + (-0.3161)×0.2 = 1.0093-0.0632 = 0.9461
+K[the,1] = 1.0093×0.2 + (-0.3161)×1.0 = 0.2019-0.3161 = -0.1142
+K[the,2] = 0.2200×1.0 + 1.1998×0.2 = 0.2200+0.2400 = 0.4600
+K[the,3] = 0.2200×0.2 + 1.1998×1.0 = 0.0440+1.1998 = 1.2438
+
+K[loan,0] = 0.2411×1.0 + (-0.8900)×0.2 = 0.2411-0.1780 = 0.0631
+K[loan,1] = 0.2411×0.2 + (-0.8900)×1.0 = 0.0482-0.8900 = -0.8418
+K[loan,2] = 1.0300×1.0 + 1.8996×0.2 = 1.0300+0.3799 = 1.4099
+K[loan,3] = 1.0300×0.2 + 1.8996×1.0 = 0.2060+1.8996 = 2.1056
+```
+
+**V = X @ Wv.** Same block-diagonal shape as `Wk`, coefficients `0.9`/`0.1` instead of `1.0`/`0.2`:
+```
+V[bank,0] = 1.0000×0.9 + 1.8000×0.1 = 0.9000+0.1800 = 1.0800
+V[bank,1] = 1.0000×0.1 + 1.8000×0.9 = 0.1000+1.6200 = 1.7200
+V[bank,2] = 0.1000×0.9 + 1.1000×0.1 = 0.0900+0.1100 = 0.2000
+V[bank,3] = 0.1000×0.1 + 1.1000×0.9 = 0.0100+0.9900 = 1.0000
+
+V[approved,0] = 1.1415×0.9 + 0.7403×0.1 = 1.0274+0.0740 = 1.1014
+V[approved,1] = 1.1415×0.1 + 0.7403×0.9 = 0.1142+0.6663 = 0.7804
+V[approved,2] = 0.4100×0.9 + 1.3000×0.1 = 0.3690+0.1300 = 0.4990
+V[approved,3] = 0.4100×0.1 + 1.3000×0.9 = 0.0410+1.1700 = 1.2110
+
+V[the,0] = 1.0093×0.9 + (-0.3161)×0.1 = 0.9084-0.0316 = 0.8768
+V[the,1] = 1.0093×0.1 + (-0.3161)×0.9 = 0.1009-0.2845 = -0.1836
+V[the,2] = 0.2200×0.9 + 1.1998×0.1 = 0.1980+0.1200 = 0.3180
+V[the,3] = 0.2200×0.1 + 1.1998×0.9 = 0.0220+1.0798 = 1.1018
+
+V[loan,0] = 0.2411×0.9 + (-0.8900)×0.1 = 0.2170-0.0890 = 0.1280
+V[loan,1] = 0.2411×0.1 + (-0.8900)×0.9 = 0.0241-0.8010 = -0.7769
+V[loan,2] = 1.0300×0.9 + 1.8996×0.1 = 0.9270+0.1900 = 1.1170
+V[loan,3] = 1.0300×0.1 + 1.8996×0.9 = 0.1030+1.7096 = 1.8126
+```
+
 ```
 Q = X @ Wq                          K = X @ Wk
 [[ 1.2000,  2.1600,  0.1200,  1.3200],   [[ 1.3600,  2.0000,  0.3200,  1.1200],
@@ -231,6 +290,45 @@ entirely ignored the object. Every row sums to 1.0 — verify it.
 ---
 
 ## 8. Head 1 — dims 2-3
+
+**All 16 cells of `Q₁ @ K₁ᵀ / √2`.** Head 1 reads columns 2-3 of `Q` and `K` (§5):
+```
+Q₁: bank=[0.1200,1.3200]  approved=[0.4920,1.5599]  the=[0.2640,1.4398]  loan=[1.2360,2.2795]
+K₁: bank=[0.3200,1.1200]  approved=[0.6700,1.3819]  the=[0.4600,1.2438]  loan=[1.4099,2.1055]
+```
+Every cell is a 2-term dot product divided by `√d_head = √2 = 1.41421` — same recipe as head 0,
+just against head 1's slice. Because this is self-attention (`Q` and `K` come from the same `X`),
+the matrix is **symmetric before softmax**: `S₁[i,j] = S₁[j,i]`, so only the upper triangle (10
+cells) needs computing — the lower triangle is a free copy:
+
+```
+S₁[bank,bank]      = (0.1200×0.3200 + 1.3200×1.1200)/1.41421 = (0.0384+1.4784)/1.41421 = 1.0725
+S₁[bank,approved]  = (0.1200×0.6700 + 1.3200×1.3819)/1.41421 = (0.0804+1.8241)/1.41421 = 1.3467
+S₁[bank,the]       = (0.1200×0.4600 + 1.3200×1.2438)/1.41421 = (0.0552+1.6418)/1.41421 = 1.2000
+S₁[bank,loan]      = (0.1200×1.4099 + 1.3200×2.1055)/1.41421 = (0.1692+2.7793)/1.41421 = 2.0849
+
+S₁[approved,approved] = (0.4920×0.6700 + 1.5599×1.3819)/1.41421 = (0.3296+2.1557)/1.41421 = 1.7574
+S₁[approved,the]       = (0.4920×0.4600 + 1.5599×1.2438)/1.41421 = (0.2263+1.9402)/1.41421 = 1.5320
+S₁[approved,loan]      = (0.4920×1.4099 + 1.5599×2.1055)/1.41421 = (0.6937+3.2843)/1.41421 = 2.8130
+
+S₁[the,the]   = (0.2640×0.4600 + 1.4398×1.2438)/1.41421 = (0.1214+1.7909)/1.41421 = 1.3521
+S₁[the,loan]  = (0.2640×1.4099 + 1.4398×2.1055)/1.41421 = (0.3723+3.0318)/1.41421 = 2.4068
+
+S₁[loan,loan] = (1.2360×1.4099 + 2.2795×2.1055)/1.41421 = (1.7430+4.7995)/1.41421 = 4.6266
+
+(lower triangle — free copies of the above, since S₁ is symmetric):
+S₁[approved,bank]=S₁[bank,approved]=1.3467   S₁[the,bank]=S₁[bank,the]=1.2000
+S₁[the,approved]=S₁[approved,the]=1.5320     S₁[loan,bank]=S₁[bank,loan]=2.0849
+S₁[loan,approved]=S₁[approved,loan]=2.8130   S₁[loan,the]=S₁[the,loan]=2.4068
+```
+
+**Why the symmetry disappears after softmax** (worth having ready — it trips people up): softmax
+normalizes **per row**, and different rows have different *other* entries competing for that row's
+probability budget. `S₁[bank,approved]` and `S₁[approved,bank]` are the same raw number, `1.3467`,
+but `A₁[bank,approved]=0.2121` while `A₁[approved,bank]=0.1243` (§8 below) — because row `bank`
+divides by a different sum than row `approved` does. Symmetry is a property of the *raw scores
+only*, and it's specific to self-attention (`Q=K` source); cross-attention (06c §8) is never
+symmetric even before softmax, since `Q` and `K` come from different sequences entirely.
 
 ```
 scores = Q₁ @ K₁ᵀ / √2
@@ -546,7 +644,7 @@ The 33/67 split is scale-invariant: it is `4d²` vs `8d²` whenever `d_ff = 4·d
 
 ## See also
 
-- [06c_transformer_decoder_end_to_end.md](06c_transformer_decoder_end_to_end.md) — the decoder that reads this file's output as its cross-attention memory
+- [06c_transformer_decoder_cross_attention_end_to_end.md](06c_transformer_decoder_cross_attention_end_to_end.md) — the decoder that reads this file's output as its cross-attention memory
 - [06_transformer_end_to_end.md](06_transformer_end_to_end.md) — `d_model=2`, single head, full backward
 - [05_attention_end_to_end.md](05_attention_end_to_end.md) — attention before the transformer block
 - [../../5.transformers/02_models/08_modern_llm_architecture.md](../../5.transformers/02_models/08_modern_llm_architecture.md) — what changed since: RMSNorm, SwiGLU, RoPE, GQA

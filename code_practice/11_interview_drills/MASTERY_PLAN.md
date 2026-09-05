@@ -83,7 +83,7 @@ Boards 1–5 (RNN → Transformer encoder) are complete: `4.nlp/03_sequence_mode
 
 | # | Board | What is NEW on this board | G1 | Theory (canonical) |
 |---|-------|---------------------------|----|--------------------|
-| 6 | **Transformer Decoder** | Masked self-attention · **cross-attention** · teacher forcing vs autoregressive | 25 | `4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md` |
+| 6 | **Transformer Decoder** | Masked self-attention · **cross-attention** · teacher forcing vs autoregressive | 25 | `4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md` |
 | 7 | **Tokenization → Embedding** | BPE merges · vocab → embedding matrix · weight tying · fertility economics | 15 | `4.nlp/01_fundamentals/04_tokenization_end_to_end.md` (tokens) + `05_embedding_lookup_end_to_end.md` (vectors) |
 | 8 | **BERT** | Encoder-only · MLM · `[CLS]`/`[SEP]` · segment embeddings | 20 | `5.transformers/02_models/05_bert_end_to_end.md` |
 | 9 | **GPT** | Causal LM · weight tying · **no cross-attention** · post-LN vs pre-LN | 20 | `5.transformers/02_models/06_gpt1_end_to_end.md` + `06b_gpt2_end_to_end.md` + `06c_gpt3_end_to_end.md` |

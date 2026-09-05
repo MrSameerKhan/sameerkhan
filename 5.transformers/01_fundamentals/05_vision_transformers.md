@@ -380,12 +380,12 @@ features* directly through cross-attention and emits structured text, so OCR err
 Each half is already hand-computed:
 
 - **Swin encoder** — §9 above
-- **Cross-attention** — [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) §8, the rectangular `L_tgt × L_src` matrix with K/V from the encoder
+- **Cross-attention** — [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) §8, the rectangular `L_tgt × L_src` matrix with K/V from the encoder
 - **BART decoder** — [../02_models/07b_bart_end_to_end.md](../02_models/07b_bart_end_to_end.md)
 
 **The question to expect:** *"which half is Swin and which is BART?"* — Swin is the encoder (image
 in), BART is the decoder (text out), and cross-attention is the join. If you can draw
-[06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md)'s decoder and swap the
+[06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md)'s decoder and swap the
 text encoder for Swin, you have drawn Donut.
 
 ---

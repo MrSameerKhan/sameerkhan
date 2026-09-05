@@ -3,7 +3,7 @@
 > **Scope note.** This file is the **reference**: block structure, shapes, variants, parameter
 > counting. The blocks are hand-computed with real numbers in
 > [06b encoder](../../4.nlp/03_sequence_models/06b_transformer_encoder_multihead.md) and
-> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md);
+> [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md);
 > pre-LN vs post-LN is computed both ways in
 > [../02_models/06b_gpt2_end_to_end.md](../02_models/06b_gpt2_end_to_end.md) §6.1.
 

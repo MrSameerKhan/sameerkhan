@@ -394,7 +394,7 @@ length pen.   score = cum_logprob / len^alpha      alpha > 0 REWARDS length
 ## See also
 
 - [../../5.transformers/02_models/06_gpt1_end_to_end.md](../../5.transformers/02_models/06_gpt1_end_to_end.md) — where this distribution comes from, and the LM head that produces it
-- [06c_transformer_decoder_end_to_end.md](06c_transformer_decoder_end_to_end.md) — autoregressive generation, the KV cache, exposure bias
+- [06c_transformer_decoder_cross_attention_end_to_end.md](06c_transformer_decoder_cross_attention_end_to_end.md) — autoregressive generation, the KV cache, exposure bias
 - [../../5.transformers/02_models/13_speculative_decoding.md](../../5.transformers/02_models/13_speculative_decoding.md) — board 16: making any of these faster without changing the output
 - [../../5.transformers/02_models/12_constrained_decoding.md](../../5.transformers/02_models/12_constrained_decoding.md) — grammar/schema-constrained generation
 - [08_scaling_laws_emergent.md](08_scaling_laws_emergent.md) — board 17

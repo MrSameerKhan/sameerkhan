@@ -11,7 +11,7 @@
 |-------|-------|
 | **Machine** | Mac |
 | **Date** | 28 August 2026 |
-| **What I did** | Theory rewrite sweep across boards 8-10, all numerically audited + torch-checked. (1) `06c_transformer_decoder_end_to_end.md` written. (2) Board track reordered (12 before 13; decoding 15->11; parked half added as boards 17-21). (3) `05_bert_end_to_end.md` REWRITTEN — old one had a softmax summing to 1.400, sinusoidal PE (BERT uses learned), no NSP. (4) GPT split into THREE clean files: `06_gpt1_...` (post-LN, 116,534,784), `06b_gpt2_...` (pre-LN + ln_f, 1/sqrt(N), 124,439,808), `06c_gpt3_...` (sparse attn, 8-model ladder, in-context learning, 174,604,259,328). (5) T5/BART split into TWO: `07_t5_...` REWRITTEN (old one used W=I identity projections, never computed the relative position bias, never mentioned RMSNorm, and had BART in one line) and `07b_bart_...` NEW. (6) Fixed stale citations of old broken numbers `(2.604, 3.101, 2.120)` and `x_cls = [1.386, 2.019]` in 3 other files. All param counts EXACT vs HF checkpoints. Zero mixing between model files — verified. |
+| **What I did** | Theory rewrite sweep across boards 8-10, all numerically audited + torch-checked. (1) `06c_transformer_decoder_cross_attention_end_to_end.md` written. (2) Board track reordered (12 before 13; decoding 15->11; parked half added as boards 17-21). (3) `05_bert_end_to_end.md` REWRITTEN — old one had a softmax summing to 1.400, sinusoidal PE (BERT uses learned), no NSP. (4) GPT split into THREE clean files: `06_gpt1_...` (post-LN, 116,534,784), `06b_gpt2_...` (pre-LN + ln_f, 1/sqrt(N), 124,439,808), `06c_gpt3_...` (sparse attn, 8-model ladder, in-context learning, 174,604,259,328). (5) T5/BART split into TWO: `07_t5_...` REWRITTEN (old one used W=I identity projections, never computed the relative position bias, never mentioned RMSNorm, and had BART in one line) and `07b_bart_...` NEW. (6) Fixed stale citations of old broken numbers `(2.604, 3.101, 2.120)` and `x_cls = [1.386, 2.019]` in 3 other files. All param counts EXACT vs HF checkpoints. Zero mixing between model files — verified. |
 | **Files changed** | NEW: `4.nlp/03_sequence_models/06c_...md`, `5.transformers/02_models/06b_gpt2_...md`, `06c_gpt3_...md`, `07b_bart_...md`. REWRITTEN: `05_bert_end_to_end.md`, `06_gpt_end_to_end.md`->`06_gpt1_end_to_end.md`, `07_t5_end_to_end.md`. TOUCHED: `5.transformers/README.md`, `01_fundamentals/04_pretraining_objectives.md`, `02_models/03_encoder_decoder.md`, `6.llms/02b_finetuning_end_to_end.md`, `7.rag/01b_rag_end_to_end.md`, `4.nlp/.../06b_...md`, `MASTERY_PLAN.md`, `SYNC.md` |
 
 > **Correction (25 Aug):** the blue placeholders in Naukri's draft (`Please mention if any`, `DD'MM'YY`) are **deliberate fill-in markers** — their cover email asks the customer to complete them. Earlier I called this a QC failure. It is not. Do not raise it.
@@ -25,7 +25,7 @@
 ```
 What:   Board 6 — Transformer DECODER whiteboard  (file done, board not drawn)
 Board:  5.transformers/whiteboard/6.decoder.jpg      (to draw, 25 min)
-Source: 4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md
+Source: 4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md
 
 The board must show:
   - three sub-layers: masked self-attn -> cross-attn -> FFN, each + Add & Norm

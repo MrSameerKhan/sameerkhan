@@ -4,7 +4,7 @@
 > Unified Text-to-Text Transformer*). BART is a separate file:
 > [07b_bart_end_to_end.md](07b_bart_end_to_end.md). Nothing here is mixed between them.
 >
-> Arc: [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) →
+> Arc: [06c decoder](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) →
 > [05 BERT](05_bert_end_to_end.md) → [06 GPT-1](06_gpt1_end_to_end.md) →
 > [06b GPT-2](06b_gpt2_end_to_end.md) → [06c GPT-3](06c_gpt3_end_to_end.md) → **T5**.
 > Same toy dimensions throughout: `d_model=4`, `n_heads=2`, `d_head=2`, `d_ff=8`.
@@ -315,7 +315,7 @@ decoder position bias, head 0           head 1
 ```
 
 Then `−∞` above the diagonal before softmax, exactly as
-[06c §5](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md):
+[06c §5](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md):
 
 ```
 h1 = X_dec + masked self-attn
@@ -537,7 +537,7 @@ Papers and checkpoints disagree, so be specific about which you mean:
 So you do not over-credit it:
 
 - **Encoder-decoder with cross-attention** — the 2017 paper; hand-computed in
-  [06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md)
+  [06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md)
 - **Bidirectional encoder** — BERT ([05](05_bert_end_to_end.md))
 - **Causal decoder, teacher forcing, autoregressive inference** — 06c
 - **Weight tying** — GPT-1 ([06 §7](06_gpt1_end_to_end.md)), though T5 ties three ways not two
@@ -585,7 +585,7 @@ T5 ENCODER LAYER                        T5 DECODER LAYER
 ## See also
 
 - [07b_bart_end_to_end.md](07b_bart_end_to_end.md) — BART: the other encoder-decoder, and how its denoising differs
-- [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) — cross-attention and the causal mask, hand-computed
+- [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) — cross-attention and the causal mask, hand-computed
 - [05_bert_end_to_end.md](05_bert_end_to_end.md) — the bidirectional encoder T5 reuses
 - [03_encoder_decoder.md](03_encoder_decoder.md) — T5/BART family overview, Flan-T5, when to use which
 - [08_modern_llm_architecture.md](08_modern_llm_architecture.md) — RMSNorm again, plus RoPE, SwiGLU, GQA

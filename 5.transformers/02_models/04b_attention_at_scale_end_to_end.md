@@ -335,6 +335,6 @@ Paged         fixed 16-token blocks + per-sequence block table.
 - [04_efficient_transformers.md](04_efficient_transformers.md) — the survey: Longformer, BigBird, distillation
 - [../../6.llms/05_vllm_internals.md](../../6.llms/05_vllm_internals.md) — vLLM's scheduler and continuous batching
 - [06_gpt1_end_to_end.md](06_gpt1_end_to_end.md) — the model whose logits verify §2
-- [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) — why cross-attention K/V are built once, and self-attention K/V grow
+- [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) — why cross-attention K/V are built once, and self-attention K/V grow
 - [08_modern_llm_architecture.md](08_modern_llm_architecture.md) — board 13: how GQA is actually implemented
 - [11_long_context_scaling.md](11_long_context_scaling.md) — board 14: what happens past 128k

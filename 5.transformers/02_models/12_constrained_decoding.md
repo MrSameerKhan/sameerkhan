@@ -3,7 +3,7 @@
 > **Scope note.** The masking mechanism here is *identical* to the causal mask — set disallowed
 > logits to `−∞` **before** softmax, never zero them after. Same discipline, same reasons, worked
 > through in
-> [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) §6.
+> [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) §6.
 > Sampling itself is board 11:
 > [../../4.nlp/03_sequence_models/07_decoding_strategies.md](../../4.nlp/03_sequence_models/07_decoding_strategies.md).
 

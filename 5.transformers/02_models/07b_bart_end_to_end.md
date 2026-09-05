@@ -6,7 +6,7 @@
 >
 > **Read this first.** BART's *architecture* is the standard 2017 encoder-decoder with a
 > BERT-style bidirectional encoder and a GPT-style causal decoder — hand-computed in
-> [06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) and
+> [06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) and
 > [05](05_bert_end_to_end.md), and not repeated here. Where T5 changed the *block*
 > (relative position bias, RMSNorm, no biases, no `√d_k`), **BART changed almost nothing**.
 >
@@ -168,7 +168,7 @@ by reframing every task as text-to-text with a task prefix.
 Explicitly, so you do not credit BART with things it inherited:
 
 - **Bidirectional encoder** — BERT ([05_bert_end_to_end.md](05_bert_end_to_end.md))
-- **Causal decoder + cross-attention** — the 2017 paper, hand-computed in [06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md)
+- **Causal decoder + cross-attention** — the 2017 paper, hand-computed in [06c](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md)
 - **Learned absolute positions** — BERT and GPT
 - **GELU** — BERT and GPT
 - **Byte-level BPE** — GPT-2 ([06b_gpt2_end_to_end.md](06b_gpt2_end_to_end.md)); BART reuses the tokenizer
@@ -275,7 +275,7 @@ pretraining:  x  --noise-->  x~   then maximise  log P(x | x~)
 ## See also
 
 - [07_t5_end_to_end.md](07_t5_end_to_end.md) — T5: relative position bias, RMSNorm, span corruption, fully hand-computed
-- [../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_end_to_end.md) — the cross-attention and causal mask BART inherits
+- [../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md](../../4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md) — the cross-attention and causal mask BART inherits
 - [05_bert_end_to_end.md](05_bert_end_to_end.md) — BART's encoder half
 - [06b_gpt2_end_to_end.md](06b_gpt2_end_to_end.md) — BART's decoder half, and the tokenizer it borrows
 - [03_encoder_decoder.md](03_encoder_decoder.md) — family overview: when to reach for BART vs Flan-T5
