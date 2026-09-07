@@ -579,14 +579,28 @@ arithmetic above and the autograd gradients describe the same computation.
 
 ## 16. Scaling to real transformers
 
-| | this file | BERT-base | GPT-3 |
-|---|---|---|---|
-| `d_model` | 4 | 768 | 12288 |
-| `n_heads` | 2 | 12 | 96 |
-| `d_head` | 2 | **64** | 128 |
-| `d_ff` | 8 (2×) | 3072 (**4×**) | 49152 (4×) |
-| layers | 1 | 12 | 96 |
-| `√d_k` | 1.414 | 8 | 11.3 |
+| | how it's set | this file | BERT-base | GPT-3 |
+|---|---|---|---|---|
+| `d_model` | **chosen** — the architecture's width | 4 | 768 | 12288 |
+| `n_heads` | **chosen** — how many heads to split into | 2 | 12 | 96 |
+| `d_head` | **derived**: `d_model / n_heads` | 2 | **64** | 128 |
+| `d_ff` | **convention**: `4 × d_model` | 8 (`2×` here) | 3072 | 49152 |
+| layers | **chosen** — stack depth | 1 | 12 | 96 |
+| `√d_k` | **derived**: `√d_head` | 1.414 | 8 | 11.3 |
+
+Only three numbers per column are real choices (`d_model`, `n_heads`, `layers` — straight from the
+BERT and GPT-3 papers). The other three fall out:
+
+```
+d_head = d_model / n_heads      BERT-base: 768/12   = 64      GPT-3: 12288/96 = 128
+d_ff   = 4 × d_model            BERT-base: 4×768    = 3072    GPT-3: 4×12288  = 49152
+√d_k   = √d_head                BERT-base: √64      = 8       GPT-3: √128     = 11.3
+```
+
+`d_k` is the original paper's name for the per-head dimension — it *is* `d_head`, which is why the
+scaling constant is `√d_head` and **never** `√d_model`. This file is the one row that breaks the
+`4×` FFN convention (`d_ff = 2 × d_model = 8`, to keep the hand arithmetic readable) — flagged again
+in §12.
 
 **`d_head = 64` is remarkably stable** — the 2017 paper (512/8), BERT-base (768/12) and BERT-large
 (1024/16) all land on 64. BERT-large scaled width *and* head count together to hold it there. Below
@@ -594,7 +608,32 @@ arithmetic above and the autograd gradients describe the same computation.
 
 ### Where the parameters live
 
-Per BERT-base layer:
+**How to count parameters, in three rules.** Every parameter is one cell of some weight matrix, so:
+(1) a matrix of shape `(a,b)` contributes `a×b` parameters, (2) list every matrix in the block and
+add, (3) multiply by the layer count, then add the embeddings (which sit outside the layers).
+
+**This file's block, counted by hand** (`d_model=4, n_heads=2, d_ff=8, vocab=4, 1 layer`):
+
+| Matrix | Shape | Parameters |
+|---|---|---|
+| `Wq` | 4×4 | 16 |
+| `Wk` | 4×4 | 16 |
+| `Wv` | 4×4 | 16 |
+| `W_o` | 4×4 | 16 |
+| | | **64** ← attention, `= 4 × d_model² = 4×4² = 64` |
+| `W1` | 4×8 | 32 |
+| `W2` | 8×4 | 32 |
+| | | **64** ← FFN, `= 2 × d_model × d_ff = 2×4×8 = 64` |
+| | **per layer** | **128** |
+| embeddings | 4 vocab × 4 | 16 |
+| positional encoding | sinusoidal | **0 — not learned** |
+| | **total** | **144** |
+
+Note `n_heads` appears **nowhere** in this count — splitting into heads is a reshape (§6), so 2 heads
+and 1 head cost exactly the same 64 attention parameters. That is the arithmetic behind "multi-head
+is free."
+
+**Per BERT-base layer**, same three rules at real scale:
 
 ```
 attention  4 × d_model²        = 4 × 768²        = 2,359,296   (33%)
@@ -602,11 +641,21 @@ FFN        2 × d_model × d_ff  = 2 × 768 × 3072  = 4,718,592   (67%)
                                                    ─────────
                                                    7,077,888
 
-× 12 layers                                      =  85.1M
+× 12 layers                                      =  85.1M   (84.9M by the formula above;
+                                                             the extra ~0.1M is biases + LayerNorm
+                                                             γ/β, which the formula omits)
 + embeddings 30522 × 768                         =  23.8M
                                                     ──────
                                                     109M   ✓ ("110M")
 ```
+
+**Where the 33/67 split comes from** — substitute `d_ff = 4·d_model` into the two formulas:
+```
+attention = 4 × d²
+FFN       = 2 × d × 4d = 8 × d²        →  4 : 8  =  33% : 67%,  at any width
+```
+This file has `d_ff = 2·d_model` instead, giving `4d² : 4d² = 50/50` — which is exactly the 64/64
+split in the table above, and the one ratio here that does **not** match real models.
 
 **The FFN is two-thirds of every layer.** Attention is the part that is expensive at *inference*
 (quadratic in sequence length); the FFN is the part that is heavy in *parameters*. Most people
