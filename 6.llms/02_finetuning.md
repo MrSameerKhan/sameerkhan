@@ -18,7 +18,7 @@
 
 **Decision rule (2025):** Try prompting + constrained decoding first. If prompting fails (consistent format, domain vocab, behavior), use QLoRA on a strong open base. For an extra ~1% with the same compute, switch to DoRA. After SFT, layer DPO / ORPO / KTO for preference alignment (`06_alignment_follow_ups.md`).
 
-**Modern open base models:** Llama 3.1 (8B/70B/405B), Mistral / Mistral, Qwen2.5, Gemma 2, Phi-3.5, DeepSeek-V3. Full comparison table with layer counts, GQA/MLA config, and context lengths: `../2.deep learning/02_architectures/00_architecture_comparison.md`.
+**Modern open base models:** Llama 3.1 (8B/70B/405B), Mistral / Mixtral, Qwen2.5, Gemma 2, Phi-3.5, DeepSeek-V3. Full comparison table with layer counts, GQA/MLA config, and context lengths: `../2.deep learning/02_architectures/00_architecture_comparison.md`.
 
 ---
 
@@ -165,7 +165,15 @@ lora_config = LoraConfig(
 
 model = get_peft_model(model, lora_config)
 model.print_trainable_parameters()
-# Output: trainable params: 20,971,520 || all params: 6,758,400,000 || trainable%: 0.31
+# trainable params: 159,907,840 || all params: 6,898,323,456 || trainable%: 2.32
+#
+# Where that comes from (Llama-2-7B: d=4096, ffn=11008, 32 layers):
+#   attention (q,k,v,o):  4 × 64 × (4096 + 4096)  = 2,097,152  per layer
+#   MLP (gate,up,down):   3 × 64 × (4096 + 11008) = 2,899,968  per layer
+#   per layer 4,997,120  ×  32 layers  =  159,907,840
+#
+# Note r=64 across all 7 modules is a LARGE adapter — the QLoRA paper's config.
+# Drop to r=16 and it falls to 39,976,960 (0.59%); q,v only at r=8 gives 4,194,304.
 
 # ── 4. Dataset ────────────────────────────────────────────────────
 dataset = load_dataset("json", data_files={"train": "train.jsonl", "test": "test.jsonl"})
@@ -187,7 +195,7 @@ training_args = TrainingArguments(
     warmup_ratio=0.03,
     logging_steps=25,
     save_strategy="epoch",
-    bf16=True,                         # bfloat16 → fp16 for LLM training stability
+    bf16=True,                         # bfloat16, NOT fp16 — wider exponent range, no grad scaling
     max_grad_norm=0.3,                 # gradient clipping
     report_to="wandb",
 )
@@ -226,20 +234,26 @@ merged_model.save_pretrained("./llama2-merged")
 **Empirical findings (Alpaca, ORCA, Dolly):**
 
 ```
-52K diverse instructions (Alpaca) = 3M random completions
-Quality curated 1K examples often beats noisy 100K examples
+LIMA (Zhou et al. 2023): 1,000 carefully curated examples beat Alpaca's 52K
+                         GPT-3.5-generated ones on human preference evals.
+Quality-curated 1K often beats noisy 100K.
 ```
+
+Why quality dominates here, when it usually doesn't in deep learning: pretraining already installed the **capabilities**. SFT is teaching *format and selection*, not knowledge — so a small, clean, internally consistent set is enough, and contradictory examples actively teach the model to be inconsistent.
 
 **Data quality checklist:**
 
 ```
+DO
 ✓ Correct answers (validate output quality)
 ✓ Diverse inputs (don't just use 1 template)
 ✓ Appropriate length (not all short or all long)
 ✓ Edge cases included
-✗ Train/val split (no overlap, no leakage)
+✓ Clean train/val split — no overlap, no leakage
+
+AVOID
 ✗ Duplicates → model memorizes, doesn't generalize
-✗ Format inconsistency → model learns wrong format
+✗ Format inconsistency → model learns the wrong format
 ✗ Assistant mimicking bad behavior in "negative" examples
 ```
 
@@ -262,7 +276,7 @@ Output: {seed_example['output']}
 Generate {n} variations as a JSON array:"""
 
     response = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=2000,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -317,7 +331,8 @@ Mitigations:
 r = 16             # start here; try 8, 32, 64 if quality insufficient
 lora_alpha = r     # alpha/r = 1.0 is neutral; lower if overfitting
 dropout = 0.05     # small dropout for regularization
-target_modules = ["q_proj", "v_proj"]   # minimum; add k_proj, k_proj if needed
+target_modules = ["q_proj", "v_proj"]   # minimum (original LoRA paper); add k_proj, o_proj,
+                                        # then gate/up/down_proj if quality is still short
 
 # Training hyperparameters
 learning_rate = 2e-4   # LoRA: 1e-4 to 3e-4; Full FT: 1e-5 to 5e-5
@@ -372,10 +387,12 @@ Fine-tuning a 7B model with LoRA still requires ~14GB GPU (7B params × 2 bytes 
 
 ## Connections
 
-- **Efficient Transformers (5.transformers/02_models/04):** LoRA, QLoRA, quantization are covered there architecturally
-- **LLM Alignment (6.llms/03):** SFT is the first stage of RLHF pipeline
-- **LLM Prompting (6.llms/01):** Fine-tuning trains the model to follow prompts more reliably
-- **MLOps (7.mlops):** Experiment tracking, model registry, serving fine-tuned models
+- **LoRA/QLoRA arithmetic** ([../5.transformers/02_models/09b_lora_qlora_end_to_end.md](../5.transformers/02_models/09b_lora_qlora_end_to_end.md)): the α/r scaling, exact merge verification, NF4 vs INT4 measured
+- **PEFT variants** ([../5.transformers/02_models/09_parameter_efficient_tuning.md](../5.transformers/02_models/09_parameter_efficient_tuning.md)): DoRA / LoftQ / PiSSA / GaLore
+- **SFT worked end-to-end** ([02c_sft_end_to_end.md](02c_sft_end_to_end.md)): prompt masking computed, chat templates, the two template failures
+- **Alignment** ([03_alignment.md](03_alignment.md)): SFT is stage 1 of the RLHF pipeline
+- **Prompting** ([01_prompting.md](01_prompting.md)): fine-tuning trains the model to follow prompts more reliably
+- **MLOps** ([../10.mlops/01_experiment_tracking.md](../10.mlops/01_experiment_tracking.md), [../10.mlops/08_model_registry_end_to_end.md](../10.mlops/08_model_registry_end_to_end.md)): Experiment tracking, model registry, serving fine-tuned models
 
 ---
 
@@ -385,6 +402,8 @@ Fine-tune when prompting fails. QLoRA is the default recipe: 4-bit quantized bas
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 09 (⏸ code-built, not run)
 
-- `code_practice/04_5_advanced/01_cpt/` — Continued Pretraining on Acme
+- [../code_practice/09_finetuning/01_lora_finetune.py](../code_practice/09_finetuning/01_lora_finetune.py) · [../code_practice/09_finetuning/02_qlora_finetune.py](../code_practice/09_finetuning/02_qlora_finetune.py)
+- ⚠️ **Parked** — torch 2.6 is not published for cu121, and trl 1.6 hits a meta-tensor bug on torch 2.5.1. The code is written; the training runs never executed on the GTX 1650 Ti.
+- **How to describe this accurately:** *"I've implemented LoRA and QLoRA end to end and worked the arithmetic by hand — the training runs are blocked on a torch/CUDA version conflict on my GPU."* That is defensible under follow-up. Claiming a completed fine-tune is not, because the next questions are dataset size, loss curve, and what broke.

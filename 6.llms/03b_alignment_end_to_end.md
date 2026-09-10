@@ -3,7 +3,7 @@
 Same setup throughout:
 
 - **Prompt x:** "Explain what gradient descent is."
-- **Response y_w (chosen):** "Gradient descent minimizes a loss function by iteratively moving in the direction of steepest descent. At each step, parameters update as θ = θ - αΔL(θ)."
+- **Response y_w (chosen):** "Gradient descent minimizes a loss function by iteratively moving in the direction of steepest descent. At each step, parameters update as θ = θ - α∇L(θ)."
 - **Response y_l (rejected):** "Gradient descent is an optimization thing that makes models learn somehow by adjusting weights."
 
 > SFT is covered in `02b_finetuning_end_to_end.md`. This file covers Stages 2 and 3 with numbers.
@@ -217,7 +217,7 @@ Watch for: reward hacking — model learns to score length highly, not quality
 After building the reward model R, we fine-tune the LLM to maximize the reward:
 
 ```
-Objective = E_{θ=0, y~π_θ(y|x)} [ R(x, y) ] - β · KL(π_θ || π_SFT)
+Objective = E_{x~D, y~π_θ(y|x)} [ R(x, y) ] - β · KL(π_θ || π_SFT)
 ```
 
 Breaking this down:
@@ -532,7 +532,7 @@ preference_dataset = [
     {
         "prompt":   "Explain gradient descent.",
         "chosen":   "Gradient descent minimizes a loss function by iteratively moving "
-                    "in the direction of steepest descent. θ = θ - αΔL(θ).",
+                    "in the direction of steepest descent. θ = θ - α∇L(θ).",
         "rejected": "Gradient descent is an optimization thing that makes models "
                     "learn somehow by adjusting weights.",
     },
@@ -685,7 +685,7 @@ def constitutional_revision(harmful_prompt: str, harmful_response: str) -> dict:
 
     # Step 1: Critique
     critique = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=512,
         messages=[{"role": "user", "content": f"""Consider this principle:
 {CONSTITUTION[0]}
@@ -696,7 +696,7 @@ Response: {harmful_response}"""}]
 
     # Step 2: Revise
     revised = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=512,
         messages=[{"role": "user", "content": f"""Critique: {critique}
 
@@ -764,4 +764,6 @@ Target KL in PPO (nats):
 - `02b_finetuning_end_to_end.md` — SFT (Stage 1) covered there with dry-run
 - `03_alignment.md` — reference: RLHF/DPO/ORPO/CAI quick-reference with code
 - `5.transformers/02_models/14_reasoning_models.md` — RLVR/GRPO for reasoning model alignment
-- `6.llms/06_evaluation.md` — measuring alignment quality (safety benchmarks, helpfulness)
+- [04_evaluation.md](04_evaluation.md) · [04b_evaluation_end_to_end.md](04b_evaluation_end_to_end.md) — measuring alignment quality (safety benchmarks, helpfulness)
+- [03c_dpo_end_to_end.md](03c_dpo_end_to_end.md) — the `Z(x)` cancellation this file skips
+- [06_alignment_follow_ups.md](06_alignment_follow_ups.md) — IPO / KTO / ORPO / GRPO / RLOO comparison

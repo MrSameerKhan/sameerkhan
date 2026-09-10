@@ -370,7 +370,7 @@ All single-agent metrics, plus: (1) **Routing accuracy** — did the supervisor 
 | LLM observability | `../10.mlops/11_llm_observability.md` | Production tracing |
 | LLM evaluation system design | `../11.system_design/11_llm_evaluation_systems.md` | Building the eval system |
 | Indirect injection (robustness eval input) | `../7.rag/03_indirect_prompt_injection.md` | Red-team corpus |
-| Code practice | `code_practice/06_agents/09_agent_eval/` | Hands-on |
+| Code practice | *not yet built* | An agent-eval harness would go in `code_practice/08_agents/` |
 
 ---
 
@@ -380,6 +380,6 @@ Agent evaluation is **multi-dimensional**: task success + tool-call quality + tr
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/06_agents/09_agent_eval/` — 5 axes (success, tool acc, efficiency, cost, safety)
+- **Not yet built.** A 5-axis harness (success · tool accuracy · efficiency · cost · safety) belongs in [../code_practice/08_agents/](../code_practice/08_agents/). Related RAG-side evaluation exists at [../7.rag/05_rag_evaluation.md](../7.rag/05_rag_evaluation.md).

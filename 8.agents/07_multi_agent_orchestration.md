@@ -427,7 +427,7 @@ In JSON tool-calling, the LLM outputs `{"name": "search", "args": {"q": "..."}}`
 | Agent reliability | `02_agent_reliability_patterns.md` | Loop detection across agents |
 | Tool authorization | `../11.system_design/09_tool_authorization_patterns.md` | Per-agent capability isolation |
 | Agent evaluation | `09_agent_evaluation.md` | Multi-agent-specific metrics |
-| Code practice | `code_practice/06_agents/07_multi_agent/` | Hands-on |
+| Code practice | [../code_practice/08_agents/04_document_agent/](../code_practice/08_agents/04_document_agent/) | Hands-on |
 
 ---
 
@@ -437,6 +437,7 @@ Multi-agent helps when you can articulate **why** — too many tools, distinct e
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 08
 
-- `code_practice/06_agents/07_multi_agent/` — supervisor + researcher + analyst + composer
+- [../code_practice/08_agents/04_document_agent/agents.py](../code_practice/08_agents/04_document_agent/agents.py) — specialist agents
+- [../code_practice/08_agents/04_document_agent/graph.py](../code_practice/08_agents/04_document_agent/graph.py) — supervisor routing over them

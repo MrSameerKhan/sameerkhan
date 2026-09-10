@@ -149,8 +149,8 @@ Evaluate the retriever in isolation before adding the LLM. Requires a labeled te
 
 | Metric | Formula | What it measures |
 |--------|---------|-----------------|
-| Recall@k | `|relevant ∩ top-k| / |relevant|` | What fraction of relevant docs did you retrieve? |
-| Precision@k | `|relevant ∩ top-k| / k` | How much of what you retrieved is relevant? |
+| Recall@k | `#(relevant ∩ top-k) / #relevant` | What fraction of relevant docs did you retrieve? |
+| Precision@k | `#(relevant ∩ top-k) / k` | How much of what you retrieved is relevant? |
 | MRR (Mean Reciprocal Rank) | `mean(1 / rank_of_first_relevant)` | How high up is the first relevant result? |
 | NDCG@k | Discounted cumulative gain | Rank-weighted relevance |
 
@@ -302,4 +302,5 @@ A/B test: same questions answered by (1) LLM only, no context and (2) LLM + RAG.
 
 ## Code Practice
 
-- `code_practice/07_rag/04_rag_evaluation.py` — RAGAS pipeline + LLM-as-judge + synthetic dataset generation
+- [../code_practice/07_rag/others/04_rag_evaluation.py](../code_practice/07_rag/others/04_rag_evaluation.py) — RAGAS pipeline + LLM-as-judge + synthetic dataset generation
+- [../code_practice/07_rag/06_rulebook_rag/evaluate.py](../code_practice/07_rag/06_rulebook_rag/evaluate.py) — the portfolio project's eval harness (see its `RESULTS.md`)

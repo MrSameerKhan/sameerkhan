@@ -483,7 +483,7 @@ Three: **stdio** (server runs as a subprocess of the host; communicates via stdi
 | Indirect injection (MCP threat surface) | `../7.rag/03_indirect_prompt_injection.md` | Tool-output injection |
 | Tool authorization | `../11.system_design/09_tool_authorization_patterns.md` | Capability isolation depth |
 | LangGraph (host substrate) | `04_langgraph_deep.md` | Using MCP tools in agent state machines |
-| Code practice | `code_practice/06_agents/08_mcp_protocol/` | Hands-on |
+| Code practice | *not yet built* | An MCP server/client session would go in `code_practice/08_agents/` |
 
 ---
 
@@ -493,6 +493,6 @@ MCP is the open standard for connecting LLM hosts to tools, data, and prompts, e
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/06_agents/08_mcp_protocol/` — FastMCP server + client
+- **Not yet built.** A FastMCP server + client session belongs in [../code_practice/08_agents/](../code_practice/08_agents/). Explaining the protocol is sufficient for interviews; building a server is the next step after that.

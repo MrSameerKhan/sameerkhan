@@ -281,4 +281,5 @@ CRAG adds a lightweight retrieval evaluator after the first retrieval pass. If c
 
 ## Code Practice
 
-- `code_practice/07_rag/03_advanced_rag.py` — hybrid search + reranking + HyDE implementation
+- [../code_practice/07_rag/others/03_advanced_rag.py](../code_practice/07_rag/others/03_advanced_rag.py) — hybrid search + reranking + HyDE implementation
+- [../code_practice/07_rag/06_rulebook_rag/retrieve.py](../code_practice/07_rag/06_rulebook_rag/retrieve.py) — the portfolio project's retrieval layer

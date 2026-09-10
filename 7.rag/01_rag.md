@@ -156,8 +156,8 @@ return model.encode([prefix + t for t in texts], normalize_embeddings=True)
 |-------|-----|-------|
 | text-embedding-3-large | 1536/3072-d | API, matryoshka (truncate-able) |
 | BAAI/bge-large-en-v1.5 | 1024-d | Strong open default, instruction prefixes |
-| BAAI/bge | 1K context | multilingual, dense + sparse + multi-vector heads |
-| intfloat/e5-mistral-70b-instruct | 4096-d | Top open MTEB; expensive (7B params) |
+| BAAI/bge-m3 | 1024-d, 8192 ctx | Multilingual; emits dense + sparse + multi-vector from one model |
+| intfloat/e5-mistral-7b-instruct | 4096-d | Top open MTEB; expensive (7B params) |
 | nomic-embed-text-v1.5 | 768-d | 8192-token context, open weights AND open training data |
 | jina-embeddings-v2 | 1024-d | multilingual, multiple task-specific LoRA adapters |
 | voyage-3 / voyage-3-lite | varies | API, very strong on retrieval |
@@ -334,7 +334,7 @@ def rag_query(query: str, retriever, reranker=None) -> str:
 
     # 4. Generate
     response = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=1000,
         system="""You are a helpful assistant. Answer questions using ONLY the provided context.
 If the answer is not in the context, say 'I don't have enough information to answer this.'
@@ -486,11 +486,11 @@ RAG is better for: frequently updated knowledge (can update vector DB without re
 
 **Q: Why is hybrid retrieval better than dense-only?**
 
-Dense (embedding-based) handles semantic similarity — finds conceptually related documents even without keyword overlap. Sparse (BM25) handles exact keyword matches — great for product IDs, proper nouns, technical terms, typos. Neither alone is optimal: dense retrieval misses "PO-2024-0432"; BM25 misses "car" when document says "automobile". Hybrid with RRF combines both and consistently outperforms either alone on standard benchmarks by 5-15%.
+Dense (embedding-based) handles semantic similarity — finds conceptually related documents even without keyword overlap. Sparse (BM25) handles exact keyword matches — great for product IDs, proper nouns, technical terms, typos. Neither alone is optimal: dense retrieval misses "PO-2024-0432"; BM25 misses "car" when document says "automobile". Hybrid with RRF combines both and consistently outperforms either alone on standard benchmarks — typically **+3-8% recall@10 on BEIR**, though the gain is strongly dataset-dependent and largest where the corpus is full of exact identifiers, product names or clause references. *(Quote the range, not a single number — an interviewer who knows BEIR will push back on a precise figure.)*
 
 **Q: What is the role of reranking in RAG?**
 
-ANN retrieval scores speed using bi-encoder (query and docs separately — no interaction). Cross-encoder rerankers jointly process query-document pairs — expensive (O(n) model calls) but much more accurate. The standard pattern: retrieve 50-100 candidates via fast bi-encoder ANN, then rerank to 3-5 with a cross-encoder. The cross-encoder can consider fine-grained token-level interactions between query and document. This two-stage pipeline gets near cross-encoder accuracy at near-bi-encoder latency.
+ANN retrieval uses a bi-encoder, which embeds the query and the documents **separately** — fast, because document vectors are precomputed offline, but the two never interact. A cross-encoder instead processes the query and document **jointly** in one forward pass, so attention runs across both — far more accurate, but it costs one model call per candidate at query time. The standard pattern: retrieve 50-100 candidates via fast bi-encoder ANN, then rerank to 3-5 with a cross-encoder. The cross-encoder can consider fine-grained token-level interactions between query and document. This two-stage pipeline gets near cross-encoder accuracy at near-bi-encoder latency.
 
 **Q: How do you evaluate a RAG pipeline?**
 
@@ -519,7 +519,8 @@ RAG = Retrieve relevant docs → Inject into prompt → Generate grounded answer
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 07
 
-- `code_practice/05_rag/04_basic_rag/` — end-to-end RAG pipeline
-- `code_practice/05_rag/07_query_expansion/` — HyDE + multi-query
+- [../code_practice/07_rag/others/01_basic_rag.py](../code_practice/07_rag/others/01_basic_rag.py) — end-to-end RAG pipeline
+- [../code_practice/07_rag/others/03_advanced_rag.py](../code_practice/07_rag/others/03_advanced_rag.py) — hybrid search + reranking + HyDE
+- [../code_practice/07_rag/06_rulebook_rag/](../code_practice/07_rag/06_rulebook_rag/) — **the portfolio project**: BM25 + RRF + cross-encoder over a policy rulebook

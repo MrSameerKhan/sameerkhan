@@ -237,15 +237,15 @@ CaMeL (Capability-based Mitigation of Prompt Injection) is the leading research 
 
 ```python
 # Signals that injection may have happened
-signals = [
+signals = {
     "instruction_phrases_in_retrieval": any(
-        bad in chunk for bad in INSTRUCTION_PHRASES for chunk in retrieved
+        bad in chunk for chunk in retrieved for bad in INSTRUCTION_PHRASES
     ),
     "tool_call_topic_mismatch": tool_call.topic != user_question.topic,
     "outbound_external_url": any(host not in TRUSTED for host in extract_urls(output)),
     "pii_in_output": pii_detector(output) > 0,
     "off_topic_drift": semantic_sim(output, user_question) < THRESHOLD,
-]
+}
 
 if sum(signals.values()) >= 2:
     log_injection_event(signals)
@@ -328,7 +328,7 @@ Red-team with a corpus of known injection payloads (LLM Vulnerability Scoring In
 | Agent reliability patterns | `../8.agents/02_agent_reliability_patterns.md` | Production hardening |
 | LLM observability | `../10.mlops/11_llm_observability.md` | Detection in production |
 | RAG conceptual | `01_rag.md` | The context where injection happens |
-| Code practice | `code_practice/05_rag/09_indirect_injection/` | Hands-on |
+| Code practice | *not yet built* | An injection-defence session would go in `code_practice/07_rag/` |
 
 ---
 
@@ -338,7 +338,6 @@ Indirect prompt injection is the #1 RAG threat. The LLM cannot distinguish trust
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/03_prompting/09_injection/` — injection defenses (prompting side)
-- `code_practice/05_rag/09_indirect_injection/` — 4-layer defense against poisoned docs
+- **Not yet built.** A 4-layer defence session against poisoned documents belongs in [../code_practice/07_rag/](../code_practice/07_rag/). This is the **top agent security question** for a bank — see [../code_practice/11_interview_drills/LLOYDS_UK_ROUND.md](../code_practice/11_interview_drills/LLOYDS_UK_ROUND.md) §4.

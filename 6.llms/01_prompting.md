@@ -478,10 +478,7 @@ Prompt engineering is the art of creating the right context for the correct answ
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 06
 
-- `code_practice/03_prompting/01_first_call/` — first Ollama call
-- `code_practice/03_prompting/02_few_shot/` — few-shot prompting
-- `code_practice/03_prompting/03_cot/` — Chain-of-Thought
-- `code_practice/03_prompting/04_self_consistency/` — Self-Consistency / CoVe / Reflexion
-- `code_practice/03_prompting/08_system_prompts/` — system prompts
+- [../code_practice/06_llms/01_prompt_engineering.py](../code_practice/06_llms/01_prompt_engineering.py) — few-shot, CoT, self-consistency, system prompts
+- [../code_practice/06_llms/02_structured_extraction.py](../code_practice/06_llms/02_structured_extraction.py) — Pydantic-constrained output

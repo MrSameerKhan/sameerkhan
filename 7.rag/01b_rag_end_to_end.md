@@ -172,36 +172,38 @@ Query: "cat sat"  →  Q = [0.80, 0.80]
 ```
 cosine(Q, D) = (Q · D) / (||Q|| × ||D||)
 
-||Q|| = √(0.80² + 0.80²) = √(0.64 + 0.64) = √1.28 = 1.131
+||Q|| = √(0.80² + 0.80²) = √(0.6400 + 0.6400) = √1.2800 = 1.13137
 
 cosine(Q, D1):
   Q · D1 = 0.80×0.85 + 0.80×0.75 = 0.680 + 0.600 = 1.280
-  ||D1|| = √(0.85² + 0.75²) = √(0.7225 + 0.5625) = √1.285 = 1.134
-  cosine(Q, D1) = 1.280 / (1.131 × 1.134) = 1.280 / 1.283 = 0.998
+  ||D1|| = √(0.85² + 0.75²) = √(0.7225 + 0.5625) = √1.2850 = 1.13358
+  cosine(Q, D1) = 1.280 / (1.13137 × 1.13358) = 1.280 / 1.28250 = 0.99805
 
 cosine(Q, D2):
-  Q · D2 = 0.80×0.30 + 0.80×0.86 = 0.240 + 0.688 = 0.880
-  ||D2|| = √(0.30² + 0.86²) = √(0.09 + 0.60) = √0.73 = 0.854
-  cosine(Q, D2) = 0.880 / (1.131 × 0.854) = 0.880 / 0.966 = 0.911
+  Q · D2 = 0.80×0.30 + 0.80×0.86 = 0.240 + 0.688 = 0.928
+  ||D2|| = √(0.30² + 0.86²) = √(0.0900 + 0.7396) = √0.8296 = 0.91082
+  cosine(Q, D2) = 0.928 / (1.13137 × 0.91082) = 0.928 / 1.03047 = 0.90055
 
 cosine(Q, D3):
-  Q · D3 = 0.80×0.79 + 0.80×0.68 = 0.624 + 0.504 = 1.168
-  ||D3|| = √(0.79² + 0.68²) = √(0.6084 + 0.4624) = √1.071 = 1.035
-  cosine(Q, D3) = 1.168 / (1.131 × 1.035) = 1.168 / 1.171 = 0.997
+  Q · D3 = 0.80×0.79 + 0.80×0.68 = 0.632 + 0.544 = 1.176
+  ||D3|| = √(0.79² + 0.68²) = √(0.6241 + 0.4624) = √1.0865 = 1.04235
+  cosine(Q, D3) = 1.176 / (1.13137 × 1.04235) = 1.176 / 1.17928 = 0.99721
 
 cosine(Q, D4):
   Q · D4 = 0.80×0.10 + 0.80×0.50 = 0.080 + 0.400 = 0.480
-  ||D4|| = √(0.10² + 0.50²) = √(0.01 + 0.25) = √0.26 = 0.510
-  cosine(Q, D4) = 0.480 / (1.131 × 0.510) = 0.480 / 0.577 = 0.832
+  ||D4|| = √(0.10² + 0.50²) = √(0.0100 + 0.2500) = √0.2600 = 0.50990
+  cosine(Q, D4) = 0.480 / (1.13137 × 0.50990) = 0.480 / 0.57689 = 0.83205
 ```
 
 **Dense retrieval scores and ranking:**
 ```
-D1: 0.998 → rank 1
-D3: 0.997 → rank 2  (semantic match — "rested" ≈ "sat")
-D2: 0.911 → rank 3  (keyword span didn't help — embedding sees low cat-relevance)
-D4: 0.832 → rank 4
+D1: 0.99805 → rank 1
+D3: 0.99721 → rank 2  (semantic match — "rested" ≈ "sat")
+D2: 0.90055 → rank 3  (keyword span didn't help — embedding sees low cat-relevance)
+D4: 0.83205 → rank 4
 ```
+
+Note how close D1 and D3 are — 0.99805 vs 0.99721, a gap of 0.0008. With a 2-D toy embedding almost everything points the same way; in a real 1024-D space the separation is far wider. Don't read significance into toy margins.
 
 Key insight: D3 ("cat rested on mat") ranks 2nd even though it contains neither "cat" nor "sat" literally — the embedding captures that "rested" is semantically close to "sat."
 
@@ -223,9 +225,11 @@ Document frequencies:
 ```
 IDF_BM25(t) = log((N − df(t) + 0.5) / (df(t) + 0.5) + 1)
 
-IDF(cat) = log((4−2+0.5) / (2+0.5) + 1) = log(2.5/2.5 + 1) = log(1.60) = 0.470
-IDF(sat) = log((4−2+0.5) / (2+0.5) + 1) = log(2.5/2.5 + 1) = log(1.60) = 0.470
+IDF(cat) = log((4−2+0.5) / (2+0.5) + 1) = log(2.5/2.5 + 1) = log(1 + 1) = log(2) = 0.69315
+IDF(sat) = log((4−2+0.5) / (2+0.5) + 1) = log(2.5/2.5 + 1) = log(1 + 1) = log(2) = 0.69315
 ```
+
+Both terms appear in exactly 2 of 4 documents, so they carry identical IDF. Because the IDF is a *common factor* across every document's score, it scales all BM25 scores equally and **cannot change the ranking** — it only sets the absolute magnitude.
 
 **Average document length:**
 ```
@@ -240,46 +244,48 @@ BM25(t, d) = IDF(t) × tf × (k1+1) / (tf + k1×(1 − b + b×|d|/avgdl))
 
 **BM25 for D1 ("cat sat on mat", |D1|=4):**
 ```
-length_norm = 1 − 0.75 + 0.75×(4/4.25) = 0.25 + 0.706 = 0.956
-denominator = tf + 1.5×0.956 = tf + 1.434
+length_norm = 1 − 0.75 + 0.75×(4/4.25) = 0.25 + 0.70588 = 0.95588
+denominator = tf + 1.5×0.95588 = tf + 1.43382
 
 BM25(cat, D1): tf=1
-  = 0.470 × 2.5 / (1 + 1.434) = 0.470 × 2.5/2.434 = 0.470 × 1.027 = 0.483
+  = 0.69315 × 2.5 / (1 + 1.43382) = 0.69315 × 2.5/2.43382 = 0.69315 × 1.02719 = 0.71200
 
 BM25(sat, D1): tf=1
-  = 0.470 × 2.5/2.434 = 0.483
+  = 0.69315 × 2.5/2.43382 = 0.71200
 
-BM25(D1) = 0.483 + 0.483 = 0.966
+BM25(D1) = 0.71200 + 0.71200 = 1.42400
 ```
 
 **BM25 for D2 ("sat sat sat on mat", |D2|=5):**
 ```
-length_norm = 1 − 0.75 + 0.75×(5/4.25) = 0.25 + 0.882 = 1.132
-denominator = tf + 1.5×1.132 = tf + 1.698
+length_norm = 1 − 0.75 + 0.75×(5/4.25) = 0.25 + 0.88235 = 1.13235
+denominator = tf + 1.5×1.13235 = tf + 1.69853
 
 BM25(sat, D2): tf=3
-  = 0.470 × (3 × 2.5) / (3 + 1.698) = 0.470 × 7.5/4.698 = 0.470 × 1.597 = 0.750
+  = 0.69315 × (3 × 2.5) / (3 + 1.69853) = 0.69315 × 7.5/4.69853 = 0.69315 × 1.59625 = 1.10640
 
 BM25(cat, D2): tf=0  → 0.000
 
-BM25(D2) = 0.000 + 0.750 = 0.750
+BM25(D2) = 0.000 + 1.10640 = 1.10640
 ```
+
+Note the **saturation** effect: "sat" appears 3× in D2 but scores only 1.55× what a single occurrence scores in D1 — that is `k1` doing its job. BM25 deliberately refuses to reward keyword stuffing linearly.
 
 **BM25 for D3 ("cat rested on mat", |D3|=4):**
 ```
-BM25(cat, D3): tf=1 → same as D1: 0.483
+BM25(cat, D3): tf=1 → same length as D1, so same value: 0.71200
 BM25(sat, D3): tf=0 → 0.000
-BM25(D3) = 0.483 + 0.000 = 0.483
+BM25(D3) = 0.71200 + 0.000 = 0.71200
 ```
 
 **BM25 for D4: cat=0, sat=0 → BM25(D4) = 0.000**
 
 **BM25 scores and ranking:**
 ```
-D1: 0.966 → rank 1   (has both "cat" and "sat")
-D2: 0.750 → rank 2   (lots of "sat" but no "cat")
-D3: 0.483 → rank 3   (has "cat" but no "sat")
-D4: 0.000 → rank 4
+D1: 1.42400 → rank 1   (has both "cat" and "sat")
+D2: 1.10640 → rank 2   (lots of "sat" but no "cat")
+D3: 0.71200 → rank 3   (has "cat" but no "sat")
+D4: 0.00000 → rank 4
 ```
 
 **The disagreement:**
@@ -321,12 +327,14 @@ D4: 1/(60+4) + 1/(60+4) = 1/64 + 1/64 = 0.01563 + 0.01563 = 0.03125
 **RRF final ranking:**
 ```
 D1: 0.03279 → rank 1  (best in both methods)
-D3: 0.03200 → rank 2  (tied with D3 — keyword strength balanced against semantic gap)
-D2: 0.03200 → rank 2  (tied with D2 — semantic strength balanced against missing keyword)
+D3: 0.03200 → rank 2  (tied with D2 — semantic strength, offset by the missing keyword)
+D2: 0.03200 → rank 2  (tied with D3 — keyword strength, offset by the semantic gap)
 D4: 0.03125 → rank 4
 ```
 
 RRF tied D2 and D3 — correctly uncertain between the keyword-match document and the semantic-match document. The reranker resolves this tie.
+
+**Why the tie is exact, not coincidental:** D3 sits at dense rank 2 and BM25 rank 3; D2 is the mirror image, dense rank 3 and BM25 rank 2. So both compute `1/62 + 1/63` — the same two terms in a different order, and addition commutes. Any document pair whose ranks are swapped between two retrievers will tie under RRF. That is a genuine property of the method, and a good thing to be able to state: **RRF sees only ranks, never scores**, which is exactly why it needs no score normalisation between retrievers with incompatible scales.
 
 **Why k=60?** If k were 0: rank 1 gets score ∞, rank 2 gets 0.5 — too extreme. If k were 1000: all ranks nearly equal — no differentiation. k=60 is empirically shown to work across most retrieval tasks.
 
@@ -401,14 +409,16 @@ The "mat" logit is highest (2.1) because the context explicitly contains "cat sa
 
 **Softmax:**
 ```
-e^0.2 = 1.350,  e^2.1 = 8.166,  e^0.5 = 1.649,  e^0.2 = 1.221
-sum = 12.386
+e^0.2 = 1.2214,  e^2.1 = 8.1662,  e^0.5 = 1.6487,  e^0.2 = 1.2214
+sum = 1.2214 + 8.1662 + 1.6487 + 1.2214 = 12.2577
 
-P(mat) = 8.166/12.386 = 0.659   ← highest probability
-P(on)  = 1.649/12.386 = 0.133
-P(cat) = 1.350/12.386 = 0.109
-P(sat) = 1.221/12.386 = 0.099
+P(mat) = 8.1662/12.2577 = 0.6662   ← highest probability
+P(on)  = 1.6487/12.2577 = 0.1345
+P(cat) = 1.2214/12.2577 = 0.0996
+P(sat) = 1.2214/12.2577 = 0.0996
 ```
+
+`cat` and `sat` share the same logit (0.2), so they **must** get identical probabilities — a useful self-check when you hand-compute a softmax. If two equal logits come out with different probabilities, you have made an arithmetic error.
 
 Model generates: **"mat"** (greedy decoding picks highest probability).
 

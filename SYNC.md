@@ -9,10 +9,78 @@
 
 | Field | Value |
 |-------|-------|
-| **Machine** | Mac |
-| **Date** | 28 August 2026 |
-| **What I did** | Theory rewrite sweep across boards 8-10, all numerically audited + torch-checked. (1) `06c_transformer_decoder_cross_attention_end_to_end.md` written. (2) Board track reordered (12 before 13; decoding 15->11; parked half added as boards 17-21). (3) `05_bert_end_to_end.md` REWRITTEN — old one had a softmax summing to 1.400, sinusoidal PE (BERT uses learned), no NSP. (4) GPT split into THREE clean files: `06_gpt1_...` (post-LN, 116,534,784), `06b_gpt2_...` (pre-LN + ln_f, 1/sqrt(N), 124,439,808), `06c_gpt3_...` (sparse attn, 8-model ladder, in-context learning, 174,604,259,328). (5) T5/BART split into TWO: `07_t5_...` REWRITTEN (old one used W=I identity projections, never computed the relative position bias, never mentioned RMSNorm, and had BART in one line) and `07b_bart_...` NEW. (6) Fixed stale citations of old broken numbers `(2.604, 3.101, 2.120)` and `x_cls = [1.386, 2.019]` in 3 other files. All param counts EXACT vs HF checkpoints. Zero mixing between model files — verified. |
-| **Files changed** | NEW: `4.nlp/03_sequence_models/06c_...md`, `5.transformers/02_models/06b_gpt2_...md`, `06c_gpt3_...md`, `07b_bart_...md`. REWRITTEN: `05_bert_end_to_end.md`, `06_gpt_end_to_end.md`->`06_gpt1_end_to_end.md`, `07_t5_end_to_end.md`. TOUCHED: `5.transformers/README.md`, `01_fundamentals/04_pretraining_objectives.md`, `02_models/03_encoder_decoder.md`, `6.llms/02b_finetuning_end_to_end.md`, `7.rag/01b_rag_end_to_end.md`, `4.nlp/.../06b_...md`, `MASTERY_PLAN.md`, `SYNC.md` |
+| **Machine** | Windows |
+| **Date** | 11 September 2026 |
+| **What I did** | **Numerical audit of the whole boards 1–6b sequence-model arc — found real bugs in 3 of 5 files, all now script-verified.** (1) `02_rnn`: single arithmetic slip — `a₁` row 1 written `0.400+0.000 = 0.500`. The ENTIRE file (forward, BPTT, weight update, 2nd forward) was built on it. All regenerated. (2) `03_lstm`: gate values were **narrated, not computed** — did not follow from the stated weights at all. Claimed ŷ=0.411 / 69% gradient retention; actual with those weights was ŷ=0.149 / 14.7%. REDESIGNED the weight matrices so the forget gate genuinely saturates, regenerated every number. Now ŷ=0.718, L=0.040, **79.2%** retention. (3) `04_gru`: same class of failure — real retention with the stated weights was **8.6%** (RNN is 9%) vs a claimed 66%. Redesigned `Wz_x` positive / `Wz_h` negative so `z` closes once `h` is non-zero. Now ŷ=0.501, L=0.124, **71.4%**. (4) `05_attention`: math was CORRECT (forward+backward+update all verified) — one typo, `A[sat,sat] 0.206→0.244` (its row didn't sum to 1). (5) `06_transformer`: correct except **a conceptual backward-pass bug** — `∂L/∂V` used a *column* of `A` instead of the *row* feeding `c_mat`; same bug was baked into the Python (`A[:, 3:4]` → `A[3, :]`). It corrupted Wv/Wq/Wk gradients and the whole 2nd-forward section. Fixed: loss 0.454→**0.428**. Also `S[on,cat] 0.485→0.406`. (6) **Granular-arithmetic expansion** — every cell shown, no `≈` shortcuts — across `05_attention`, `06_transformer`, `06b_encoder`, `06c_decoder`. (7) RENAMED `06c_transformer_decoder_end_to_end.md` → `06c_transformer_decoder_cross_attention_end_to_end.md` (git mv; 25 refs across 15 files updated; verified 0 stale). (8) Taught calculus from zero (derivative → chain rule → partials → backprop) — was a self-identified gap. |
+| **Files changed** | REWRITTEN (numbers regenerated): `4.nlp/03_sequence_models/02_rnn_end_to_end.md`, `03_lstm_end_to_end.md`, `04_gru_end_to_end.md`. EXPANDED + fixed: `05_attention_end_to_end.md`, `06_transformer_end_to_end.md`, `06b_transformer_encoder_multihead.md`. RENAMED + expanded: `06c_transformer_decoder_end_to_end.md` → `06c_transformer_decoder_cross_attention_end_to_end.md`. REF UPDATES (rename): 11 files in `5.transformers/`, `06b_...md`, `07_decoding_strategies.md`, `MASTERY_PLAN.md`, `SYNC.md`. |
+
+---
+
+## Session 2 — 11 September 2026 (Windows) — AGENTS ARC STARTED
+
+| Field | Value |
+|-------|-------|
+| **Context** | **INTERVIEW ~15 SEP 2026 — LLOYDS BANKING GROUP.** Rounds 1-2 technical face-to-face in Hyderabad **DONE**; next round is the **UK team**, expected to grill on LLMs/RAG/Agents (per a recently-joined contact). Conversational deep-dive. Budget 6-8 h/day × 4 days. |
+| **Lloyds recon** (public sources, Sep 2026) | **Google Cloud Vertex AI is the technology spine** (migrated 2024; 300+ data scientists; 18+ GenAI systems in prod) — NOT Azure/OpenAI. **Athena** = first large-scale GenAI product: grounded RAG over **~13,000 authorised internal knowledge articles** for customer-facing colleagues, search time 59s→20s (-66%), deliberately grounded to internal corpus **not** the open web. **50+ GenAI solutions + 80 ML use cases to production in one year.** ~£50m value 2025 → **£100m+ target 2026**. **Scaling agentic AI is the stated 2026 priority**, plus an AI financial assistant in the mobile app expanding into savings/borrowing/investments. Rohit Dhawan (ex-AWS) is Group Director of AI & Advanced Analytics, running a centralised AI CoE. **Vertex AI Agent Engine runs LangGraph** — Phase 08 work ports directly. |
+| **The two connections that matter** | (1) **Athena ≈ Rulebook-RAG.** Same shape — retrieval over an authorised policy corpus, grounded, staff-facing, wrong answers have regulatory consequence. Lead with this. (2) The tools in `08_agents/03_langgraph_agent/tools.py` are **literally UK mortgage policy** (95% LTV first-time buyer, Help to Buy, ERC taper, SVR, affordability at rate+3%). Toy Lloyds systems already built. |
+| **What I did** | (1) Walked the existing `08_agents/03_langgraph_agent/` session line by line — found `route_after_llm` is DEAD CODE (never passed to `add_conditional_edges`; the graph uses built-in `tools_condition`) and `app = build_graph(with_hitl=False)`, so the HITL/`interrupt()` path was **built but never exercised**. Do not oversell it in interview. (2) Started `code_practice/12_agents_from_scratch/` — a step-by-step ladder (single call → memory → tool schema → round-trip → loop → multi-tool). Step 1 written and run. (3) **AUDITED all 3,400 lines of `8.agents/`** — content quality is high, 48 interview Q&As already written; the gap was never content. (4) Wrote 3 new files (below). (5) Fixed **34 stale cross-refs** across all 10 files in `8.agents/`. |
+| **Files created** | `8.agents/00_agent_stack_foundations.md` (NEW SSOT — the 7-layer stack: model/runtime/host/format/SDK/framework/protocol; the two wire formats side by side; product placement map; **workflows vs agents** + Anthropic's 5 workflow patterns; when to delete the framework). `code_practice/11_interview_drills/AGENTS_4DAY_PLAN.md` (day-by-day, every block ends in SAY IT). `code_practice/11_interview_drills/AGENTS_QA_BANK.md` (32 rapid-fire + 15 new full answers + index to the existing 48 + resume defence). |
+| **Refs fixed** | `code_practice/06_agents/` → `08_agents/` with REAL filenames (the 10-session folder never existed; there are 4). `5.llms` → `6.llms`/`7.rag`, `7.mlops` → `10.mlops`, `8.system_design`/`9.system_design` → `11.system_design`. Sessions that genuinely don't exist (MCP, long-term memory, agent eval, production hardening) now say **"not yet built"** instead of pointing at nothing. Verified: **77 links checked, 0 broken.** |
+| **Gaps research found** (not in repo, now written) | **Workflows vs agents** — the #1 framing question, absent entirely. **Anthropic's 5 workflow patterns** (prompt chaining / routing / parallelization / orchestrator-workers / evaluator-optimizer) — repo had only the academic planners. **LangGraph Store vs Checkpointer** (cross-thread vs thread-scoped) — a named interview question. **MCP control dynamics** — tools are *model*-controlled, resources *application*-controlled, prompts *user*-controlled; that's the real distinction, not data type. **Tool poisoning** (injection via tool *metadata*, distinct from tool *output*). **MCP auth**: stdio = process trust, remote = OAuth 2.1; **Enterprise-Managed Authorization** (2026) moves authz to the org IdP — directly relevant to a bank. **Agentic RAG** — the bridge between two of their three named topics. |
+
+### 7.rag + 6.llms AUDITED (same session)
+
+**Verdict: both are strong. RAG had 9 real defects, LLMs had 1.** Theory quality is not the gap in any of the three folders — recall under pressure is.
+
+| File | Found | Fixed |
+|---|---|---|
+| `7.rag/02_rag_pipeline.md` | **RRF worked example was numerically wrong AND pedagogically broken** — it used *identical* rankings for dense and sparse (so nothing fused), and claimed `D3=D2=0.03200`. Script-verified truth: D3=0.03226, D2=0.03175, **not equal**. | Rewrote with rankings that genuinely disagree; every term shown; verified `D1 0.032522 > D2 0.032266 > D3 0.031754 > D4 0.031498`. Added the teaching point: D2 was 3rd in dense, 1st in BM25, and RRF lifts it to 2nd — *that promotion is the whole value of hybrid.* |
+| `7.rag/06_production_rag.md` | **Python `SyntaxError`** — `incremental_index()` had non-default `vectorstore` after a defaulted param. Code could never run. | Reordered params. |
+| `7.rag/01_rag.md` | Embedding table garbled: a row labelled `BAAI/bge` with "1K context" was actually describing **BGE-M3** (8192 ctx); `intfloat/e5-mistral-70b-instruct` **does not exist** — it is **7b**, and the same row said "7B params", self-contradicting. | Both corrected. |
+| `7.rag/01_rag.md` | Reranking Q&A opened with a garbled sentence ("ANN retrieval scores speed using bi-encoder"). Also `claude-opus-4-6` model ref. | Rewritten; model ref updated. |
+| `7.rag/01_rag.md` vs `02_rag_pipeline.md` | **Cross-file contradiction** on hybrid lift: "5-15%" vs "3-8%" recall@10. | Harmonised to **+3-8% on BEIR**, explicitly marked dataset-dependent, with a note to quote the range not a point figure (an interviewer who knows BEIR will push). |
+| `7.rag/05_rag_evaluation.md` | Recall@k / Precision@k formulas used `\|` inside backticks **inside a markdown table** → the rows render broken. | Switched to `#(...)` notation. |
+| `6.llms/05_vllm_internals.md` | Same waste figure quoted **three different ways**: 60-80% (Q1), 85.4% (§2, measured), ~99% (diagram caption). | Harmonised to the measured **85.4%** batch figure, with a note to quote that rather than the 98.8% single-request worst case. Also `250+` vs `256+` typo. |
+
+> 🔴 **`7.rag/01b_rag_end_to_end.md` WAS THE WORST FILE — and I nearly missed it.** 690 lines of narrated step-by-step numbers, i.e. **exactly the failure class this file's own 11-Sep warning describes.** Script-verified; **four independent arithmetic faults**:
+> 1. **BM25 IDF wrong, and it poisoned every BM25 score in the file.** Wrote `log(2.5/2.5 + 1) = log(1.60) = 0.470`. But `2.5/2.5 + 1 = 2`, so it is **log(2) = 0.69315**. Every score was ~32% low. Regenerated: D1 0.966→**1.42400**, D2 0.750→**1.10640**, D3 0.483→**0.71200**.
+> 2. **Cosine(Q,D2) had two errors compounding.** `0.240 + 0.688` was written as **0.880** (it is 0.928), and `0.86²` was written as **0.60** (it is 0.7396). Result 0.911 → **0.90055**.
+> 3. **Cosine(Q,D3) had three slips** — `0.8×0.79` as 0.624 (=0.632), `0.8×0.68` as 0.504 (=0.544), `0.79²` as 0.6084 (=0.6241). Final rounded to 0.997 *by luck*.
+> 4. **Softmax gave the SAME logit two different values.** Logits `cat=0.2, sat=0.2`, yet `e^0.2` appears as both **1.350** and **1.221**. 1.350 is `e^0.3`. Sum 12.386 → **12.2577**; P(mat) 0.659 → **0.6662**; P(cat) 0.109 → **0.0996**.
+>
+> **Every ranking survived** (dense D1>D3>D2>D4, BM25 D1>D2>D3>D4, RRF tie D2/D3, greedy picks "mat"), so the narrative was sound and only the arithmetic needed regenerating. Added three teaching notes the errors revealed: IDF is a common factor so it **cannot** change BM25 ranking; the D2/D3 RRF tie is **exact and structural** (ranks 2+3 vs 3+2, addition commutes) because RRF reads ranks not scores; and **equal logits must yield equal probabilities** — a free self-check on any hand-computed softmax.
+
+**Both previously-flagged 6.llms items turned out to be properly FIXED, not left hanging:** the Llama-3 KV-cache figure is correctly 0.50 GiB (GQA) with an explicit note that 2.00 GiB is the MHA/Llama-2-7B number people misattach; and the GSM8K "18%→70%" claim carries an honest CAUTION block explaining the Kojima/Wei conflation rather than substituting an unverified number.
+
+### AUDIT LEDGER — what was actually verified, and by whom
+
+| Folder | Read by this session | Status |
+|---|---|---|
+| `8.agents/` | **11 of 11** | ✅ Complete |
+| `7.rag/` | **7 of 7** | ✅ Complete |
+| `6.llms/` | 4 of 12 — `01_prompting` (clean), `04_evaluation`, `05_vllm_internals`, README | ⚠️ **Partial** |
+
+**The 8 unread `6.llms` files are the fine-tuning + alignment cluster** (`02`, `02b` 754L, `02c`, `03`, `03b` 571L, `03c`, `06`, `07` — ~2,812 lines). Deliberately deprioritised for THIS interview: it is exactly the area covered by the **do-not-claim rule** (Phase 09 parked, not on the resume), so it will be discussed conceptually at most. They also carry script-verified evidence from the previous session recorded above — e.g. `03c` (`cancellation 0.000e+00`, `L_DPO == L_BT 0.167786` both ways) and `02b` (`B=[[0.0],[0.0]]` fixed at source, NF4 claim corrected to the measured 2.14×). **Trusted, not re-verified.** If time opens up post-interview, `02b` and `03b` are the two worth re-checking first — they are the largest narrated-number files left in the repo, and that is the exact class that failed in `7.rag/01b`.
+
+**Extra defects found while closing the gaps:** `7.rag/03_indirect_prompt_injection.md` had a **Python `SyntaxError`** — the `signals` detector was written as a `list` with `"key": value` entries, then read via `signals.values()`; now a `dict`. `6.llms/04_evaluation.md` had **BERTScore F1 printed as ≈ −0.92** (cannot be negative there; it is 0.92), a **garbled `pass@k` example** whose two lines were both labelled `pass@1` — fixed at source to `pass@1 = 0.4000` / `pass@10 = 0.9996` for n=20,c=8, with the point that made it worth fixing (one sample passes 40% of the time; ten attempts solve it essentially always — which is why a bare "pass@k" without both n and k is meaningless) — and 4× dated `claude-opus-4-6` refs.
+
+**SEQUENCING FIXED — the arc is `6.llms` → `7.rag` → `8.agents`, and all three READMEs now say so** with the same three-line diagram (engine → tool → loop) and an explicit "do not start at RAG". `6.llms/README.md` had **no single linear path** (topic-indexed only) and its Folder TOC was **missing 3 files that its own Reading Order references** — `02c_sft_end_to_end`, `03c_dpo_end_to_end`, `04b_evaluation_end_to_end` (same defect class as the 5.transformers TOC). Added a straight-through path plus the missing rows. `7.rag/README.md` gained the framing decision (RAG vs fine-tuning vs long-context vs agentic RAG) it was missing at the entry point — the content existed but was buried in `01b` §9/§13.
+
+**No new foundations files written for RAG or LLMs — deliberately.** The agents one earned its place because there was a *named* gap (what a format/SDK/framework even is). No equivalent gap exists here: the 7-layer stack in `8.agents/00_agent_stack_foundations.md` already covers the LLM layer and is cross-referenced from all three READMEs, and RAG's orientation need was a **sequencing** problem, not a missing-content problem. Writing more would have duplicated and violated SSOT.
+
+**Dead refs fixed in both folders too.** `code_practice/03_prompting/`, `05_rag/`, `09_llms/`, `04_5_advanced/`, `02_transformers/` **never existed** — real phases are 05-12. Phase 09 refs now carry ⏸ **"code-built, not run"** so the parked status is visible at the point of use. Rulebook-RAG (`07_rag/06_rulebook_rag/`) is now linked from `01_rag.md`, `04_advanced_rag.md`, `05_rag_evaluation.md` and the README as the portfolio project. **Repo-wide check: 184 links across 37 files, 0 broken.**
+
+---
+
+> 🇬🇧 **THE DIFFERENTIATOR for the UK round — regulation, written up in `LLOYDS_UK_ROUND.md` §3.** **SS1/23** (PRA Model Risk Management, in force 17 May 2024) is technology-neutral and **expressly covers AI/ML, including LLMs used as components inside agentic workflows**; scope is the whole firm, not just credit/market risk. Five principles: model identification + risk tiering · governance (SM&CR named accountability) · documented development/implementation/use (**a prompt change IS a model change**) · **independent validation with effective challenge** · mitigants where not fully validated. **FCA Consumer Duty** adds individual-decision explainability — defensible to the customer, the FCA **and the Financial Ombudsman Service** — plus outcomes monitoring with a drift tolerance and documented intervention path. **The synthesis to rehearse:** validating a stochastic agent means validating a *trajectory distribution*, not a function — so validate components (retrieval precision, tool-call accuracy, refusal behaviour), measure variance across repeated runs not a single pass, red-team, and fall back to Principle 5 mitigants (HITL, scope restriction) where full validation is unreachable. Almost no other candidate will have this.
+
+> ⚠️ **Do NOT claim QLoRA / Mistral-7B in the interview.** Not on the resume, Phase 09 parked, indefensible under follow-up. Already flagged in the Open Finding below.
+
+> ⚠️ **`02_INTERVIEW_PACK.md` IS STALE** and is scheduled for rewrite on Day 4 of the plan. It still says "8 years / 94% accuracy / 60% RCA reduction" and describes the RAG project as FAISS + Streamlit + `llama3.2:1b`. Real: 9 years, F1 0.959-0.972 and 0.975, P1 RCA 5 services / 21,096 pages / 2.3%, Rulebook-RAG 36 classes / BM25+RRF (+5.2) / cross-encoder (+3.9) / 0 invalid of 775.
+
+---
+
+> ⚠️ **Pattern worth knowing:** the three broken files (RNN/LSTM/GRU) all failed the same way — plausible-looking numbers that were *written* rather than *computed*. The two correct ones (attention/transformer) are single-shot parallel computations, which are harder to fake. **Any file whose numbers were narrated step-by-step should be assumed unverified until a script reproduces it.**
 
 > **Correction (25 Aug):** the blue placeholders in Naukri's draft (`Please mention if any`, `DD'MM'YY`) are **deliberate fill-in markers** — their cover email asks the customer to complete them. Earlier I called this a QC failure. It is not. Do not raise it.
 
@@ -23,7 +91,36 @@
 ## Next Task
 
 ```
-What:   Board 6 — Transformer DECODER whiteboard  (file done, board not drawn)
+DIRECTION: user will choose the starting point next session. Open threads below,
+           highest-value first. Nothing is blocked on anything else.
+
+>>> DECISION OPEN (paused mid-session 11 Sep) <<<
+  06b_transformer_encoder_multihead.md  §14-15 (backward + weight update)
+  The file NEVER shows W1, W2 (FFN weights) or the target T. Consequence:
+    - W1/W2: reconstructible only by pseudo-inverse. h1 CANNOT be inverted exactly
+      -- a LayerNorm output has every row summing to 0, so it is always rank-deficient.
+    - T: unrecoverable, full stop (16 unknowns, 1 equation = the scalar loss).
+  So §14-15's numbers (loss 0.395052 -> 0.354209, all gradient magnitudes) cannot be
+  verified without INVENTING a target. A reconstruction was built and checked:
+    invented T (role vectors: bank=[1,1,-1,-1], loan=[-1,-1,1,1], others 0)
+    -> loss 0.770069 -> 0.599646, Wv 0.2407 / Wo 0.2682 / Wq 0.0387
+    -> qualitative story SURVIVES (Wv,Wo dominate; Wq,Wk ~7-10x smaller; loss drops)
+    -> but every number in §14-15 changes.
+  Blast radius checked: ZERO. Those numbers are cited in no other file, and OUTPUT
+  (which 06c consumes as MEMORY) is unaffected -- it is forward-pass only.
+  NOT YET DONE. Decide: rewrite §14-15 with the reconstruction, or leave as-is.
+
+AGENTS (asked about 11 Sep, nothing started):
+  Phase 08 is COMPLETE -- all 4 sessions ✅ Run, but back in JUNE (3 months cold):
+    01_react_agent.py · 02_tool_calling.py · 03_langgraph_agent/ · 04_document_agent/
+  MASTERY_PLAN.md contains ZERO agent drills (grepped -- none).
+  So the gap is recall/defence, not build. Three options put to user, none chosen:
+    (a) build an agent drill in 11_interview_drills (LangGraph from scratch, cold)
+    (b) re-run + walk the existing 4
+    (c) new session for untouched theory: MCP (08), multi-agent (07), agent eval (09)
+  NOTE: "LangGraph 46% / Agents 23%" in 00_HUB are % OF JOB DESCRIPTIONS,
+        not mastery levels. Do not misread these as skill gaps.
+
 Board:  5.transformers/whiteboard/6.decoder.jpg      (to draw, 25 min)
 Source: 4.nlp/03_sequence_models/06c_transformer_decoder_cross_attention_end_to_end.md
 
@@ -236,10 +333,20 @@ Boards 8 and 9 theory rewritten and verified. Board 9 is now TWO files, no mixin
 
 Also open:
   Board 6b whiteboard — theory written, board not drawn (20 min).
-  Drill 01 — built 14 Aug, NEVER ATTEMPTED. 20 min, no reference, target 13/13.
+  Drill 01 — built 14 Aug, NEVER ATTEMPTED, now ~4 WEEKS COLD. 20 min, no reference, 13/13.
   code_practice/11_interview_drills/01_multihead_attention.py
+    (concepts were walked through 11 Sep — shapes, -inf-before-softmax, .contiguous()
+     before .view() — but the file was never filled in. Still 5 x NotImplementedError.)
   Drill 04 (cross-attention) — not built; board 6 is reached so it is due.
+  Gates: G1 draw 0/16 · G3 code 0/16. Whiteboard folder still empty.
+  02_INTERVIEW_PACK.md still stale (see "Open Finding" below) — days 12-14.
 ```
+
+> **Verification tooling note (11 Sep):** every fix this session was checked by rebuilding the
+> forward + backward pass in numpy and diffing against the file. Scripts are in the session
+> scratchpad (not committed). Rebuilding one takes ~10 min and is the only way to trust a
+> hand-written numeric walkthrough — recommend doing this for any remaining end-to-end file
+> whose numbers were never script-checked.
 
 
 ---

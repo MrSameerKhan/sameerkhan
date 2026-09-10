@@ -23,6 +23,29 @@ mindmap
 
 ---
 
+## Where This Sits
+
+**The learning arc is `6.llms` → `7.rag` → `8.agents`.** This folder is the middle step: RAG is **one tool** an agent can call.
+
+```
+6.llms    the engine   — what ONE call does
+7.rag     a tool       — retrieval, one capability          ← you are here
+8.agents  the loop     — decides WHICH tool, and WHEN
+```
+
+**The decision that frames everything here** — RAG vs fine-tuning vs long-context:
+
+| Need | Reach for |
+|---|---|
+| Knowledge that changes; source attribution; private data | **RAG** |
+| Behaviour — format, style, persona, domain syntax | **Fine-tuning** ([../6.llms/02_finetuning.md](../6.llms/02_finetuning.md)) |
+| Small corpus (< ~1M tokens), simplicity over cost | **Long context** — just paste it in |
+| The model should decide *whether* to retrieve at all | **Agentic RAG** ([../8.agents/00_agent_stack_foundations.md](../8.agents/00_agent_stack_foundations.md) §7) |
+
+Worked comparisons: [01b_rag_end_to_end.md](01b_rag_end_to_end.md) §9 (vs fine-tuning) and §13 (vs long-context).
+
+---
+
 ## Reading Order
 
 1. `01_rag.md` — conceptual RAG (architecture, chunking, retrieval, generation patterns)
@@ -78,5 +101,7 @@ mindmap
 
 ## Practice
 
-- RAG pipeline (10 sessions, all docs complete) — `../code_practice/05_rag/`
+- RAG sessions (all ✅ Run) — [../code_practice/07_rag/](../code_practice/07_rag/)
+  - `others/01_basic_rag.py` · `others/02_chunking_strategies.py` · `others/03_advanced_rag.py` · `others/04_rag_evaluation.py` · `05_production_rag/`
+- **Portfolio project** — [../code_practice/07_rag/06_rulebook_rag/](../code_practice/07_rag/06_rulebook_rag/): BM25 + RRF + cross-encoder over a policy rulebook (see its `RESULTS.md`)
 - Active resume project: `../archive/projects/rag_system/` — FastAPI + Streamlit + eval

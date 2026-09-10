@@ -27,7 +27,26 @@ mindmap
 
 ---
 
+## Where This Sits
+
+**The learning arc is `6.llms` → `7.rag` → `8.agents`, in that order**, and the folder numbers encode it:
+
+```
+6.llms    the engine   — what ONE call does
+7.rag     a tool       — retrieval, one capability the engine can use
+8.agents  the loop     — decides WHICH tool, and WHEN
+```
+
+Do not start at RAG. RAG is a *tool an agent calls*, and an agent is *a loop around an LLM call* — both are meaningless until the single call is solid. Cross-cutting orientation (model vs runtime vs host vs format vs SDK vs framework) lives in **[../8.agents/00_agent_stack_foundations.md](../8.agents/00_agent_stack_foundations.md)** — it is filed under agents but applies to this whole arc, and it is worth reading first.
+
+---
+
 ## Reading Order
+
+**Straight-through path** (if you just want one sequence):
+`01_prompting` → `02_finetuning` → `02b` → `02c` → `07_dataset_preparation` → `03_alignment` → `03b` → `03c` → `04_evaluation` → `04b` → `05_vllm_internals` → `06_alignment_follow_ups`
+
+**By topic** (if you're targeting a specific board):
 
 | If you're learning... | Read in order |
 |-----------------------|---------------|
@@ -47,9 +66,12 @@ mindmap
 | `01_prompting.md` | Prompting patterns + Self-Consistency / CoVe / Reflexion / Tree-of-Thoughts + reasoning model prompting |
 | `02_finetuning.md` | SFT / instruction tuning workflow + PEFT overview |
 | `02b_finetuning_end_to_end.md` | Worked example — full fine-tune, LoRA math, RLHF/DPO with numbers |
+| `02c_sft_end_to_end.md` | SSOT: prompt masking computed, chat templates, the two template failure modes |
 | `03_alignment.md` | RLHF / DPO / ORPO / Constitutional AI overview |
 | `03b_alignment_end_to_end.md` | Worked example — alignment pipeline with numbers |
+| `03c_dpo_end_to_end.md` | SSOT: the `Z(x)` cancellation — the derivation step `03`/`03b` skip |
 | `04_evaluation.md` | LLM eval (BLEU/ROUGE/BERTScore + MMLU/Arena-Hard/RAGAS summary) |
+| `04b_evaluation_end_to_end.md` | SSOT: perplexity, pass@k, multiple-choice floors, contamination |
 | `05_vllm_internals.md` | SSOT: vLLM, paged attention, prefill/decode, continuous batching |
 | `06_alignment_follow_ups.md` | SSOT: DPO / IPO / KTO / ORPO / GRPO / RLOO comparison (LLM-workflow framing) |
 | `07_dataset_preparation.md` | SSOT: ChatML / Alpaca / ShareGPT / chat_template, LIMA synthetic data (Self-Instruct / Evol-Instruct / Magpie), quality filtering, DPO/KTO/function-call formats |
@@ -82,6 +104,7 @@ mindmap
 
 ## Practice
 
-- Prompting (10 sessions, all run) — `../code_practice/03_prompting/`
-- LLM workflow (14 sessions, mixed) — `../code_practice/09_llms/`
-- Advanced LLMs (4 sessions, code-built) — `../code_practice/04_5_advanced/`
+- LLM sessions (all ✅ Run) — [../code_practice/06_llms/](../code_practice/06_llms/)
+  - `01_prompt_engineering.py` · `02_structured_extraction.py` · `03_llm_evaluation.py`
+- Fine-tuning / alignment / serving (⏸ **code-built, not run** — Phase 09 parked on torch/cu121) — [../code_practice/09_finetuning/](../code_practice/09_finetuning/)
+  - `01_lora_finetune.py` · `02_qlora_finetune.py` · `03_dataset_prep.py` · `04_dpo_alignment.py` · `05_vllm_serving/` · `06_llm_monitoring.py`

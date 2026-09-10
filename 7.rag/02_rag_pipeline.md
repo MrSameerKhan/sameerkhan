@@ -1,6 +1,6 @@
 # RAG Pipeline — NLP-side Reference
 
-> The retrieval-side NLP details that make RAG work. Complements the coding sessions in `code_practice/05_rag/` and the system design in `11.system_design/03_search_and_rag_system.md`.
+> The retrieval-side NLP details that make RAG work. Complements the coding sessions in [../code_practice/07_rag/](../code_practice/07_rag/) and the system design in [../11.system_design/03_search_and_rag_system.md](../11.system_design/03_search_and_rag_system.md).
 
 ---
 
@@ -143,12 +143,19 @@ def rrf(rankings: list[list[str]], k: int = 60) -> dict[str, float]:
     return dict(sorted(scores.items(), key=lambda x: x[1], reverse=True))
 
 
-# Usage
+# Usage — the two retrievers DISAGREE, which is the whole point of fusion
 dense_ranking  = ["D1", "D3", "D2", "D4"]   # from ANN search
-sparse_ranking = ["D1", "D3", "D2", "D4"]   # from BM25
+sparse_ranking = ["D2", "D1", "D4", "D3"]   # from BM25
 fused = rrf([dense_ranking, sparse_ranking])
-# → D1=0.03279, D3=D2=0.03200, D4=0.03125
+
+# D1: dense rank 1, sparse rank 2 → 1/61 + 1/62 = 0.032522
+# D2: dense rank 3, sparse rank 1 → 1/63 + 1/61 = 0.032266
+# D3: dense rank 2, sparse rank 4 → 1/62 + 1/64 = 0.031754
+# D4: dense rank 4, sparse rank 3 → 1/64 + 1/63 = 0.031498
+# → final order: D1 > D2 > D3 > D4
 ```
+
+Note what fusion did: **D2 was only 3rd in dense but 1st in BM25, and RRF lifts it to 2nd overall.** That promotion is the entire value of hybrid retrieval — a document that one retriever nearly missed gets rescued by the other. Note also that RRF uses only *ranks*, never the raw scores, which is why it needs no score normalisation between methods.
 
 RRF is robust to score scale differences between retrieval methods — no normalization needed.
 
@@ -295,8 +302,8 @@ Three layers: (1) Retrieval — improve recall so the answer is actually in the 
 
 ## Code Practice
 
-- `code_practice/05_rag/` — RAG coding sessions
-- `../11.system_design/03_search_and_rag_system.md` — system design for RAG at scale
+- [../code_practice/07_rag/](../code_practice/07_rag/) — RAG coding sessions
+- [../11.system_design/03_search_and_rag_system.md](../11.system_design/03_search_and_rag_system.md) — system design for RAG at scale
 
 ---
 

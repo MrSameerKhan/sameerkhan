@@ -201,7 +201,7 @@ flowchart TD
 
 2. **KTO with extreme class imbalance** — 99% positive, 1% negative → set λ_U high or you'll never penalize bad outputs. Default λs assume rough balance.
 
-3. **IPO converges to NULL update** — if margin already exceeds 1/(2β), the loss is small and gradients vanish. Lower β to keep training signal.
+3. **IPO stalls once the target margin is hit** — the squared loss is centred at `1/(2β)`, so at exactly that margin the loss is zero and the gradient vanishes. (Past it the loss rises again — that is the intended over-confidence penalty from §5, not a bug.) If training flatlines early, the target margin is too easy: **lower β to raise `1/(2β)`** and restore signal.
 
 4. **DPO / ORPO catastrophic forgetting** — preference training narrows distribution. Run general-task eval (MMLU, HumanEval) after every alignment step to detect.
 
@@ -244,6 +244,6 @@ IPO — overcomes the tendency to overfit noisy labels via the bounded squared m
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/09_llms/10_dpo/` — DPO via TRL DPOTrainer
+- [../code_practice/09_finetuning/04_dpo_alignment.py](../code_practice/09_finetuning/04_dpo_alignment.py) — DPO via TRL `DPOTrainer` (⏸ code-built, not run)

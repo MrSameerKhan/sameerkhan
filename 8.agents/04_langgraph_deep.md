@@ -449,7 +449,7 @@ Two layers: (1) **Built-in recursion limit** — set when invoking: `graph.invok
 | Tool authorization | `../11.system_design/09_tool_authorization_patterns.md` | Capability isolation |
 | LangChain primer | `03_langchain_primer.md` | LCEL chains used INSIDE LangGraph nodes |
 | LLM observability | `../10.mlops/11_llm_observability.md` | Tracing LangGraph runs |
-| Code practice | `code_practice/06_agents/03_langgraph/` | Hands-on |
+| Code practice | [../code_practice/08_agents/03_langgraph_agent/](../code_practice/08_agents/03_langgraph_agent/) | Hands-on |
 
 ---
 
@@ -459,6 +459,7 @@ LangGraph turns agent loops into **explicit state machines**: nodes (functions),
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 08
 
-- `code_practice/06_agents/03_langgraph/` — state-machine orchestration
+- [../code_practice/08_agents/03_langgraph_agent/graph.py](../code_practice/08_agents/03_langgraph_agent/graph.py) — `StateGraph`, reducer, `ToolNode`, `tools_condition`, `MemorySaver`
+- [../code_practice/08_agents/04_document_agent/graph.py](../code_practice/08_agents/04_document_agent/graph.py) — multi-agent graph

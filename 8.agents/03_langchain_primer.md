@@ -361,7 +361,7 @@ LangChain is for composing linear/branching chains of LLM calls using LCEL. Lang
 | Structured output / constrained decoding | `../5.transformers/02_models/12_constrained_decoding.md` | Alternative to PydanticOutputParser |
 | Pydantic structured extraction | `../4.nlp/04_applications/03_information_extraction.md` | Same pattern for tool-call validation |
 | LLM observability (LangSmith etc.) | `../10.mlops/11_llm_observability.md` | |
-| Code practice | `code_practice/06_agents/02_langchain_primer/` | |
+| Code practice | [../code_practice/08_agents/03_langgraph_agent/](../code_practice/08_agents/03_langgraph_agent/) | LangChain `@tool` + `bind_tools` in use |
 
 ---
 
@@ -371,6 +371,8 @@ LangChain has one good idea (LCEL) and a lot of legacy baggage. Use it for: rapi
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 08
 
-- `code_practice/06_agents/02_langchain_primer/` —
+- [../code_practice/08_agents/03_langgraph_agent/tools.py](../code_practice/08_agents/03_langgraph_agent/tools.py) — `@tool`-decorated functions
+- [../code_practice/08_agents/03_langgraph_agent/graph.py](../code_practice/08_agents/03_langgraph_agent/graph.py) — `bind_tools` + `ChatOpenAI`
+- **Not yet built:** a dedicated LCEL / Runnables session

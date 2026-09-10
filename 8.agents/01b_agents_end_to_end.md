@@ -928,7 +928,7 @@ ReAct interleaves planning and acting — each action is decided based on the pr
 - **Prompting (6.llms/01):** ReAct is an advanced prompting pattern; CoT is the foundation of agent reasoning
 - **Finetuning (6.llms/02, 07):** Agents can be fine-tuned to follow tool-call formats more reliably
 - **Alignment (6.llms/03, 10):** Aligned models are safer agents — they follow constraints, refuse harmful tool calls
-- **System Design (9.system_design):** Agent system design asks: latency, cost, reliability, scaling
+- **System Design** ([../11.system_design/05_llm_agent_system_design.md](../11.system_design/05_llm_agent_system_design.md)): Agent system design asks: latency, cost, reliability, scaling
 
 ---
 

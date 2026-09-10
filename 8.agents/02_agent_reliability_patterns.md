@@ -146,7 +146,7 @@ The "already called" response signals the model to either use the cached result 
 
 ### Pattern D — Planner / executor split (fixes FM2)
 
-Phase 6 Session 6 in the coding sequence covers this. One LLM call produces the full plan up front; an executor runs each step. The planner doesn't get to mid-loop "wander" because it's only invoked once.
+Covered in depth in [06_planner_executor_patterns.md](06_planner_executor_patterns.md). One LLM call produces the full plan up front; an executor runs each step. The planner doesn't get to mid-loop "wander" because it's only invoked once.
 
 ### Pattern E — Tool-call extraction from content (fixes FM1)
 
@@ -256,8 +256,8 @@ This is what separates "agent works on the demo" from "agent works in production
 
 The single-agent patterns above handle 80% of cases. For the rest:
 
-- **Multi-step task requiring coordination** — planner/executor (Phase 6 S6)
-- **Cross-domain expertise required** — multi-agent supervisor (Phase 6 S7)
+- **Multi-step task requiring coordination** — planner/executor ([06_planner_executor_patterns.md](06_planner_executor_patterns.md))
+- **Cross-domain expertise required** — multi-agent supervisor ([07_multi_agent_orchestration.md](07_multi_agent_orchestration.md))
 - **Failed task with recoverable failure** — replan-on-error (LangGraph conditional edges)
 - **High-stakes write action** — HITL pause (LangGraph checkpointing → human approval queue)
 
@@ -296,10 +296,12 @@ Task success rate, tool-call accuracy (right tool emitted), efficiency (tool cal
 - **Gorilla** (Patil et al. 2023) — arXiv:2305.15334 — tool-call FT at scale
 - **LangGraph docs** — langchain-ai.github.io/langgraph — state machine orchestration
 - **Anthropic Claude Tool Use** docs — production-grade tool calling patterns
-- The `06_agents` folder in `code_practice/` has runnable code for every pattern above
+- [../code_practice/08_agents/](../code_practice/08_agents/) has runnable code for the core patterns above
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 08
 
-- `code_practice/06_agents/10_production_agents/` — budgets + timeouts + HITL + audit
+- [../code_practice/08_agents/01_react_agent.py](../code_practice/08_agents/01_react_agent.py) — ReAct loop with iteration cap
+- [../code_practice/08_agents/03_langgraph_agent/graph.py](../code_practice/08_agents/03_langgraph_agent/graph.py) — HITL interrupt scaffold (note: compiled with `with_hitl=False`, so the interrupt path is built but unexercised)
+- **Not yet built:** a dedicated production-hardening session (budgets + timeouts + audit log)

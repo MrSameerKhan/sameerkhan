@@ -28,10 +28,25 @@ mindmap
 
 ---
 
+## Where This Sits
+
+**The learning arc is `6.llms` → `7.rag` → `8.agents`.** This folder is the last step.
+
+```
+6.llms    the engine   — what ONE call does
+7.rag     a tool       — retrieval, one capability
+8.agents  the loop     — decides WHICH tool, and WHEN      ← you are here
+```
+
+An agent is a loop around a single LLM call, and RAG is one of the tools it can reach for. Neither makes sense before those two. If `00_agent_stack_foundations.md` is the only file you read here, it is still the highest-value one — it owns the orientation for the entire arc, not just this folder.
+
+---
+
 ## Reading Order
 
 | If you're learning... | Read in order |
 |----------------------|---------------|
+| **Orientation (start here)** | `00_agent_stack_foundations` — what a model / runtime / host / format / SDK / framework / protocol each is, and workflows vs agents |
 | Agent fundamentals | `01_agents` → `01b_agents_end_to_end` |
 | Production reliability | `02_agent_reliability_patterns` (retries, loop detection, structured outputs, HITL, audit) |
 | Frameworks | `03_langchain_primer` → `04_langgraph_deep` (the modern default) → `07_multi_agent_orchestration` |
@@ -46,6 +61,7 @@ mindmap
 
 | File | Owns |
 |------|------|
+| `00_agent_stack_foundations.md` | SSOT: the 7-layer stack, wire-format comparison, product placement map, workflows vs agents + Anthropic's 5 workflow patterns, when to delete the framework |
 | `01_agents.md` | Agent fundamentals — ReAct, tool calling, MCP overview |
 | `01b_agents_end_to_end.md` | Worked example — agent loop with tool calls |
 | `02_agent_reliability_patterns.md` | SSOT: production hardening (retries, loop detection, structured outputs, HITL, audit log) |
@@ -61,6 +77,7 @@ mindmap
 
 ## SSOT Topics Owned Here
 
+- Stack layers / wire formats / workflows vs agents → `00_agent_stack_foundations.md`
 - Agent reliability patterns → `02_agent_reliability_patterns.md`
 - LangGraph deep dive → `04_langgraph_deep.md`
 - Agent memory architectures → `05_agent_memory.md`
@@ -87,5 +104,12 @@ mindmap
 
 ## Practice
 
-- Agents (10 sessions, all docs complete) → `code_practice/06_agents/`
-- Each session pairs 1:1 with a file in this folder — see `code_practice/INDEX.md` § Phase 6.
+- Agents (4 sessions, all ✅ Run) → [../code_practice/08_agents/](../code_practice/08_agents/)
+  - `01_react_agent.py` · `02_tool_calling.py` · `03_langgraph_agent/` · `04_document_agent/`
+- Primitives ladder (the loop, one step at a time) → [../code_practice/12_agents_from_scratch/](../code_practice/12_agents_from_scratch/)
+- **Not yet built:** dedicated sessions for MCP, long-term memory, agent eval, and production hardening.
+
+## Interview Prep
+
+- 4-day plan → [../code_practice/11_interview_drills/AGENTS_4DAY_PLAN.md](../code_practice/11_interview_drills/AGENTS_4DAY_PLAN.md)
+- Question bank → [../code_practice/11_interview_drills/AGENTS_QA_BANK.md](../code_practice/11_interview_drills/AGENTS_QA_BANK.md)

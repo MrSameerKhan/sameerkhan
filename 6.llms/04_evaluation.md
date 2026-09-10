@@ -164,7 +164,7 @@ refs = ["The quick brown fox jumps over the lazy dog"]
 hyps = ["A fast brown fox leaps over the sleeping dog"]
 
 P, R, F1 = score(hyps, refs, lang="en", verbose=False)
-print(f"BERTScore F1: {F1.item():.4f}")  # ≈ -0.92 (handles paraphrase well)
+print(f"BERTScore F1: {F1.item():.4f}")  # ≈ 0.92 (handles paraphrase well)
 ```
 
 ---
@@ -209,7 +209,7 @@ Return ONLY valid JSON:
 }}"""
 
     response = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=300,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -231,7 +231,7 @@ Return ONLY one of: "A", "B", or "tie"
 Verdict:"""
 
     response = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=10,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -312,10 +312,12 @@ def pass_at_k(n_samples, n_correct, k):
         return 1.0
     return 1.0 - comb(n_samples - n_correct, k) / comb(n_samples, k)
 
-# Example: generate 20 code samples, 8 pass tests
-# pass@1 (k=20, 8 correct): ≈ 0.48
-# pass@1 (k=20, 8 correct, n=10): ≈ 0.95
+# Example: n=20 samples generated, c=8 pass the tests
+# pass@1  = 1 - C(12,1)/C(20,1)  = 1 - 12/20        = 0.4000
+# pass@10 = 1 - C(12,10)/C(20,10) = 1 - 66/184756   = 0.9996
 ```
+
+Read those two together: **any single sample has a 40% chance of passing, but if the user gets 10 attempts the task is solved essentially every time.** That gap is why reporting only `pass@1` understates a model on tasks where a human can cheaply retry — and why quoting a bare "pass@k" without stating both `n` and `k` is meaningless.
 
 ---
 
@@ -382,7 +384,7 @@ results = evaluate(
 ### Hallucination Detection
 
 ```python
-def check_faithfulness(response: str, context: str, judge_model="claude-opus-4-6") -> dict:
+def check_faithfulness(response: str, context: str, judge_model="claude-opus-5") -> dict:
     """Check if response is fully supported by context."""
     prompt = f"""Given the following context, determine if the response is fully supported.
 
@@ -427,7 +429,7 @@ def nli_faithfulness(response: str, context: str) -> float:
 
 ```python
 class LLMEvaluator:
-    def __init__(self, judge_model="claude-opus-4-6"):
+    def __init__(self, judge_model="claude-opus-5"):
         self.judge_model = judge_model
 
     def evaluate(self, model_fn, test_cases: list, metrics: list) -> pd.DataFrame:
@@ -506,6 +508,7 @@ LLM evaluation requires a metric battery, not a single score. Automatic metrics:
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 06
 
-- `code_practice/09_llms/09_eval_compare/` — 20-prompt eval + McNemar test
+- [../code_practice/06_llms/03_llm_evaluation.py](../code_practice/06_llms/03_llm_evaluation.py) — LLM evaluation harness
+- [../code_practice/07_rag/others/04_rag_evaluation.py](../code_practice/07_rag/others/04_rag_evaluation.py) — RAGAS + LLM-as-judge (retrieval side)

@@ -138,8 +138,8 @@ def compute_doc_hash(content: str) -> str:
 
 def incremental_index(
     new_docs: list[dict],          # {id, content, updated_at}
-    hash_store_path: str = "doc_hashes.json",
     vectorstore,
+    hash_store_path: str = "doc_hashes.json",
 ) -> dict:
     hashes = json.loads(Path(hash_store_path).read_text()) if Path(hash_store_path).exists() else {}
     
@@ -317,5 +317,4 @@ Shadow deployment: run both old and new pipelines on the same queries, evaluate 
 
 ## Code Practice
 
-- `code_practice/07_rag/05_production_rag/pipeline.py` — semantic cache + incremental indexing
-- `code_practice/07_rag/05_production_rag/serve.py` — FastAPI server with tracing
+- [../code_practice/07_rag/05_production_rag/](../code_practice/07_rag/05_production_rag/) — semantic cache + incremental indexing + FastAPI server with tracing

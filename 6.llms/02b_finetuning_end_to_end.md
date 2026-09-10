@@ -502,7 +502,7 @@ Response C ("and then flew"): h_C = [0.3, 0.2]
 
 Reward head W_r = [[0.4], [0.5]] (d×1)
 
-r_A = h_A @ W_r = 0.9×0.4 + 0.8×0.5 = 0.480 + 0.400 = 0.880
+r_A = h_A @ W_r = 1.2×0.4 + 0.8×0.5 = 0.480 + 0.400 = 0.880
 r_B = h_B @ W_r = 0.9×0.4 + 0.6×0.5 = 0.360 + 0.300 = 0.660
 r_C = h_C @ W_r = 0.3×0.4 + 0.2×0.5 = 0.120 + 0.100 = 0.220
 
@@ -511,13 +511,16 @@ L_reward = -log σ(r_A - r_C)
          = -log σ(0.880 - 0.220)
          = -log σ(0.660)
          = -log(1 / (1 + e^(-0.660)))
-         = -log(1 / 1.934)
-         = -log(0.517)
-         = 0.659   → W_r gets updated to increase r_A and decrease r_C
+         = -log(1 / (1 + 0.5169))
+         = -log(1 / 1.5169)
+         = -log(0.6593)
+         = 0.4166   → W_r gets updated to increase r_A and decrease r_C
 
 For preference pair (A preferred over B):
-L_reward = -log σ(0.880 - 0.660) = -log σ(0.220) = 0.589
+L_reward = -log σ(0.880 - 0.660) = -log σ(0.220) = -log(0.5548) = 0.5892
 ```
+
+**Sanity check worth internalising:** the *larger* preference margin (A over C, 0.660) must give the *smaller* loss (0.4166) — the model is already confident and correct, so there is little to learn. The narrower margin (A over B, 0.220) gives the larger loss (0.5892). If your reward loss moves the other way, you have a sign error. And note `σ(0.660) = 0.6593` is the **probability** that A is preferred, not the loss — confusing the two is the single most common slip here.
 
 ### 5.5 Step 3: PPO Optimization
 
@@ -545,8 +548,8 @@ KL(π_θ || π_sft) = Σ_x π_θ(x) × log(π_θ(x) / π_sft(x))
 
 For our toy case, at position 2 ("on" → predicting next token):
 
-π_sft (SFT model):  P(mat)=0.400, P(sat)=0.200, P(on)=0.100
-π_θ   (RL model):   P(mat)=0.600, P(sat)=0.200, P(on)=0.150, P(on)=0.050
+π_sft (SFT model):  P(mat)=0.400, P(sat)=0.200, P(on)=0.100, P(other)=0.300
+π_θ   (RL model):   P(mat)=0.600, P(sat)=0.200, P(on)=0.150, P(other)=0.050
 
 KL contribution from "mat":
 0.600 × log(0.600/0.400) = 0.600 × log(1.500) = 0.600 × 0.405 = 0.243
@@ -639,7 +642,7 @@ term_rejected = β × log(π_θ(r) / π_ref(r)) = 0.5 × log(0.06/0.08) = 0.5 ×
 
 margin = term_chosen - term_rejected = 0.144 - (-0.144) = 0.288
 
-L_DPO = -log σ(0.288) = -log(0.572) = 0.558
+L_DPO = -log σ(0.2877) = -log(0.5714) = 0.5596
 ```
 
 The gradient increases π_θ(chosen) relative to π_ref and decreases π_θ(rejected) relative to π_ref.
@@ -708,27 +711,34 @@ LoRA with r=8 keeps the top 8 — enough for most tasks.
 **Before LoRA update:**
 
 ```
-q_on = x_on @ W_Q = [1.000, -0.316] @ [[0.1,0.3],[0.3,0.4]]
-                   = [1.000×0.1 + (-0.316)×0.3, 1.000×0.2 + (-0.316)×0.4]
-                   = [0.181 - 0.095, 0.282 - 0.126]
-                   = [0.086, 0.076]
+W_Q = [[0.1, 0.2],          ← the SAME frozen matrix as §3.3
+       [0.3, 0.4]]
+
+q_on = x_on @ W_Q = [1.000, -0.316] @ [[0.1, 0.2], [0.3, 0.4]]
+                   = [1.000×0.1 + (-0.316)×0.3,  1.000×0.2 + (-0.316)×0.4]
+                   = [0.1000 - 0.0948,           0.2000 - 0.1264]
+                   = [0.0052, 0.0736]
 ```
 
 **After LoRA step (B_new from Section 3.4):**
 
 ```
-ΔW = [[0.010, 0.005],
-      [-0.004, -0.002]]
+ΔW = B_new × A = [[0.0100,  0.0055],
+                  [-0.0040, -0.0022]]
 
-x_on @ ΔW = [1.000, -0.316] @ [[0.010, 0.005],[-0.004,-0.002]]
-           = [1.000×0.010 + (-0.316)×(-0.004), 1.000×0.005 + (-0.316)×(-0.002)]
-           = [0.010+0.001, 0.005+0.001]
-           = [0.011, 0.006]
+x_on @ ΔW = [1.000, -0.316] @ [[0.0100, 0.0055], [-0.0040, -0.0022]]
+           = [1.000×0.0100 + (-0.316)×(-0.0040),  1.000×0.0055 + (-0.316)×(-0.0022)]
+           = [0.010000 + 0.001264,                0.005500 + 0.000695]
+           = [0.011264, 0.006195]
 
-q_on_new = q_on + [0.011, 0.006] = [0.097, 0.082]
+q_on_new = q_on + [0.011264, 0.006195]
+         = [0.0052 + 0.011264, 0.0736 + 0.006195]
+         = [0.0165, 0.0798]
 ```
 
-The query vector shifted from [0.006, 0.076] to [0.017, 0.082]. This propagates through the attention computation, changes the output, and adjusts the final loss.
+The query vector shifted from **[0.0052, 0.0736]** to **[0.0165, 0.0798]**. This propagates through the attention computation, changes the output, and adjusts the final loss.
+
+Note the first component **more than tripled** while the second moved ~8%. That asymmetry is not arbitrary — it is `ΔW` being rank-1, so every column of the update is a scalar multiple of the same direction. LoRA cannot push the query anywhere it likes; it can only move it along the one direction that `B×A` spans.
 
 **The key point:** LoRA changes queries (and keys, values) in a targeted rank-1 direction, not arbitrarily — making updates interpretable and controllable.
 
@@ -902,7 +912,7 @@ frozen    = sum(p.numel() for p in layer.parameters() if not p.requires_grad)
 print(f"Trainable params: {trainable} (LoRA)")
 print(f"Frozen params:    {frozen} (base weight)")
 
-x = torch.tensor([[1.0, 1.0, 1.0]])
+x = torch.tensor([[1.0, 1.0]])   # in_features=2, so 2 values — not 3
 out = layer(x)
 print(f"Output: {out}")
 

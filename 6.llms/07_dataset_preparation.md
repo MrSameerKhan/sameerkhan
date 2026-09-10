@@ -357,6 +357,6 @@ Data format and quality dominate fine-tuning outcomes. Default to ChatML + `toke
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/09_llms/05_dataset_prep/` — Alpaca → ChatML converter
+- [../code_practice/09_finetuning/03_dataset_prep.py](../code_practice/09_finetuning/03_dataset_prep.py) — Alpaca → ChatML converter (⏸ code-built, not run)

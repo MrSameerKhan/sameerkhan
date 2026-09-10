@@ -499,11 +499,12 @@ Defense in depth: (1) **Tool design** — make destructive tools require explici
 
 ## Connections
 
-- **LLM Prompting (5.llms/01):** ReAct is an advanced prompting pattern; CoT is the foundation of agent reasoning
-- **RAG (5.llms/04):** Retrieval is one of the core agent tools; agents can dynamically query RAG systems
-- **LLM Evaluation (5.llms/06):** Agent evaluation requires task completion metrics, not just output quality
-- **MLOps (7.mlops):** Agents need monitoring (tool call latency, error rates, loop detection)
-- **System Design (8.system_design):** Agentic system design is a rapidly growing interview topic
+- **Stack foundations** ([00_agent_stack_foundations.md](00_agent_stack_foundations.md)): where models, runtimes, hosts, formats, SDKs, frameworks and protocols each sit
+- **LLM Prompting** ([../6.llms/01_prompting.md](../6.llms/01_prompting.md)): ReAct is an advanced prompting pattern; CoT is the foundation of agent reasoning
+- **RAG** ([../7.rag/01_rag.md](../7.rag/01_rag.md)): Retrieval is one of the core agent tools; agents can dynamically query RAG systems
+- **LLM Evaluation** ([../6.llms/04_evaluation.md](../6.llms/04_evaluation.md)): Agent evaluation requires task completion metrics, not just output quality
+- **MLOps** ([../10.mlops/11_llm_observability.md](../10.mlops/11_llm_observability.md)): Agents need monitoring (tool call latency, error rates, loop detection)
+- **System Design** ([../11.system_design/05_llm_agent_system_design.md](../11.system_design/05_llm_agent_system_design.md)): Agentic system design is a rapidly growing interview topic
 
 ---
 
@@ -513,7 +514,8 @@ Agents = LLM + tools + memory + loop. ReAct pattern: Thought → Action → Obse
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 08
 
-- `code_practice/03_prompting/07_react_manual/` — manual ReAct loop
-- `code_practice/06_agents/01_fundamentals/` — production ReAct with guards
+- [../code_practice/08_agents/01_react_agent.py](../code_practice/08_agents/01_react_agent.py) — manual ReAct loop
+- [../code_practice/08_agents/02_tool_calling.py](../code_practice/08_agents/02_tool_calling.py) — provider-native tool calling
+- [../code_practice/12_agents_from_scratch/](../code_practice/12_agents_from_scratch/) — the loop built one primitive at a time

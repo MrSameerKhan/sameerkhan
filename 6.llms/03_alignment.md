@@ -322,9 +322,9 @@ No separate reference model needed — uses within-batch contrast
 
 L_ORPO = L_SFT + λ · L_OR
 
-L_OR = -log(σ(log(odds_ratio(y_w) / odds_ratio(y_l))))
+L_OR = -log(σ(log(odds(y_w|x) / odds(y_l|x))))
 
-odds_ratio(y) = P(y|x) / (1 - P(y|x))
+odds(y|x) = P(y|x) / (1 - P(y|x))        ← this is the ODDS; their ratio is the odds ratio
 
 Benefits:
 - Single training stage (SFT + alignment simultaneously)
@@ -377,7 +377,7 @@ def constitutional_revision(harmful_prompt: str, harmful_response: str) -> dict:
 
     # Step 1: Critique
     critique = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=512,
         messages=[{"role": "user", "content": f"""Consider this principle:
 {CONSTITUTION[0]}
@@ -388,7 +388,7 @@ Response: {harmful_response}"""}]
 
     # Step 2: Revise
     revised = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-opus-5",
         max_tokens=512,
         messages=[{"role": "user", "content": f"""Critique: {critique}
 
@@ -420,8 +420,9 @@ As β → ∞: pure SFT, ignores reward signal → no alignment
 
 β selection:
   - Monitor KL divergence during training
-  - Target KL = 6-10 nats for typical RLHF
-  - Adaptive: adjust β to keep KL near target_kl
+  - Healthy KL = 2-6 nats.  < 1 → the policy has barely moved off SFT, so it may not be
+    learning.  > 15 → likely reward hacking, raise β.  > 30 → stop and investigate.
+  - Adaptive: adjust β to keep KL near target_kl (TRL's `target_kl` default is 6.0)
 
 Computed on a 4-response toy (03c_dpo_end_to_end.md §4), π* ∝ π_ref·exp(r/β):
 
@@ -466,10 +467,11 @@ Reward hacking occurs when the model finds responses that score high on the rewa
 
 ## Connections
 
-- **LLM Fine-Tuning (6.llms/02):** SFT is stage 1 of RLHF; DPO builds on SFT checkpoint
-- **LLM Prompting (6.llms/01):** Aligned models respond better to prompts — RLHF is why Claude/GPT follow instructions
-- **LLM Evaluation (6.llms/06):** Alignment quality measured by safety/helpfulness benchmarks, LLM-as-judge
-- **Reasoning models (5.transformers/02_models/14):** RLVR / GRPO for verifiable-reward alignment
+- **LLM Fine-Tuning** ([02_finetuning.md](02_finetuning.md), [02c_sft_end_to_end.md](02c_sft_end_to_end.md)): SFT is stage 1 of RLHF; DPO builds on the SFT checkpoint
+- **LLM Prompting** ([01_prompting.md](01_prompting.md)): aligned models respond better to prompts — RLHF is why Claude/GPT follow instructions
+- **LLM Evaluation** ([04_evaluation.md](04_evaluation.md), [04b_evaluation_end_to_end.md](04b_evaluation_end_to_end.md)): alignment quality measured by safety/helpfulness benchmarks, LLM-as-judge
+- **Alignment variants** ([06_alignment_follow_ups.md](06_alignment_follow_ups.md)): IPO / KTO / ORPO / GRPO / RLOO
+- **Reasoning models** ([../5.transformers/02_models/14_reasoning_models.md](../5.transformers/02_models/14_reasoning_models.md)): RLVR / GRPO for verifiable-reward alignment
 
 ---
 
@@ -479,7 +481,8 @@ Alignment = making LLMs do what humans want. RLHF does this via human preference
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/03_prompting/` — prompting baseline before alignment
+- [../code_practice/06_llms/01_prompt_engineering.py](../code_practice/06_llms/01_prompt_engineering.py) — prompting baseline before alignment
+- [../code_practice/09_finetuning/04_dpo_alignment.py](../code_practice/09_finetuning/04_dpo_alignment.py) — DPO (⏸ code-built, not run)
 - `6.llms/10_alignment_end_to_end.md` — RLHF + DPO full dry-run with numbers

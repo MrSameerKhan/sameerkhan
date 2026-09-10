@@ -113,7 +113,7 @@ graph TD
     style naive fill:#e74c3c22
     style paged fill:#27ae6022
 ```
-> Naive: ~99% memory waste. PagedAttention: >96% utilization → more concurrent requests → 10-30× throughput.
+> Naive: 85.4% fragmentation on a realistic batch (§2). PagedAttention: >96% utilization → more concurrent requests → 10-30× throughput.
 
 When `request_42` attends to position 50, the engine looks up Block 3 (logical 32-47) and the offset within. The attention kernel is rewritten to handle non-contiguous blocks.
 
@@ -203,7 +203,7 @@ Static batching:    B requests → 1 forward pass per token, batched
                     Throughput: B × N tokens/sec — if all requests had same length
                     Reality:    ~3-4× N tokens/sec (step-locking waste)
 
-vLLM (continuous):  250+ requests packed via PagedAttention
+vLLM (continuous):  256+ requests packed via PagedAttention
                     Throughput: 30× N tokens/sec on the same GPU
 ```
 
@@ -235,7 +235,7 @@ Per-request latency is **slightly worse** under continuous batching (your reques
 
 **Q1: What's PagedAttention and why does it matter?**
 
-PagedAttention is vLLM's mechanism for storing the KV cache in non-contiguous fixed-size blocks (like OS pages). Each request has a logical page table mapping its positions to physical blocks. Eliminates the 60-80% memory waste of naive pre-allocation, lets you fit 5-10× more concurrent requests on the same GPU.
+PagedAttention is vLLM's mechanism for storing the KV cache in non-contiguous fixed-size blocks (like OS pages). Each request has a logical page table mapping its positions to physical blocks. On the realistic batch measured in §2 it cuts fragmentation from **85.4% to 1.3%**, which lets you fit far more concurrent requests on the same GPU. *(Quote 85.4% — the batch-level figure — not the 98.8% single-request worst case, which only holds when one request massively under-uses its allocation.)*
 
 **Q2: What's continuous batching?**
 
@@ -265,7 +265,7 @@ vLLM is the throughput champion for general HF models. TGI (HuggingFace) has sim
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice
 
-- `code_practice/02_transformers/09_kv_cache/` — KV cache from scratch
-- `code_practice/09_llms/12_vllm_serve/` — vLLM serve + batching
+- [../code_practice/09_finetuning/05_vllm_serving/](../code_practice/09_finetuning/05_vllm_serving/) — vLLM serve + batching (⏸ code-built, not run)
+- KV-cache arithmetic is hand-computed in [../5.transformers/02_models/04b_attention_at_scale_end_to_end.md](../5.transformers/02_models/04b_attention_at_scale_end_to_end.md)

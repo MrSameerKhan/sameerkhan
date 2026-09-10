@@ -390,7 +390,7 @@ Three policies, pick by use case. (1) **Latest wins** — most recent observatio
 | RAG conceptual | `../7.rag/01_rag.md` | Long-term memory IS retrieval |
 | Indirect injection (writes from untrusted sources) | `../7.rag/03_indirect_prompt_injection.md` | Memory poisoning threat |
 | Multi-agent (shared memory) | `07_multi_agent_orchestration.md` | Memory as blackboard |
-| Code practice | `code_practice/06_agents/05_memory/` | Hands-on |
+| Code practice | [../code_practice/08_agents/03_langgraph_agent/](../code_practice/08_agents/03_langgraph_agent/) | Short-term memory via `MemorySaver` + `thread_id` |
 
 ---
 
@@ -400,6 +400,7 @@ Production agent memory has **three tiers**: working (context window), short-ter
 
 ---
 
-## Code Practice — Wired by Phase 6
+## Code Practice — Phase 08
 
-- `code_practice/06_agents/05_memory/` — short + working + long memory
+- [../code_practice/08_agents/03_langgraph_agent/run.py](../code_practice/08_agents/03_langgraph_agent/run.py) — multi-turn state persisted across `.invoke()` calls by `thread_id`
+- **Not yet built:** long-term memory (episodic / semantic / procedural) with a `BaseStore` backend
