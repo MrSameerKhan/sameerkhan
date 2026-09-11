@@ -24,7 +24,9 @@ mindmap
     Evaluation
       Outcome eval vs process eval
       Trajectory · cost · safety metrics
-``` **Tier: 2 (Theory).** The most comprehensive part of the LLM stack — 10 files cover the full agent lifecycle.
+```
+
+**Tier: 2 (Theory).** The most comprehensive part of the LLM stack — 11 files cover the full agent lifecycle.
 
 ---
 

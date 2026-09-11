@@ -955,7 +955,7 @@ Three practical reasons: (1) Parallelism — LSTM step t requires step t-1's out
 | Scaling laws and emergent abilities | `08_scaling_laws_emergent.md` | Why scale changes which architecture wins |
 | BiLSTM for NER | `../04_applications/02_ner_and_tagging.md` | BiLSTM + CRF for tagging |
 | Word embeddings as input | `../02_embeddings/01_word_embeddings.md` | Embedding layer feeds into LSTM |
-| RNN for time series | `../../1.machine_learning/05_algorithms/05_time_series.md` | Sequential data in ML context |
+| RNN for time series | [../../1.machine learning/02_algorithms/05_time_series.md](../../1.machine%20learning/02_algorithms/05_time_series.md) | Sequential data in ML context |
 
 ---
 

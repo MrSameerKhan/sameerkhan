@@ -485,4 +485,5 @@ Alignment = making LLMs do what humans want. RLHF does this via human preference
 
 - [../code_practice/06_llms/01_prompt_engineering.py](../code_practice/06_llms/01_prompt_engineering.py) — prompting baseline before alignment
 - [../code_practice/09_finetuning/04_dpo_alignment.py](../code_practice/09_finetuning/04_dpo_alignment.py) — DPO (⏸ code-built, not run)
-- `6.llms/10_alignment_end_to_end.md` — RLHF + DPO full dry-run with numbers
+- [03b_alignment_end_to_end.md](03b_alignment_end_to_end.md) — RLHF + DPO full dry-run with numbers
+- [03c_dpo_end_to_end.md](03c_dpo_end_to_end.md) — the `Z(x)` cancellation derived and verified

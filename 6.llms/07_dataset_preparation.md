@@ -43,7 +43,7 @@ flowchart TD
 
 ## 1. Instruction Formats — The Big Three
 
-### ChatML (used by Llama-3, Mistral, Qwen, most modern open models)
+### ChatML (Qwen, Yi, many open models — **not** Llama-3 or Mistral)
 
 ```
 <|im_start|>system
@@ -55,6 +55,12 @@ Paris.<|im_end|>
 ```
 
 Multi-turn extends naturally. Role tags (`system` / `user` / `assistant` / `tool`) are explicit. Each turn ends with `<|im_end|>`.
+
+> ⚠️ **ChatML is not universal — this trips people up.** Llama-3 uses its own scheme
+> (`<|begin_of_text|>`, `<|start_header_id|>role<|end_header_id|>`, `<|eot_id|>`) and Mistral uses
+> `[INST] … [/INST]`. They are *different token IDs*, not cosmetic variants. Side-by-side comparison
+> in [02c_sft_end_to_end.md](02c_sft_end_to_end.md) §4, and the failure it causes in §5.
+> This is exactly why you call `tokenizer.apply_chat_template()` rather than hand-writing a format.
 
 ### Alpaca (instruction-tuning classic — Stanford 2023)
 
@@ -92,7 +98,7 @@ Originally scraped from sharegpt.com. Commonly converted to ChatML before traini
 
 | Format | Best for | Modern? |
 |--------|----------|---------|
-| ChatML | Any modern LLM (Llama-3 / Mistral / Qwen / Gemma) | Default |
+| ChatML | Qwen / Yi and many open models. **Llama-3 and Mistral use their own formats** — always let the tokenizer decide | Default *source* format |
 | Alpaca | Single-turn instruction following (legacy) | Outdated |
 | ShareGPT | Multi-turn from chat scrapes | Common as source format |
 | Plain (prompt → completion) | Base-model continued pretraining | For CPT only |
@@ -155,7 +161,7 @@ Without this masking, the model also learns to generate user turns — degrades 
 | Continued pretraining (CPT) | ~1M-10M tokens | Adding new domain knowledge |
 | Frontier-quality SFT | ~1M+ examples | Llama-3 used ~10M+ SFT examples |
 
-**LIMA insight (Meta, 2023):** 1,000 carefully curated high-quality examples can beat models tuned on 50,000 noisy ones. **Quality beats quantity in instruction tuning.**
+**LIMA insight (Zhou et al., Meta 2023):** 1,000 carefully curated examples beat models tuned on Alpaca's 52,000 GPT-3.5-generated ones on human preference evals. **Quality beats quantity in instruction tuning** — because pretraining already installed the capabilities, and SFT is teaching format and selection, not knowledge.
 
 ---
 
@@ -182,10 +188,13 @@ model = AutoModelForCausalLM.from_pretrained(...)
 
 # Apply chat template but cut to just after the user-turn opener
 # Then let the model "auto-complete" the user's question
-prefix = tokenizer.apply_chat_template(
-    [{"role": "user", "content": ""}],
+# NOTE: with tokenize=False this returns a STRING. Slicing [0] would take one CHARACTER —
+# a real bug in many copies of this snippet. Cut at the user header instead.
+full = tokenizer.apply_chat_template(
+    [{"role": "user", "content": "X"}],
     tokenize=False, add_generation_prompt=False
-)[0]  # cut to just after user header
+)
+prefix = full[: full.index("X")]   # everything up to where user content would begin
 
 ids = tokenizer(prefix, return_tensors="pt").input_ids
 out = model.generate(ids, max_new_tokens=128, do_sample=True, temperature=1.0)
@@ -271,9 +280,9 @@ DeepSeek-R1 distilled this format; reasoning tokens are usually masked from infe
 
 ## 7. Multi-Turn Data Construction
 
-**Trap:** training on multi-turn data with naive masking puts loss on earlier assistant turns, which the model will copy verbatim (parrot mode).
+**The rule:** in a `k`-turn conversation, **every assistant turn is a training target and every user turn is masked** — not just the last one. Each assistant turn is a valid demonstration conditioned on everything before it, so training on all of them gets you `k` examples out of one conversation instead of 1.
 
-**Fix:** mask all but the **final** assistant turn, OR mask earlier turns as context.
+**The trap** is the opposite of what people assume: the failure is *under*-masking the user turns, not over-training the assistant ones. Miss the user masking and the model learns to write the next user question itself — see [02c_sft_end_to_end.md](02c_sft_end_to_end.md) §2.
 
 ```python
 # TRL's DataCollatorForCompletionOnlyLM handles this
@@ -343,11 +352,12 @@ CPT (continued pretraining) trains on raw text with no instruction format, using
 
 | This file | Links to |
 |-----------|----------|
-| Fine-tuning workflow | `02_finetuning.md` |
-| PEFT methods (LoRA / QLoRA / DoRA) | `../5.transformers/02_models/09_parameter_efficient_tuning.md` |
-| Alignment (DPO / KTO / ORPO / GRPO) | `06_alignment_follow_ups.md` |
-| Constrained / function-calling decoding | `../5.transformers/02_models/12_constrained_decoding.md` |
-| Reasoning model data (R1-style) | `../5.transformers/02_models/14_reasoning_models.md` |
+| **SFT arithmetic** (masking computed, template overhead, the two failures) | [02c_sft_end_to_end.md](02c_sft_end_to_end.md) |
+| Fine-tuning workflow | [02_finetuning.md](02_finetuning.md) |
+| PEFT methods (LoRA / QLoRA / DoRA) | [../5.transformers/02_models/09_parameter_efficient_tuning.md](../5.transformers/02_models/09_parameter_efficient_tuning.md) |
+| Alignment (DPO / KTO / ORPO / GRPO) | [06_alignment_follow_ups.md](06_alignment_follow_ups.md) |
+| Constrained / function-calling decoding | [../5.transformers/02_models/12_constrained_decoding.md](../5.transformers/02_models/12_constrained_decoding.md) |
+| Reasoning model data (R1-style) | [../5.transformers/02_models/14_reasoning_models.md](../5.transformers/02_models/14_reasoning_models.md) |
 
 ---
 

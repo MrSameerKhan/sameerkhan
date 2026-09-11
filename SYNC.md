@@ -52,15 +52,57 @@
 
 **Both previously-flagged 6.llms items turned out to be properly FIXED, not left hanging:** the Llama-3 KV-cache figure is correctly 0.50 GiB (GQA) with an explicit note that 2.00 GiB is the MHA/Llama-2-7B number people misattach; and the GSM8K "18%→70%" claim carries an honest CAUTION block explaining the Kojima/Wei conflation rather than substituting an unverified number.
 
+### ALL 13 READMEs FIXED — the "READMEs won't display" bug found and killed
+
+**Root cause was ONE bug repeated in 4 files:** the closing ``` fence of the mermaid block had **text appended on the same line**, e.g. ``` ``` **Tier: 2 (Theory).** …``` . The fence never closes, so the diagram fails to render *and* the sentence gets swallowed into the code block. Hit `7.rag`, `8.agents`, `9.multimodal`, `11.system_design`. Fixed by moving the prose to its own line after the fence.
+
+Other defects found in the same sweep:
+
+| Problem | Files |
+|---|---|
+| **H1 title didn't match the folder number** | `9.multimodal/README.md` was titled **"# 11. Multimodal"**; `10.mlops/README.md` was **"# 8. MLOps"**. Both now correct — all 10 numbered folders verified title-vs-folder. |
+| **Renamed files still referenced by old name** | `10.mlops` listed `03_feature_store.md` (**never existed**; real file is `03_monitoring_and_drift.md`, which was missing from the TOC entirely). `1.machine learning` listed `03_unsupervised.md` (real: `03_unsupervised_learning.md`). |
+| **Dead `code_practice/` paths** | `10.mlops` pointed at `code_practice/04_llms/` and `code_practice/05_rag/` — **neither folder exists**. Repointed at the real `06_llms/`, `07_rag/05_production_rag/`, `09_finetuning/` with ✅/⏸ status. |
+| **`1.machine_learning` (underscore) — the folder name has a SPACE** | Same bug class as the `2.deep_learning` fix from the prior arc. 4 files: `10.mlops/README.md` ×2, `11.system_design/README.md`, `6.llms/README.md`, `4.nlp/03_sequence_models/01_rnn_to_attention.md` (which also had a wrong subfolder, `05_algorithms/` → `02_algorithms/`). Now written as URL-encoded `%20` links, which render correctly on GitHub and in VS Code. |
+| Stale file count | `8.agents/README.md` said "10 files"; it is now **11** (after `00_agent_stack_foundations.md`). |
+
+**Verification:** fence/mermaid lint **0 issues across all 13 READMEs**; README link + TOC audit **clean**; repo-wide **218 links, 0 broken**; all 10 numbered folder titles match. *(Lint scripts are in the session scratchpad — the fence check is worth rebuilding if READMEs are ever edited by hand again, it took seconds and found what eyeballing missed.)*
+
+---
+
+### 6.llms COMPLETED — all 12 files read. **Do-not-claim rule LIFTED at user's instruction.**
+
+User decided to claim fine-tuning/alignment after learning it properly, so the 8 deferred files were audited in full. **Found 11 more defects, several serious.** The honest framing agreed for interview: **claim the knowledge, not the run** — *"I've implemented LoRA/QLoRA and DPO end to end and worked the arithmetic by hand; the training runs are blocked on a torch/cu121 conflict on a GTX 1650 Ti."* That survives follow-up (dataset size, loss curve, what broke); "I fine-tuned Mistral-7B in production" does not.
+
+| File | Verdict |
+|---|---|
+| `02b_finetuning_end_to_end.md` | ⚠️ **6 faults.** (1) Reward model computed `r_A` using **h_B's value** — wrote `0.9×0.4 = 0.480` (0.9×0.4=0.36; correct first term is 1.2×0.4). (2) **Bradley-Terry loss had a sign error in the exponent** — `1/1.934` uses `e^(+0.66)`; and it reported **σ(0.66)=0.659 *as the loss***. Correct `L = 0.4166`. (3) §9 LoRA verification carried **three mutually inconsistent number sets** and a `W_Q` contradicting §3.3; regenerated `q_on [0.0052, 0.0736] → [0.0165, 0.0798]`. (4) DPO loss `0.558 → 0.5596`. (5) KL example listed `P(on)` twice. (6) PyTorch snippet fed **3 features into a 2-feature layer**. |
+| `02_finetuning.md` | ⚠️ **LoRA trainable params off by 7.6×** — claimed `20,971,520` for r=64 across all 7 modules; correct is **159,907,840** (**2.32%**, not 0.31%), all-params `6,898,323,456`. Base verified against published `6,738,415,616`. Also `"Mistral / Mistral"`, `"add k_proj, k_proj"`, a backwards bf16 comment, and **train/val split listed under things to AVOID**. |
+| `07_dataset_preparation.md` | ⚠️ **Said ChatML is "used by Llama-3, Mistral"** — it is not; Llama-3 uses `<\|start_header_id\|>`/`<\|eot_id\|>`, Mistral uses `[INST]`. Wrong in 2 places and **contradicts `02c` §4**. Also **contradicted `02c` on multi-turn masking** — claimed "mask all but the final assistant turn"; correct is **every assistant turn is a target**, `02c` was right. Magpie snippet sliced `[0]` off a **string** (one character, not a header cut). |
+| `03_alignment.md` | ⚠️ KL target `6-10 nats` **contradicted `03b`** (healthy 2-6); `odds()` mislabelled `odds_ratio()`; **2 refs to files that don't exist** (`10_alignment_end_to_end.md`, `6.llms/06_evaluation`). |
+| `06_alignment_follow_ups.md` | ⚠️ IPO failure mode contradicted its own §5 (said loss is *small* past the target margin; it *rises* — that is the intended penalty). |
+| `03b_alignment_end_to_end.md` | ✅ **Clean.** All four dry-runs independently re-derived (BT `0.153→0.149`, PPO clip `0.568→0.372`, DPO `0.404→0.371`, ORPO `0.517`). Only `∇L` written as `ΔL`, a garbled expectation subscript, 1 dead ref. |
+| `02c_sft_end_to_end.md` | ✅ **Clean.** Masked/unmasked loss `2.178202 → 2.051061` (diff `0.127141`) and all 10 template-overhead percentages verified. |
+| `03c_dpo_end_to_end.md` | ✅ **Clean and genuinely excellent.** Independently re-derived the closed form (`Z=5.524786`, π* to 6dp), the `Z(x)` cancellation, `L_BT = L_DPO = 0.167786`, the β-sweep KL, and the memory math (239.3 vs 119.7 GiB = 2.00×). |
+| `01_prompting.md` · `04_evaluation.md` · `05_vllm_internals.md` | ✅ audited earlier this session |
+
+> **Deliberately NOT changed: dated model names in illustrative code** (`gpt-4o`, `claude-sonnet-4-6`) across 6.llms/7.rag/8.agents. They are example snippets, not claims. **One must not be touched casually:** `8.agents/01b_agents_end_to_end.md:324` quotes `claude-sonnet-4-6 at $3/$15 per MTok` — that is *correct pricing for that model*, and the whole `$0.022/run` cost walkthrough is built on it. Renaming the model without regenerating the arithmetic would introduce an error.
+
+**Repo-wide after all fixes: 214 links across 37 files, 0 broken.**
+
+---
+
 ### AUDIT LEDGER — what was actually verified, and by whom
 
 | Folder | Read by this session | Status |
 |---|---|---|
 | `8.agents/` | **11 of 11** | ✅ Complete |
 | `7.rag/` | **7 of 7** | ✅ Complete |
-| `6.llms/` | 4 of 12 — `01_prompting` (clean), `04_evaluation`, `05_vllm_internals`, README | ⚠️ **Partial** |
+| `6.llms/` | **12 of 12** | ✅ Complete |
 
-**The 8 unread `6.llms` files are the fine-tuning + alignment cluster** (`02`, `02b` 754L, `02c`, `03`, `03b` 571L, `03c`, `06`, `07` — ~2,812 lines). Deliberately deprioritised for THIS interview: it is exactly the area covered by the **do-not-claim rule** (Phase 09 parked, not on the resume), so it will be discussed conceptually at most. They also carry script-verified evidence from the previous session recorded above — e.g. `03c` (`cancellation 0.000e+00`, `L_DPO == L_BT 0.167786` both ways) and `02b` (`B=[[0.0],[0.0]]` fixed at source, NF4 claim corrected to the measured 2.14×). **Trusted, not re-verified.** If time opens up post-interview, `02b` and `03b` are the two worth re-checking first — they are the largest narrated-number files left in the repo, and that is the exact class that failed in `7.rag/01b`.
+~~**The 8 unread `6.llms` files are the fine-tuning + alignment cluster**~~ **— SUPERSEDED, now all read. See the 6.llms section above.** Original reasoning retained below for the record:
+
+**The 8 then-unread `6.llms` files were the fine-tuning + alignment cluster** (`02`, `02b` 754L, `02c`, `03`, `03b` 571L, `03c`, `06`, `07` — ~2,812 lines). Deliberately deprioritised for THIS interview: it is exactly the area covered by the **do-not-claim rule** (Phase 09 parked, not on the resume), so it will be discussed conceptually at most. They also carry script-verified evidence from the previous session recorded above — e.g. `03c` (`cancellation 0.000e+00`, `L_DPO == L_BT 0.167786` both ways) and `02b` (`B=[[0.0],[0.0]]` fixed at source, NF4 claim corrected to the measured 2.14×). **Trusted, not re-verified.** If time opens up post-interview, `02b` and `03b` are the two worth re-checking first — they are the largest narrated-number files left in the repo, and that is the exact class that failed in `7.rag/01b`.
 
 **Extra defects found while closing the gaps:** `7.rag/03_indirect_prompt_injection.md` had a **Python `SyntaxError`** — the `signals` detector was written as a `list` with `"key": value` entries, then read via `signals.values()`; now a `dict`. `6.llms/04_evaluation.md` had **BERTScore F1 printed as ≈ −0.92** (cannot be negative there; it is 0.92), a **garbled `pass@k` example** whose two lines were both labelled `pass@1` — fixed at source to `pass@1 = 0.4000` / `pass@10 = 0.9996` for n=20,c=8, with the point that made it worth fixing (one sample passes 40% of the time; ten attempts solve it essentially always — which is why a bare "pass@k" without both n and k is meaningless) — and 4× dated `claude-opus-4-6` refs.
 

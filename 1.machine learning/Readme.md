@@ -31,7 +31,7 @@ Pick a thread based on what you need:
 | Stats foundations | `01_fundamentals/01_statistics_foundations.md` → `01b` → `01c` |
 | EDA → feature engineering | `01_fundamentals/02_eda.md` → `03_feature_engineering.md` |
 | Model evaluation | `01_fundamentals/04_model_evaluation.md` (incl. conformal prediction, fairness) |
-| Algorithms — start to finish | `02_algorithms/01_linear_models.md` → `02_tree_models` → `03_unsupervised` → `04_probabilistic` |
+| Algorithms — start to finish | `02_algorithms/01_linear_models.md` → `02_tree_models.md` → `03_unsupervised_learning.md` → `04_probabilistic.md` |
 | Time series | `02_algorithms/05_time_series.md` → `05b_time_series_end_to_end.md` |
 | Semi-supervised / RL | `06_semi_supervised_learning.md` → `07_reinforcement_learning.md` → `10_reinforcement_learning_deep.md` |
 | EM / Gaussian Processes | `08_expectation_maximization.md` → `09_gaussian_processes.md` |
@@ -57,7 +57,7 @@ Pick a thread based on what you need:
 |------|------|
 | `01_linear_models.md` | Linear/Logistic/Ridge/Lasso/SVM + GLMs (Poisson, Tweedie) + quantile regression |
 | `02_tree_models.md` | RF/XGBoost/LightGBM/CatBoost + monotonic constraints + modern tabular FM (TabPFN) |
-| `03_unsupervised.md` | K-Means/DBSCAN/PCA/UMAP/Isolation Forest + FAISS clustering at scale |
+| `03_unsupervised_learning.md` | K-Means/DBSCAN/PCA/UMAP/Isolation Forest + FAISS clustering at scale |
 | `04_probabilistic.md` | Naive Bayes / GMM / HMM / Bayesian regression / Probabilistic programming (PyMC, NumPyro) |
 | `05_time_series.md` | ARIMA/SARIMA/Prophet/LightGBM-TS + Chronos / TimesFM (foundation models) |
 | `05b_time_series_end_to_end.md` | Worked examples — ARIMA forecast with numbers |

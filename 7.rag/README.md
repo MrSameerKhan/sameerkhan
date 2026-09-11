@@ -19,7 +19,9 @@ mindmap
     Security
       Indirect prompt injection
       6 defense layers · CaMeL dual-LLM
-``` Embedder / retriever theory lives in `../4.nlp/02_embeddings/`; production RAG ops in `../10.mlops/13_production_rag_ops.md`; multi-tenant RAG system design in `../11.system_design/10_multi_tenant_rag.md`. Tier 2 (Theory).
+```
+
+**Tier: 2 (Theory).** Embedder / retriever theory lives in [../4.nlp/02_embeddings/](../4.nlp/02_embeddings/); production RAG ops in [../10.mlops/13_production_rag_ops.md](../10.mlops/13_production_rag_ops.md); multi-tenant RAG system design in [../11.system_design/10_multi_tenant_rag.md](../11.system_design/10_multi_tenant_rag.md).
 
 ---
 

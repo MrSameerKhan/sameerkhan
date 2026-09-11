@@ -20,7 +20,9 @@ mindmap
       Tool authorization · capability isolation
       Multi-tenant RAG · namespace isolation
       LLM evaluation systems · golden sets
-``` Implementation depth lives in other tier-2 folders; this is the system-level lens. **Tier: 2 (Theory).**
+```
+
+**Tier: 2 (Theory).** Implementation depth lives in the other tier-2 folders; this is the system-level lens.
 
 ---
 
@@ -72,7 +74,7 @@ mindmap
 - **Eval frameworks** (MTEB / RAGAS / lm-eval-harness — referenced from `11_llm_evaluation_systems`): `../4.nlp/04_applications/04_evaluation_metrics.md`
 - **Model evaluation theory** (conformal prediction): `../1.fundamentals/04_model_evaluation/`
 - **LLM observability**: `../10.mlops/11_llm_observability.md`
-- **Recommendation algorithms**: `../1.machine_learning/`
+- **Recommendation algorithms**: [../1.machine learning/](../1.machine%20learning/)
 
 ---
 

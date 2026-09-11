@@ -89,7 +89,7 @@ Do not start at RAG. RAG is a *tool an agent calls*, and an agent is *a loop aro
 ## Connections
 
 - **PEFT methods (DoRA / LoftQ / PiSSA / GaLore):** `../5.transformers/02_models/09_parameter_efficient_tuning.md`
-- **DPO/GRPO algorithm depth (RL framing):** `../1.machine_learning/02_algorithms/10_reinforcement_learning_deep.md`
+- **DPO/GRPO algorithm depth (RL framing):** [../1.machine learning/02_algorithms/10_reinforcement_learning_deep.md](../1.machine%20learning/02_algorithms/10_reinforcement_learning_deep.md)
 - **Reasoning models (o1, DeepSeek-R1, RLVR):** `../5.transformers/02_models/14_reasoning_models.md`
 - **Modern decoding (speculative, constrained, min-p):**
   - `../4.nlp/03_sequence_models/07_decoding_strategies.md`

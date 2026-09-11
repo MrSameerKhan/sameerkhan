@@ -1,4 +1,4 @@
-# 11. Multimodal
+# 9. Multimodal
 
 Scope: vision+language fusion — VLMs, document AI, multimodal RAG.
 
@@ -27,7 +27,11 @@ mindmap
     Hallucination mitigation
       Object · attribute · relation types
       Verifier · constrained · ensemble
-``` Pure-vision applications in `../3.computerVision/`; pure-NLP in `../4.nlp/`. **Tier: 2 (Theory).** Note: `00_roadmap.md` is legacy navigation. This README supersedes it. `00_roadmap.md` will be archived in Phase 8.
+```
+
+**Tier: 2 (Theory).** Pure-vision applications live in [../3.computerVision/](../3.computerVision/); pure-NLP in [../4.nlp/](../4.nlp/).
+
+> `00_roadmap.md` in this folder is legacy navigation — **this README supersedes it.**
 
 ---
 
