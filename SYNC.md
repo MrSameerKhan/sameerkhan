@@ -52,6 +52,21 @@
 
 **Both previously-flagged 6.llms items turned out to be properly FIXED, not left hanging:** the Llama-3 KV-cache figure is correctly 0.50 GiB (GQA) with an explicit note that 2.00 GiB is the MHA/Llama-2-7B number people misattach; and the GSM8K "18%→70%" claim carries an honest CAUTION block explaining the Kojima/Wei conflation rather than substituting an unverified number.
 
+### Session 3 — 12 Sep 2026 (Windows, last session before Mac move)
+
+| Field | Value |
+|-------|-------|
+| **Live mock run** | Asked "what is an agent?" cold. Answer had the loop and ReAct but **omitted tools entirely**, missed the workflow-vs-agent distinction the question explicitly teed up, and gave no tradeoff. Graded mid-level. **Conclusion: the gap is delivery, not knowledge** — everything missing was already written in his own files. |
+| **NEW** | `code_practice/11_interview_drills/AGENTS_SPOKEN_ANSWERS.md` — 20 questions with model answers written as **spoken prose** (60-90s each), in a **Define → Distinguish → Tradeoff → Judgment** structure, plus the likely follow-up for each. Distinct from `AGENTS_QA_BANK.md`, which is one-liners + an index into 11 files (fine for reference, unusable for drilling aloud). |
+| **NEW — module ladder started** | `code_practice/12_agents_from_scratch/` — plan approved for **37 modules** derived by extracting every section heading from all 11 `8.agents/` files and mapping each one. Built so far: `_tools.py` (4 tools, schemas in BOTH envelopes, verified identical underneath), `_providers.py` (openai/anthropic/local factory + health check), `_fake_model.py` (scripted client — the only way to trigger failure modes on demand), `01_standard_llm_call.py` (runs clean, 112 lines). |
+| **Live bug caught by module 01** | With `max_tokens=200`, Claude Opus 5 returned `content = ['thinking']` only, `stop_reason='max_tokens'`, and an **empty answer** — thinking consumed the entire budget before any text. Nothing errored. Now baked into the module as a deliberate lesson with a re-run instruction. |
+
+> **Two module-design decisions worth keeping:** (1) workflow patterns are built **before** any agent, so "most things called agents are workflows" is felt rather than read; (2) modules 07, 08 and 19 solve the **same task three ways** — hand-parsed ReAct, native tool calling, LangGraph — so the only thing changing on screen is the machinery.
+
+> ⚠️ **MCP theory is now out of date.** The **2026-07-28 spec** made MCP **stateless** and introduced **MRTR (Multi Round-Trip Requests)**, which *deprecates* server-initiated `sampling/createMessage`, `elicitation/create` and `roots/list`. Streamable HTTP now requires `Mcp-Method` / `Mcp-Name` headers so gateways route without parsing the body. `8.agents/08_mcp_protocol_deep.md` §3 still presents sampling/roots/elicitation as current capabilities. **Not yet fixed** — modules 32-35 are written against the new spec.
+
+---
+
 ### ALL 13 READMEs FIXED — the "READMEs won't display" bug found and killed
 
 **Root cause was ONE bug repeated in 4 files:** the closing ``` fence of the mermaid block had **text appended on the same line**, e.g. ``` ``` **Tier: 2 (Theory).** …``` . The fence never closes, so the diagram fails to render *and* the sentence gets swallowed into the code block. Hit `7.rag`, `8.agents`, `9.multimodal`, `11.system_design`. Fixed by moving the prose to its own line after the fence.
@@ -529,11 +544,28 @@ Zero coverage in the pack for: Rulebook-RAG, ONNX export, 643 classes, dedup pip
 
 ## Machine Differences (matters for drills)
 
-| | Mac (here) | Windows |
+> ✅ **MOVING TO MAC (M1, Apple Silicon) — 12 Sep 2026.** Audited first; the move is near-free.
+
+| | Mac — M1 Apple Silicon | Windows |
 |---|---|---|
-| **torch** | 2.12.0, CPU | 2.5.1 + cu121, GTX 1650 Ti |
-| **Good for** | Drills 1–8 (all CPU, tiny tensors, seconds to run) | GPU sessions, Phase 05/10 |
-| **Known block** | — | Phase 09 fine-tuning parked: torch 2.6 not on cu121, trl 1.6 meta-tensor bug |
+| **torch** | 2.12.0, **MPS (Metal)** available | 2.5.1 + cu121, GTX 1650 Ti (**4 GB**) |
+| **Agent modules** (`12_agents_from_scratch/`) | ✅ **zero machine dependency** — no torch, no CUDA, no GPU code. Only API calls + Ollama over HTTP. | same |
+| **Phase 05 transformers** | ✅ works — every file already opens with `DEVICE = mps if available else cuda else cpu`. MPS is checked **first**; written Mac-aware from the start. | works |
+| **Ollama / local Llama** | ✅ **better than Windows.** Unified memory beats 4 GB VRAM — 16 GB M1 holds an 8B model the 1650 Ti cannot. Only 2 files touch it: `_providers.py` (`"local"` entry) and `01_standard_llm_call.py` Cell 4. Model name is a one-line change. | limited to ~3B |
+| **Known block** | `09_finetuning/02_qlora_finetune.py` — **bitsandbytes is CUDA-only**, no Mac support. File already degrades via `use_qlora = torch.cuda.is_available()`. | Phase 09 **already parked anyway** (torch 2.6 not on cu121, trl 1.6 meta-tensor bug) |
+
+> **The QLoRA "loss" is not a loss.** Phase 09 does not run on Windows *today* either. Moving costs nothing that currently works.
+
+### Mac setup after `git pull`
+
+```bash
+conda env create -f environment.yml && conda activate sameerkhan   # or environment.lock.yml
+export OPENAI_API_KEY=...  &&  export ANTHROPIC_API_KEY=...        # put in ~/.zshrc
+brew install ollama && ollama serve &                               # then: ollama pull llama3.2
+cd code_practice/12_agents_from_scratch && python _providers.py     # should print 3x OK
+```
+
+`python _providers.py` is the one-command health check — it prints which of the three providers are live.
 
 All interview drills are **deliberately CPU-only and seed-fixed** — they run identically on both machines. No GPU needed, no environment drift.
 

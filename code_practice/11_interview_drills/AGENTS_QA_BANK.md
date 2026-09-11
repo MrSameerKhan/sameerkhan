@@ -3,6 +3,8 @@
 > **How to use this.** Part A is a cold-recall drill — cover the right column, answer aloud, uncover. Part B holds the questions your theory files **don't** cover, answered in full. Part C indexes the 48 Q&As already written across `8.agents/` so you drill them where they live rather than reading duplicates. Part D is resume defence. Part E is what you ask them.
 >
 > **Answer out loud. Always.** Reading an answer you already agree with teaches you nothing.
+>
+> 🎯 **For the 20 highest-probability questions, use [AGENTS_SPOKEN_ANSWERS.md](AGENTS_SPOKEN_ANSWERS.md) instead** — full model answers written as spoken prose, with the four-move structure named. This file is the wider net; that one is what you drill.
 
 ---
 

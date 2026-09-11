@@ -5,6 +5,8 @@
 > **Format:** conversational deep-dive — they ask, you explain out loud. No editor.
 > **Budget:** 6–8 focused hours/day × 4 days ≈ 28 hours.
 >
+> 🎯 **Your drill file is [AGENTS_SPOKEN_ANSWERS.md](AGENTS_SPOKEN_ANSWERS.md)** — 20 model answers written to be *said*, each in the Define → Distinguish → Tradeoff → Judgment shape. A live mock on 11 Sep proved the gap is delivery, not knowledge: the "what is an agent" answer had the loop but no tools, no workflow contrast, no tradeoff. Work through that file aloud before anything else.
+>
 > ⚠️ **Read [LLOYDS_UK_ROUND.md](LLOYDS_UK_ROUND.md) before Day 1.** A UK retail bank round adds a layer the Hyderabad rounds almost certainly didn't test — **SS1/23 model risk** and **FCA Consumer Duty**. That layer, not agent theory, is what separates you from the rest of the pipeline. It also re-weights Day 3 (less MCP, more regulation) and adds 90 minutes to Day 4.
 
 ---
