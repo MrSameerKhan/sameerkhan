@@ -10,7 +10,7 @@ Run:  python 01_standard_llm_call.py
 
 # %%
 # ── Cell 1: setup ─────────────────────────────────────────────────────────────
-import json
+import sys; sys.path.insert(0, "..")   # shared _providers.py lives in the phase root
 from _providers import get_client, available
 
 QUESTION = "What is the maximum LTV for a first-time buyer? Answer in one sentence."
@@ -100,14 +100,22 @@ results["local"] = (r.choices[0].message.content, r.choices[0].finish_reason,
 # %%
 # ── Cell 5: the lesson, side by side ──────────────────────────────────────────
 print("\n" + "=" * 74)
-print(f"{'provider':11} {'format':11} {'stop signal':14} {'in':>5} {'out':>5}")
+print(f"{'provider':11} {'format':11} {'stop signal':14} {'in':>5} {'out':>5} {'shown~':>6} {'unseen~':>7}")
 print("-" * 74)
 for name, (txt, stop, tin, tout) in results.items():
     fmt = "anthropic" if name == "anthropic" else "openai"
-    print(f"{name:11} {fmt:11} {stop:14} {tin:5} {tout:5}")
+    # ~4 chars per token is a rough but honest estimate for English prose.
+    shown = round(len(txt.strip()) / 4)
+    unseen = max(0, tout - shown)          # clamp: the estimate can overshoot slightly
+    print(f"{name:11} {fmt:11} {stop:14} {tin:5} {tout:5} {shown:6} {unseen:7}")
 print("=" * 74)
-print("TWO formats across THREE providers. Local speaks OpenAI, so it shares a")
-print("code path with hosted OpenAI. Only Anthropic needs different parsing.")
+print("LESSON 1 — TWO formats across THREE providers. Local speaks OpenAI, so it")
+print("shares a code path with hosted OpenAI. Only Anthropic needs different parsing.")
+print()
+print("LESSON 2 — read the 'unseen' column. All three answered in one sentence, but")
+print("a thinking model BILLS ITS REASONING AS OUTPUT. Those tokens never reach your")
+print("screen and you pay full output rate for them. That is why the same one-line")
+print("answer costs ~8x more here. Module 11 shows this compounding once per turn.")
 
 
 # %%

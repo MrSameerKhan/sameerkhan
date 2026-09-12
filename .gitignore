@@ -62,3 +62,9 @@ models/
 *.key
 
 
+
+# agents-ladder generated artefacts
+**/run_trace.jsonl
+**/__pycache__/
+**/traces.jsonl
+**/_stdio_server.py

@@ -69,3 +69,5 @@ followup = client.messages.create(
 )
 
 print("".join(b.text for b in followup.content if b.type == "text"))
+
+# %%

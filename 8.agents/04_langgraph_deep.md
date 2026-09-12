@@ -305,8 +305,7 @@ for update in graph.stream({"messages": [...]}, config):
 
 # Stream LLM tokens within a node
 for chunk in graph.stream(input, config, stream_mode="messages"):
-    for chunk in graph.stream(input, config, stream_mode="messages"):
-        print(chunk[0].content, end="", flush=True)  # token-by-token
+    print(chunk[0].content, end="", flush=True)  # token-by-token
 
 # Stream multiple modes
 for chunk in graph.stream(input, config, stream_mode=["updates", "messages"]):

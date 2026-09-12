@@ -156,7 +156,7 @@ If the orchestrator sees an empty `tool_calls` field but the content contains JS
 import json, re
 
 def rescue_tool_call(content):
-    match = re.search(r'\{s*"name"\s*:\s*"\w+"\s*,\s*"arguments"\s*:\s*\{.*?\}', content, re.DOTALL)
+    match = re.search(r'\{\s*"name"\s*:\s*"\w+"\s*,\s*"arguments"\s*:\s*\{.*?\}', content, re.DOTALL)
     if match:
         try:
             obj = json.loads(match.group(0))

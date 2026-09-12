@@ -343,7 +343,7 @@ Several cases: (1) **Latency-critical paths** — LangChain adds 100-300ms overh
 
 **Q: LangChain vs LangGraph?**
 
-LangChain is for composing linear/branching chains of LLM calls using LCEL. LangGraph (from the same team) is for building stateful agents as explicit state graphs — nodes are functions, edges define transitions, the graph carries persistent state. LangGraph is the right tool for "prompt → model → parser" pipelines. LangGraph is the right tool for agentic loops with tool use, retries, conditional logic, human-in-the-loop, and persistence. The two are complementary: a LangGraph node may itself contain an LCEL chain. Modern production agents use LangGraph as the outer loop, LCEL inside individual nodes.
+LangChain is for composing linear/branching chains of LLM calls using LCEL. LangGraph (from the same team) is for building stateful agents as explicit state graphs — nodes are functions, edges define transitions, the graph carries persistent state. LangChain is the right tool for "prompt → model → parser" pipelines. LangGraph is the right tool for agentic loops with tool use, retries, conditional logic, human-in-the-loop, and persistence. The two are complementary: a LangGraph node may itself contain an LCEL chain. Modern production agents use LangGraph as the outer loop, LCEL inside individual nodes.
 
 **Q: What's the difference between `RunnablePassthrough` and `RunnableLambda`?**
 
@@ -367,7 +367,7 @@ LangChain is for composing linear/branching chains of LLM calls using LCEL. Lang
 
 ## Key Takeaway
 
-LangChain has one good idea (LCEL) and a lot of legacy baggage. Use it for: rapid prototyping; integrations. Prefer for stateful agents: use Pydantic + Instructor for structured outputs; use `with_structured_output` (Pydantic model); avoid `SequentialChain`, and most of the memory classes — **the migration path is to LangGraph**. Always use `set_debug(True)` to print actual prompts during dev, and don't be afraid to drop down to the provider SDK directly when the abstractions cost more than they save.
+LangChain has one good idea (LCEL) and a lot of legacy baggage. Reach for it for rapid prototyping and for its integrations. For stateful agents, prefer LangGraph. For structured outputs, prefer Pydantic + Instructor, or `with_structured_output` if you are already inside LangChain. Avoid `LLMChain`, `SequentialChain`, `AgentExecutor` and most of the memory classes — **the migration path is to LangGraph**. Always use `set_debug(True)` to print actual prompts during dev, and don't be afraid to drop down to the provider SDK directly when the abstractions cost more than they save.
 
 ---
 
