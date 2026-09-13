@@ -1,84 +1,73 @@
 # Module 07 — ReAct Without SDK Support
-Status: `🔧 Code-built`
+Status: `🔧 Code-built` — **re-run required after the fix below**
 
-Theory: [../../../8.agents/01_agents.md](../../../8.agents/01_agents.md) (the ReAct loop) · [../../../8.agents/06_planner_executor_patterns.md](../../../8.agents/06_planner_executor_patterns.md) §1 · [../../../8.agents/02_agent_reliability_patterns.md](../../../8.agents/02_agent_reliability_patterns.md) §2 (FM1)
+Theory: [../../../8.agents/01_agents.md](../../../8.agents/01_agents.md) (the ReAct loop) · [../../../8.agents/02_agent_reliability_patterns.md](../../../8.agents/02_agent_reliability_patterns.md) §2 (FM1)
 
 ---
 
 ## Use Case
 
-Shows what an agent was before providers shipped native tool calling, so that module
-08's `tools=[...]` parameter reads as a *removal* of work rather than magic.
+Shows what an agent was before native tool calling, so module 08's `tools=[...]` reads as
+a *removal* of work rather than magic.
 
-Two claims tested: **the model now chooses the sequence**, and **without a structured
-tool-call channel the integration is a regex whose reliability is the model's.**
+The claim being tested: **without a structured tool-call channel the integration is a
+regex, and its reliability is the model's willingness to hold a text format.**
 
 ---
 
 ## The Mechanism
 
 ```
-prompt teaches a TEXT FORMAT:
-    Thought: ...
-    Action: search_policy
-    Action Input: erc
-
-loop:
-    call model with the whole transcript
-    stop=["Observation:"]        <- stop the model before it invents the tool result
-    ACTION_RE.search(text)       <- YOU mine the tool call out of prose
-    run the tool
-    append "Observation: ..." to the transcript
-until FINAL_RE matches, or the parser misses
+prompt teaches a TEXT FORMAT (Thought / Action / Action Input)
+loop: call model with the whole transcript
+      stop=["Observation:"]     <- stop it before it invents the tool result
+      ACTION_RE.search(text)    <- YOU mine the tool call out of prose
+      run tool, append "Observation: ..."
+until a Final Answer, or the parser misses
 ```
-
----
-
-## Key Implementation Details
-
-**`stop=["Observation:"]`** is load-bearing. Without it the model happily writes the
-Observation *itself*, hallucinating the tool result, and the loop never executes a real
-tool. This is the single most common bug when hand-rolling ReAct.
-
-**The whole transcript is one user message**, rebuilt each turn. That is module 02's
-lesson: the list is the memory, and here it is literally a growing string.
-
-**The 1B override is scoped to one cell** and put back immediately, so later modules
-still get the 3B. Per `_providers.py`, changing the model is a one-line change.
-
-**A parser miss returns `ok=False` rather than raising.** That is the honest simulation:
-in production FM1 does not crash, it silently produces an answer with no tool behind it.
 
 ---
 
 ## Fixes Applied (during run)
 
-*Not yet run.*
+| Found | Fix |
+|---|---|
+| **The loop reported success on an answer computed from nothing.** `gpt-4.1-mini` emitted an `Action` *and* a `Final Answer` in the same turn. The code checked `FINAL_RE` **before** `ACTION_RE`, so it returned the Final Answer — which was the literal string **"The early repayment charge in year 2 on a 250000 loan is `[calculated amount]`"** — and reported `ok=True, steps=1`. No tool ever ran. | An `Action` now takes precedence over a `Final Answer` found beside it: both are matched, and the answer is only accepted when there is no pending action. |
+
+**This is the module's own lesson landing on the module.** FM1 is "the model called a tool
+in prose and your orchestrator could not see it". Here the orchestrator *did* see the
+action and discarded it in favour of a placeholder — and reported success. `stop=["Observation:"]`
+did not help, because the model never wrote the word Observation.
 
 ---
 
-## Actual Output
+## Actual Output (macOS M1, 2026-09-12) — **before the fix**
 
-*Not yet run.*
+```
+gpt-4.1-mini  parsed=True    steps=1     <- FALSE PASS, see above
+llama3.2:1b   parsed=False   steps=1
+```
 
----
+The 1B behaved exactly as intended — it wrote a paragraph of prose with no `Action:` line
+at all, and the parser missed:
 
-## Expected Output
+```
+To find the early repayment charge (ERC) on a $250,000 loan with interest, I will
+first search for the bank's loan policy...
+  !! PARSER MISS — no Action/Action Input found
+```
 
-`gpt-4.1-mini` should hold the format, call `search_policy("erc")`, then `calculate`, and
-reach a Final Answer in 3 steps. Year 2 ERC is 4%, so 250000 x 0.04 = **10000**.
-
-The 1B is expected to fail, most likely with a parser miss. If it happens to succeed,
-re-run it — the point is the variance, and that variance IS the failure mode.
-
-Needs `ollama serve` with **both** `llama3.2` and `llama3.2:1b` pulled.
+That is FM1, live, on the model kept specifically to produce it.
 
 ---
 
 ## How to Run
 
 Open `07_agent_without_sdk_react.ipynb`, select the `sameerkhan` kernel, run all cells.
-Needs `OPENAI_API_KEY` and Ollama. Under a cent.
+Needs `OPENAI_API_KEY` and Ollama with **both** `llama3.2` and `llama3.2:1b`.
+
+Expected after the fix: `gpt-4.1-mini` should take 3 steps and reach **10000**
+(250000 x 4% for year 2). The 1B should still miss.
 
 ---
 

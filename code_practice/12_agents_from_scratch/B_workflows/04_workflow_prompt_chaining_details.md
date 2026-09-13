@@ -1,5 +1,5 @@
 # Module 04 — Workflow: Prompt Chaining
-Status: `🔧 Code-built`
+Status: `✅ Run`
 
 Theory: [../../../8.agents/00_agent_stack_foundations.md](../../../8.agents/00_agent_stack_foundations.md) §5 (workflows vs agents, the five patterns)
 
@@ -26,44 +26,42 @@ GATE 2  YOU    debt-to-income <= 45 ?    -> HALT on fail
 STEP 3  LLM    write approval letter
 ```
 
-Same path every run. Predictable cost, predictable latency, and the gates are unit
-testable with no API key.
-
 ---
 
 ## Key Implementation Details
 
-**The gates are arithmetic on typed fields**, which module 03 made possible. `ltv` is
-computed from `loan.amount` and `loan.property_value` as floats — not regexed out of
-prose. Chaining without structured output between steps is how the lost-in-translation
-failure from `07_multi_agent_orchestration.md` gets in.
+**The gates are arithmetic on typed fields**, which module 03 made possible. `ltv` comes
+from `loan.amount` and `loan.property_value` as floats, not regexed out of prose.
 
-**`raise SystemExit` in gate 1** is deliberately blunt so the halt is visible in a
-notebook. Production would return a rejection object.
-
-**Step 2's LLM call is doing almost nothing.** That is honest: the affordability
-*decision* is the ratio, and the model only writes prose about it. Noticing how little
-work the model does in a workflow is part of the lesson.
+**Step 2's LLM call does almost no work.** That is honest: the affordability *decision* is
+the ratio, and the model only writes prose about it. Noticing how little the model
+decides in a workflow is part of the lesson.
 
 ---
 
 ## Fixes Applied (during run)
 
-*Not yet run.*
+None — ran clean on first execution.
 
 ---
 
-## Actual Output
+## Actual Output (macOS M1, `gpt-4.1-mini`, 2026-09-12)
 
-*Not yet run.*
+```
+STEP 1 extracted: {'applicant': 'Sarah Chen', 'income': 74000.0,
+                   'monthly_debts': 950.0, 'amount': 285000.0,
+                   'property_value': 320000.0}
 
----
+GATE 1  LTV = 89.1%  (policy max 95.0%)      -> pass
+GATE 2  debt-to-income = 15.4%  (policy max 45.0%)  -> pass
 
-## Expected Output
+STEP 3 output:
+ Approval is granted for Sarah Chen's loan request of $285,000 at an 89.1%
+ loan-to-value ratio, subject to standard underwriting conditions.
+```
 
-LTV computes to about 89.1% and passes. Debt-to-income is 950 / (74000/12), about 15.4%,
-and passes. Both gates clear, so step 3 prints an approval note. To see a halt, raise
-`monthly_debts` in `APPLICATION` above roughly 2775.
+Both gates computed exactly as predicted: 285000/320000 = 89.1%, and
+950/(74000/12) = 15.4%. To see a halt, raise `monthly_debts` above roughly 2775.
 
 ---
 

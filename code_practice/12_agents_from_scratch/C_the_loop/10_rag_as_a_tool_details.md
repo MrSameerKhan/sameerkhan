@@ -1,75 +1,74 @@
 # Module 10 — RAG as a Tool
-Status: `🔧 Code-built`
+Status: `✅ Run` — with an instructive partial failure, see below
 
-Theory: [../../../8.agents/00_agent_stack_foundations.md](../../../8.agents/00_agent_stack_foundations.md) §7 (how LLM, RAG and agents connect; classic vs agentic RAG) · [../../../7.rag/01_rag.md](../../../7.rag/01_rag.md)
+Theory: [../../../8.agents/00_agent_stack_foundations.md](../../../8.agents/00_agent_stack_foundations.md) §7 (classic vs agentic RAG) · [../../../7.rag/01_rag.md](../../../7.rag/01_rag.md)
 
 ---
 
 ## Use Case
 
 Connects the `7.rag` arc to the `8.agents` arc. Retrieval is one capability; the agent is
-the loop that decides when to use it. This is the cleanest way to show you understand
-both topics at once, which is why it recurs in interviews.
+the loop that decides when to use it.
 
 The claim being tested: **classic RAG is a workflow, agentic RAG is an agent, and the
 difference is who decides to retrieve.**
 
 ---
 
-## The Mechanism
-
-```
-CLASSIC   q -> retrieve(q) -> stuff context -> generate
-          retrievals = 1, always, for every question
-
-AGENTIC   q -> model sees search_policy + calculate as TOOLS
-            -> may call neither, either, or one of them repeatedly
-            -> may reformulate the query after a weak result
-          retrievals = 0..N, decided at runtime
-```
-
----
-
 ## Key Implementation Details
 
-**The retriever is deliberately naive** — keyword overlap over the `_POLICY` dict in
-`_tools.py`, no embeddings. Retrieval quality is the subject of `7.rag`; this module is
-only about who invokes it. A good retriever here would distract from that.
+**The retriever is deliberately naive** — keyword overlap over the `_POLICY` dict, no
+embeddings. Retrieval quality belongs to `7.rag`; this module is about who invokes it.
 
-**The arithmetic question is the control.** "What is 17 times 4?" has nothing to do with
-mortgage policy, so classic RAG visibly retrieves irrelevant context while agentic RAG
-reaches for `calculate` instead. Without a question outside the corpus the two look
-identical.
-
-**`search_policy` doubles as the retrieval tool.** Reusing the shared tool keeps this
-module diffable against 08 and 09 — the machinery is the only difference.
+**The arithmetic question is the control.** Without a question outside the corpus the two
+approaches look identical.
 
 ---
 
 ## Fixes Applied (during run)
 
-*Not yet run.*
+None. But see the partial failure below — it is worth keeping rather than fixing.
 
 ---
 
-## Actual Output
+## Actual Output (macOS M1, `gpt-4.1-mini`, 2026-09-12)
 
-*Not yet run.*
+**The control worked perfectly.** Classic RAG retrieved mortgage policy in order to answer
+"What is 17 times 4?" — it has no choice. Agentic RAG skipped the corpus entirely and
+reached for `calculate`:
 
----
+```
+CLASSIC   Q: What is 17 times 4?   retrievals=1   A: 17 times 4 is 68.
+AGENTIC   Q: What is 17 times 4?   tool calls: ["calculate('17 * 4')"]
+```
 
-## Expected Output
+**The policy question went the other way, and that is the interesting part.** Classic RAG
+answered it; agentic RAG did not:
 
-Classic RAG reports `retrievals=1` for both questions, including the arithmetic one.
-Agentic RAG should show `['search_policy('erc')']` for the policy question and
-`['calculate('17*4')']` — or no calls at all — for the arithmetic one. Year 3 ERC is 3%.
+```
+CLASSIC   retrievals=1  A: The early repayment charge in year 3 is 3%.
+AGENTIC   tool calls: ["search_policy('early repayment charge year 3')"]
+          A: I could not find specific information for the early repayment charge
+             in year 3. Could you please specify which...
+```
+
+The agent chose a natural-language query. The naive retriever only matches the literal
+key `erc`, so it returned nothing — **and the agent did not reformulate.** Classic RAG
+succeeded precisely because it never had to choose a query; it stuffed the whole top-k in.
+
+**This is an honest result, not a broken demo.** The module's own lesson claims agentic
+RAG "can reformulate a weak query" — *can*, not *will*. Notice what module 08 did in the
+same situation: it got `No policy matched. Try one of: ltv, erc, ...` and retried. The
+difference is that `search_policy` returns that helpful list while this module's
+`retrieve()` returns silence. **A retriever that fails informatively lets an agent
+recover; one that fails quietly does not.** That is the practical lesson, and it is
+better than the one the module set out to teach.
 
 ---
 
 ## How to Run
 
-Open `10_rag_as_a_tool.ipynb`, select the `sameerkhan` kernel, run all cells.
-Needs `OPENAI_API_KEY` only. Roughly 6-8 calls, under a cent.
+Open `10_rag_as_a_tool.ipynb`, run all cells. Needs `OPENAI_API_KEY` only.
 
 ---
 

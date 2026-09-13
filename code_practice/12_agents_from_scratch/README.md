@@ -15,7 +15,7 @@
 | | Built | Run live |
 |---|---|---|
 | Shared foundation | ✅ 3 / 3 | ✅ |
-| Modules | **✅ 37 / 37** | ✅ 12 / 37 |
+| Modules | **✅ 37 / 37** | ✅ 18 / 37 |
 
 **Built** means the code is written. **Run live** means it executed end-to-end against
 real providers and printed its own lesson — the bar set under *Verification* below.
@@ -30,9 +30,9 @@ Captured output lives in each module's `_details.md`, not here — one canonical
 
 | Block | Verified live | Notes |
 |---|---|---|
-| A wire | **01 · 02** | 03 needs an API key |
-| B workflows | — | 04–06 need keys; 05 needs Ollama too |
-| C loop | — | 07–11 need keys; 07 needs `llama3.2:1b` |
+| A wire | **01 · 02 · 03** | ✅ block complete |
+| B workflows | **04 · 06** | 05 re-run needed — the router was not being charged for |
+| C loop | **08 · 09 · 10** | 07 and 11 need a re-run — both had a defect their own output exposed |
 | D reliability | **12 · 13 · 14** | all three run on `_fake_model`, offline and free |
 | E security | — | 15–16 need keys |
 | F observability | — | 17 runs offline, not yet executed end-to-end |
@@ -43,7 +43,7 @@ Captured output lives in each module's `_details.md`, not here — one canonical
 | K MCP | **34** | 32–33 run offline; 35 needs a key |
 | L evaluation | **36 · 37** | 37's red-team section needs a key |
 
-**Twelve modules are verified end-to-end** — every one that needs no API key. Captured
+**Eighteen modules are verified end-to-end** — every one that needs no API key. Captured
 output and any fixes live in each module's `_details.md`, one canonical home per
 [`../../RULES.md`](../../RULES.md).
 
@@ -121,15 +121,15 @@ The three `_shared.py` files stay plain Python: notebooks cannot be imported.
 |---|---|---|---|
 | 01 | `01_standard_llm_call.py` | Same prompt → OpenAI, Anthropic, local. **Two wire formats**: `choices[0].message.content` (string) vs `content[]` (typed blocks); `finish_reason` vs `stop_reason`. Ends with raw `requests.post` — the SDK is a wrapper, not a capability. | ✅ |
 | 02 | `02_multi_turn_by_hand.ipynb` | Carry the list yourself. **The API is stateless — memory *is* the list.** Tokens printed per turn. | ✅ |
-| 03 | `03_structured_output.ipynb` | JSON mode, Pydantic, `strict`. **Why free-text parsing is a bug**, and how constrained output deletes a failure class. | 🔧 |
+| 03 | `03_structured_output.ipynb` | JSON mode, Pydantic, `strict`. **Why free-text parsing is a bug**, and how constrained output deletes a failure class. | ✅ |
 
 ## Block B — Workflows *(deliberately before agents)* · `B_workflows/`
 
 | # | File | The one idea | |
 |---|---|---|---|
-| 04 | `04_workflow_prompt_chaining.ipynb` | Sequential calls with a **programmatic gate** between steps. | 🔧 |
+| 04 | `04_workflow_prompt_chaining.ipynb` | Sequential calls with a **programmatic gate** between steps. | ✅ |
 | 05 | `05_workflow_routing.ipynb` | Classify → dispatch. **Cheap model for easy inputs** — the main cost lever. | 🔧 |
-| 06 | `06_workflow_parallel_and_evaluator.ipynb` | Sectioning, voting, and generate → critique → revise. | 🔧 |
+| 06 | `06_workflow_parallel_and_evaluator.ipynb` | Sectioning, voting, and generate → critique → revise. | ✅ |
 
 *Built before any agent so "most things called agents are workflows" is **felt**, not read.*
 
@@ -138,9 +138,9 @@ The three `_shared.py` files stay plain Python: notebooks cannot be imported.
 | # | File | The one idea | |
 |---|---|---|---|
 | 07 | `07_agent_without_sdk_react.ipynb` | ReAct in prose — **you write the regex**. Local Llama buries the call in text and the parser misses it. **FM1, live.** | 🔧 |
-| 08 | `08_agent_with_sdk_tool_calling.ipynb` | Native tool calling, both envelopes. `finish_reason` flips; `content` is `None` on a tool turn. The regex from 07 is deleted. | 🔧 |
-| 09 | `09_agent_parallel_tool_calls.ipynb` | Several tool calls in **one** turn — return **all** results in a single message, or the model quietly stops parallelising. | 🔧 |
-| 10 | `10_rag_as_a_tool.ipynb` | Retrieval as a **tool the model chooses**. Classic vs **agentic RAG**. | 🔧 |
+| 08 | `08_agent_with_sdk_tool_calling.ipynb` | Native tool calling, both envelopes. `finish_reason` flips; `content` is `None` on a tool turn. The regex from 07 is deleted. | ✅ |
+| 09 | `09_agent_parallel_tool_calls.ipynb` | Several tool calls in **one** turn — return **all** results in a single message, or the model quietly stops parallelising. | ✅ |
+| 10 | `10_rag_as_a_tool.ipynb` | Retrieval as a **tool the model chooses**. Classic vs **agentic RAG**. | ✅ |
 | 11 | `11_agent_cost_and_tokens.ipynb` | Per-turn cost table. **Why an agent costs ~10× a single call.** | 🔧 |
 
 ## Block D — Reliability · `D_reliability/`

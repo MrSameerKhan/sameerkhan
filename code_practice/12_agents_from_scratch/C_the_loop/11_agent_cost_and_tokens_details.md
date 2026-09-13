@@ -1,79 +1,62 @@
 # Module 11 — Agent Cost and Tokens
-Status: `🔧 Code-built`
+Status: `🔧 Code-built` — **re-run required after the correction below**
 
-Theory: [../../../8.agents/01b_agents_end_to_end.md](../../../8.agents/01b_agents_end_to_end.md) §2.2 (token count per turn, the 5-iteration dry run) · [../../../8.agents/09_agent_evaluation.md](../../../8.agents/09_agent_evaluation.md) §7 (cost thresholds)
+Theory: [../../../8.agents/01b_agents_end_to_end.md](../../../8.agents/01b_agents_end_to_end.md) §2.2 (tokens per turn) · [../../../8.agents/09_agent_evaluation.md](../../../8.agents/09_agent_evaluation.md) §7 (cost thresholds)
 
 ---
 
 ## Use Case
 
-Puts a measured number on the claim every agent article repeats without evidence. Closes
-Block C by explaining why Blocks D through F exist at all.
+Puts a measured number on the claim every agent article repeats without evidence.
 
 The claim being tested: **an agent costs roughly 10x a single call, and the driver is
-re-sent input, not generated output.**
-
----
-
-## The Mechanism
-
-```
-single call     [question]                                   -> answer
-                in = ~40
-
-agent turn 1    [question] + SCHEMAS                          -> tool call
-agent turn 2    [question] + SCHEMAS + asst + result          -> tool call
-agent turn 3    [question] + SCHEMAS + asst + result + ...    -> answer
-                                    ^ everything re-sent, every turn
-
-total input grows ~QUADRATICALLY with turn count
-```
-
----
-
-## Key Implementation Details
-
-**The baseline is a no-tools call on the same question.** It may answer wrongly from
-parametric memory — that is fine and worth noting. It is the cost *floor*, not the
-quality bar.
-
-**Cost is computed per turn, not just in total**, so the growth curve is visible in the
-table rather than inferred from one number.
-
-**`msgs` is printed alongside tokens** to tie the token growth to the list growing, which
-is module 02's lesson arriving with a price tag.
-
-**Prices are `gpt-4.1-mini` rates.** Swap in Opus 5 rates and the multiplier rises
-sharply because thinking is billed as output on every turn — module 01 measured 632
-output tokens for a one-sentence answer.
+re-sent input.**
 
 ---
 
 ## Fixes Applied (during run)
 
-*Not yet run.*
+| Found | Fix |
+|---|---|
+| **The headline claim did not survive its own measurement.** The input multiplier came out at **10.2x**, exactly as predicted. But total cost came out at **0.7x** — the agent loop was *cheaper* than the single call. The module's closing text asserted the ~10x total anyway. | Rewrote the lesson to lead with the **input** multiplier, which is what the module actually measures, and to explain when total cost falls below 1x. The "~10x" figure is now stated as what it is: an assumption about a **long** loop. |
+
+**Why it happened, and why it is worth keeping.** Output is priced around 4x input. The
+no-tools baseline answered discursively in **287 output tokens**; the agent answered in
+**112** across two turns. A verbose single call can out-cost a terse two-turn agent even
+while the agent re-sends ten times the input. The trade only tips the other way as turns
+accumulate, because input grows roughly with the square of turn count.
+
+A demo that asserts 10x while printing 0.7x teaches the reader to distrust the demo.
 
 ---
 
-## Actual Output
+## Actual Output (macOS M1, `gpt-4.1-mini`, 2026-09-12)
 
-*Not yet run.*
+```
+single call: in=36 out=287 cost=$0.000474
 
----
+turn  msgs      in    out   $ this turn
+   1     1     124     54      0.000136
+   2     4     242     58      0.000190
 
-## Expected Output
+                       in     out           $
+single call            36     287    0.000474
+agent loop            366     112    0.000326
+multiplier          10.2x    0.4x        0.7x
 
-Expect 3-4 turns. Input tokens should roughly double or triple from first turn to last.
-The cost multiplier against the single call should land somewhere in the 5-15x range —
-the exact figure varies with how many tools the model decides to call, and that variance
-is itself part of the lesson.
+first turn input 124 -> last turn input 242
+```
+
+**The input story held perfectly.** 36 -> 366 tokens is 10.2x, and within the loop itself
+input nearly doubled from turn 1 to turn 2 on a two-turn run. Extrapolate that curve
+across ten turns and the familiar multiplier appears — which is the point the corrected
+lesson now makes explicitly instead of assuming.
 
 ---
 
 ## How to Run
 
-Open `11_agent_cost_and_tokens.ipynb`, select the `sameerkhan` kernel, run all cells.
-Needs `OPENAI_API_KEY` only. Under a cent.
+Open `11_agent_cost_and_tokens.ipynb`, run all cells. Needs `OPENAI_API_KEY` only.
 
 ---
 
